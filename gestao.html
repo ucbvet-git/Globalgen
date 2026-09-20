@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GLOBALGEN — Gestão de Orçamentos v5.0.0</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--pr:#199198;--deep:#004446;--lt:#E4F5F6;--sf:#F2F8F8;--bd:#B8D4D6;--tx:#1A2C2E;--mt:#4A7275;--wh:#fff;--green:#2B9960;--glt:#E6F5EE;--rd:#C83232}
+body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-height:100vh}
+/* ── Login ── */
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 20px}
+.login-box{background:#fff;border-radius:16px;border:1.5px solid var(--bd);padding:40px 32px;width:100%;max-width:380px;text-align:center}
+.login-logo{max-height:52px;margin-bottom:24px}
+.login-title{font-size:18px;font-weight:800;color:var(--deep);margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--mt);margin-bottom:24px}
+.login-inp{width:100%;border:1.5px solid var(--bd);border-radius:10px;padding:12px 14px;font-size:15px;font-family:inherit;outline:none;margin-bottom:12px;text-align:center;letter-spacing:3px}
+.login-inp:focus{border-color:var(--pr)}
+.login-btn{width:100%;padding:13px;background:var(--deep);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit}
+.login-btn:active{background:var(--pr)}
+.login-err{color:var(--rd);font-size:12px;margin-top:8px;min-height:16px}
+/* ── App ── */
+#app{display:none}
+.hdr{background:var(--deep);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.hdr-logo{height:28px}
+.hdr-title{color:rgba(255,255,255,.7);font-size:13px;font-weight:500}
+.hdr-logout{color:rgba(255,255,255,.5);font-size:12px;cursor:pointer;text-decoration:underline;background:none;border:none;font-family:inherit}
+/* ── Filtros ── */
+.filters{background:#fff;border-bottom:1px solid var(--bd);padding:14px 24px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.f-label{font-size:11px;font-weight:700;color:var(--mt);margin-right:-4px}
+.f-inp{border:1.5px solid var(--bd);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;color:var(--tx);outline:none;background:#fff}
+.f-inp:focus{border-color:var(--pr)}
+.f-btn{padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border:none}
+.f-btn-clear{background:var(--sf);color:var(--mt);border:1.5px solid var(--bd)}
+.f-btn-export{background:var(--green);color:#fff}
+.f-spacer{flex:1}
+.filter-modal-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.filter-modal-field{display:flex;flex-direction:column;gap:6px}
+.filter-modal-field.full{grid-column:1/-1}
+.filter-modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+@media(max-width:650px){.filter-modal-grid{grid-template-columns:1fr}.filter-modal-field.full{grid-column:auto}}
+/* ── Stats ── */
+.stats{display:flex;gap:12px;padding:16px 24px;background:var(--sf);flex-wrap:wrap}
+.stat{background:#fff;border:1.5px solid var(--bd);border-radius:10px;padding:12px 16px;flex:1;min-width:140px}
+.stat-val{font-size:22px;font-weight:800;color:var(--deep)}
+.stat-lbl{font-size:11px;color:var(--mt);margin-top:2px}
+/* ── Lista ── */
+.lista{padding:16px 24px;display:flex;flex-direction:column;gap:10px}
+.card{background:#fff;border:1.5px solid var(--bd);border-radius:12px;padding:16px;cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.card:hover{border-color:var(--pr);box-shadow:0 2px 12px rgba(25,145,152,.1)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px}
+.card-cliente{font-size:14px;font-weight:700;color:var(--tx)}
+.card-doc{font-size:11px;color:var(--mt);margin-top:2px}
+.card-valor{font-size:16px;font-weight:800;color:var(--pr);text-align:right;white-space:nowrap}
+.card-valor-sub{font-size:10.5px;color:var(--mt);text-align:right}
+.card-mid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.badge{background:var(--lt);color:var(--deep);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:20px}
+.badge.mod{background:#FFF3E0;color:#B26000}
+.card-bot{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:var(--mt)}
+.card-rep{font-weight:500}
+.card-data{text-align:right}
+.empty{text-align:center;padding:60px 20px;color:var(--mt)}
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:16px}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;padding:24px}
+.modal-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:17px;font-weight:800;color:var(--deep)}
+.modal-close{background:var(--sf);border:1.5px solid var(--bd);border-radius:8px;padding:6px 12px;cursor:pointer;font-size:13px;font-family:inherit}
+.m-sec{background:var(--sf);border-radius:10px;padding:14px;margin-bottom:12px}
+.m-sec-title{font-size:10px;font-weight:800;color:var(--mt);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.m-row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--bd)}
+.m-row:last-child{border-bottom:none}
+.m-rl{color:var(--mt)}
+.m-rv{font-weight:600;text-align:right}
+.m-rv.pos{color:var(--green)}
+.m-rv.neg{color:var(--rd)}
+.m-table{width:100%;border-collapse:collapse;font-size:11.5px}
+.m-table th{background:var(--deep);color:#fff;padding:6px 8px;text-align:left;font-size:10px}
+.m-table th.r,.m-table td.r{text-align:right}
+.m-table td{padding:5px 8px;border-bottom:1px solid #E4EEEF}
+.m-table tr:last-child td{border-bottom:none}
+.m-table tr.alt td{background:var(--sf)}
+.m-actions{display:flex;gap:8px;margin-top:16px}
+.m-cancel-area{margin-top:12px;border:1.5px solid var(--rd);border-radius:10px;padding:12px}
+.m-cancel-ta{width:100%;border:1.5px solid #FECACA;border-radius:8px;padding:8px;font-size:12.5px;font-family:inherit;resize:vertical;min-height:60px;color:var(--tx)}
+.m-btn-cancel{padding:11px 16px;background:var(--rd);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.m-btn-pdf{flex:1;padding:12px;background:var(--green);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
+.loading{text-align:center;padding:60px;color:var(--mt);font-size:14px}
+.share-modal{position:fixed;inset:0;background:rgba(0,30,31,.72);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px}
+.share-modal[hidden]{display:none}
+.share-card{width:100%;max-width:390px;background:#fff;border-radius:16px;padding:22px;text-align:center;box-shadow:0 18px 55px rgba(0,0,0,.28)}
+.share-icon{font-size:38px;margin-bottom:8px}.share-title{font-size:19px;font-weight:800;color:var(--deep)}.share-text{font-size:13px;color:var(--mt);line-height:1.5;margin:7px 0 16px}
+.share-main{width:100%;border:0;border-radius:10px;padding:13px;background:var(--green);color:#fff;font:700 14px inherit;cursor:pointer}.share-alt{width:100%;border:0;background:none;color:var(--mt);font:600 12px inherit;text-decoration:underline;padding:12px;cursor:pointer}
+/* ── Print ── */
+@media screen{.print-only{display:none!important}}
+@media print{
+  .no-print{display:none!important}
+  .overlay,#login-screen,.share-modal{display:none!important}
+  #app>*:not(#print-area){display:none!important}
+  #print-area{display:block!important}
+  body{background:#fff}
+  .pp{padding:22px 28px;font-family:'Inter',sans-serif}
+  .p-hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid #199198;padding-bottom:14px;margin-bottom:16px}
+  .p-brand-logo{max-height:54px;max-width:260px;width:auto;object-fit:contain}
+  .p-orc{text-align:right}
+  .p-orc-lbl{font-size:9px;font-weight:800;color:#999;text-transform:uppercase}
+  .p-orc-num{font-size:17px;font-weight:800;color:#004446}
+  .p-orc-meta{font-size:10px;color:#666;margin-top:2px;line-height:1.6}
+  .p-kit-bar{background:#004446;padding:9px 13px;border-radius:6px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+  .p-kit-name{font-size:12px;font-weight:700;color:#fff}
+  .p-kit-tags{display:flex;gap:5px;flex-wrap:wrap}
+  .p-kit-tag{background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);font-size:9.5px;padding:2px 7px;border-radius:20px}
+  .p-sec{font-size:8.5px;font-weight:800;color:#5F7A8E;letter-spacing:.8px;text-transform:uppercase;margin:13px 0 4px}
+  table{width:100%;border-collapse:collapse;font-size:11px}
+  thead{display:table-header-group}
+  tr{break-inside:avoid;page-break-inside:avoid}
+  th{background:#199198;color:#fff;padding:6px 9px;text-align:left;font-size:9.5px;font-weight:700}
+  th.r,td.r{text-align:right}
+  th.c,td.c{text-align:center}
+  td{padding:5px 9px;border-bottom:1px solid #E4EEEF;vertical-align:top}
+  tr.alt td{background:#F4F8F8}
+  td.nm{font-weight:600}
+  td.b-col{color:#2B9960;font-weight:600}
+  .p-tots{display:flex;justify-content:flex-end;overflow:visible;margin:12px 0;break-inside:avoid;page-break-inside:avoid}
+  .p-ti{width:265px}
+  .ptr{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;border-bottom:1px solid #E4EEEF}
+  .ptr.big{font-size:16px;font-weight:800;color:#199198;border-top:2px solid #199198;border-bottom:none;padding-top:7px;margin-top:5px}
+  .ptr.mt{color:#888;font-size:10px}
+  .ptr.neg{color:#C83232;font-weight:600}
+  .ptr.pos{color:#2B9960;font-weight:600}
+  .ptr.av{color:#2B9960;font-size:13px;font-weight:700;border-bottom:none}
+  .p-clr{clear:both}
+  .p-conds{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+  .p-cond{background:#F4F8F8;border-radius:5px;padding:8px 10px}
+  .p-cond-l{font-size:8px;font-weight:800;color:#5F7A8E;text-transform:uppercase;margin-bottom:2px;letter-spacing:.3px}
+  .p-cond-v{font-size:10.5px}
+  .p-obs{border:1px solid #B8D4D6;border-radius:5px;padding:8px 11px;margin:10px 0}
+  .p-obs-l{font-size:8px;font-weight:800;color:#5F7A8E;text-transform:uppercase;margin-bottom:3px}
+  .p-obs-t{font-size:10px;color:#444;white-space:pre-wrap;line-height:1.5}
+  .p-acc{margin-top:16px;font-size:9px;color:#777;text-align:center;font-style:italic;border-top:1px dashed #ccc;padding-top:10px}
+  .p-sig{margin-top:60px;display:grid;grid-template-columns:1fr 1fr;gap:50px}
+  .p-sig-l{border-top:1px solid #888;padding-top:5px;font-size:9px;color:#666;text-align:center}
+  .p-ftr{margin-top:10px;display:flex;justify-content:space-between;font-size:8.5px;color:#999}
+}
+</style>
+</head>
+<body>
+<!-- Login / Primeiro Acesso -->
+<div id="login-screen">
+  <!-- Painel login -->
+  <div id="g-login" class="login-box">
+    <img id="g-logo-login" class="login-logo" alt="GlobalGen">
+    <div class="login-title">Gestão de Orçamentos</div>
+    <div class="login-sub">Acesso restrito à gerência GLOBALGEN</div>
+    <input class="login-inp" type="email" id="g-email" placeholder="E-mail" autocomplete="email"
+      onkeydown="if(event.key==='Enter')doLoginGestao()">
+    <div style="position:relative">
+      <input class="login-inp" type="password" id="g-pw" placeholder="Senha" autocomplete="current-password"
+        onkeydown="if(event.key==='Enter')doLoginGestao()" style="padding-right:42px">
+      <button onclick="toggleGPw()" tabindex="-1"
+        style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#888;padding:4px">👁</button>
+    </div>
+    <div class="login-err" id="g-login-err"></div>
+    <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
+    <button onclick="showGPrimAcesso()"
+      style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
+  </div>
+  <!-- Painel primeiro acesso -->
+  <div id="g-prim" class="login-box" style="display:none">
+    <div class="login-title">Primeiro acesso</div>
+    <div class="login-sub">Informe seu CPF ou CNPJ e o e-mail cadastrado no Senior G5</div>
+    <input class="login-inp" type="text" id="g-doc" placeholder="CPF ou CNPJ" maxlength="18"
+      oninput="fmtGDoc(this)">
+    <input class="login-inp" type="email" id="g-first-email" placeholder="E-mail cadastrado" autocomplete="email"
+      onkeydown="if(event.key==='Enter')doGFirstAccess()">
+    <div class="login-err" id="g-prim-err"></div>
+    <div id="g-prim-ok" style="color:var(--green);font-size:12px;margin-bottom:8px;text-align:left;min-height:16px"></div>
+    <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
+    <button onclick="showGLogin()"
+      style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
+  </div>
+</div>
+<!-- App -->
+
+<div id="app">
+  <div class="hdr">
+    <div style="background:rgba(255,255,255,.92);border-radius:6px;padding:2px 10px;display:inline-flex;align-items:center"><img src="data:image/webp;base64,UklGRpgFAABXRUJQVlA4IIwFAABwHACdASpjAB4APlEijkQjoiGW3AUAOAUEoAeB/1WmP4AG2AuwD0APLM9j/9vfSKu4P6R+I/mz4EO/3truVuZn6a/cfyq9Vd4W/jf+C143+A9QL1l+kf5P7YPQi1Au1foj/pv+X9De8G8W/pP4zfQB+Xv9V/Rv2M+Tz93/5X90/ID2Qfl/91/5P+E+AL+Vf0P/L/l5/iP//4mfQq/W8Mg8bakrUU3DRJ8MH+vrd64dc5UuVux2FERUhKpvGEdXPI9/Wy8Sad3FNXaFyWT5eIUCn5Fo+PqlTrQIKR6mlTnzRBXlZFL85gKA0S8AAAD+/u0vYerRjyImmm//4+X5QncnBb/057ysYBGsD7UyZyRqqGiClHYX0ZjzHEnwVNgf4d00IL2yLD4wTUI9bk646lgRVQdWDme5+dGX94YNj7Ojl+oqAIFWxfiGSz5frZjIWoPmELMSx7OIiX00IHwLYajFDEADEuA7/3yiffMo+2QHzPuR7u+edW0dU94ZaO8/pGDJVK1rft//5smXCfgSExmXw5RSh5Loy/90nCFboQC216z6q8dqE4lLKb11Vr3g736LBJ0RSvl22rLFV0YT+eaAof5eRdyNE0MBYQg+eFVbEKU6xYVynSPmxuqZnpMWvBD+rEgldrb/Xj3O6idXDX9CKo0BHmgLK2bUojdeoT+WpAgU4OCt+vOY6ndmcxS3NxcSixLBjDTAu2/5YYQI7VWLyxnO7ma3i4jvtOQIWWzs0/iNfe9KUXJBdRbR/JoFXJJ9e3v+/kOoIBTOshawwqoP+5SYLMqEoWMbiKXds/89gdT8mXdKclcmvxDs9OBVECxp2vh2zR/E3L60sPlsXwr51z5zmpUXH/5Clvqq8z3cFd9CK/djBNoGi3dek+d0hP/LOD/4TV+V82ycByq1/c37hJcLfzy5f+on0rNEx++NF3MiWEnHf+UAskiD6FnkIAFAd0GXBqeeRgX5wezFpemg2Grvz/+sL/k7amfoVANUP2IfjUuYpOtYQivU/5jARP/0yj+qZE/HY2t+Yft9n2dnI/NjGUkcaMxSVcc+Ldvd5vYRTMFoSIp/QY24HRLP2q9fWKmbecyPGdnjkwlpKFvIR4lx+xsl0FxIYsj9MHmQVUplf79yof8hpfzCCPNVqHUL2voDD4NgstBFi0TLP0tXfhX3ZT+dztJgPhw42dCh+G9ZgMQ647+jhAqeAdq69Y0dSPtfohYojGQmLO06s8Fs+foyuF6JBxgL/sLeVd+CCb0uC+8J99ik/96W4ZXJYH9RFtd8B2CFKMvcDloTJ1D+5dA4lBqHHraD1dzRPI5yPYi/0rVBBQMz+66y2WnP15saDPhlSlg8bFLjL6Pwg0Ud3nLVSQpApSAH293VY5fkR75zJxjbPTRccyXX/Ej5AhccNBzY5uKTw4hnqCept+5BVQx92XqWEQC6FxoH+TkMaIW7I0fwGOuWMLCZYghFYKQ2ZeAvxWPogPrqAKdOwu7wdbXUciJRZWNEO3/GcLHYgJnw/jaZrO2nQhzgkGdoiP9j82n9Ynfy5hr+mGoyAAQNtV/ZE3ljo5sNXTxhRkkBUn9NXv3LS+bLSImoMBA4fu+GUpSb+Xck1+qZ3rsApWyXFNxmU6nDJhW6BaUbnzyxMrnift6q8Nrg4u6z5YnKzbZWlLRCEEPRm3uEOVO2hMqAxxrR1TpqZaE+hE003wfWTixcXngNZZjuFGD1v/n3DFM1caSp3Q/6PB8C0iRG1QtOveFHq4xpHXkjpmqZCY2XbXE4gPxon0mC8qimouQ/QAc01hF0VvCp0UV/WLqt4/u64whAZCnUDkCINQ1M3OaR6rbZV+vuqkCGGBjzMBWNX1rlUPjl4+0KFwizYUhnm32ql2Nf8zztmXkyuAAA" alt="GlobalGen" style="height:26px"></div><svg style="display:none" viewBox="0 0 360 104" xmlns="http://www.w3.org/2000/svg"><defs><style>.c1{fill:#199198}.c2{fill:#004446}.c3{fill:#878787}.c4{fill:#fff}</style></defs><path class="c4" d="M0,28.6v47h10.3V58.1h7.4c5.9,0,10.5-1.5,13.8-4.6,3.4-3.1,5.1-7.3,5.1-12.5,0-5-1.6-9-4.8-12-3.2-2.9-7.7-4.4-13.4-4.4H0zm10.3,8.6h5.8c2.7,0,4.8.6,6.1,1.9,1.4,1.2,2.1,3.1,2.1,5.5,0,2.6-.7,4.6-2.2,5.9-1.5,1.4-3.7,2.1-6.5,2.1h-5.3V37.1z"/><path class="c1" d="M54.7,28.6H44.4v47h10.3V28.6z"/><path class="c4" d="M96.2,28.6H86L63.5,75.5h10.7l4.1-9.3h25l4.1,9.3h11.4L96.2,28.6zm-14.4,29.8l8.3-19,8.3,19H81.8z"/></svg>
+    <span class="hdr-title">Gestão de Orçamentos</span>
+    <span id="g-user-name" style="font-size:11px;color:rgba(255,255,255,.7);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+    <button class="hdr-logout" onclick="sairGestao()">Sair</button>
+  </div>
+
+  <div class="filters">
+    <button class="f-btn" style="background:var(--deep);color:#fff" onclick="forcarSincronizacaoCadastrosG()">☁ Atualiza Firebase</button>
+    <span class="f-label">Status:</span>
+    <select class="f-inp" id="f-status" onchange="aplicarFiltros()">
+      <option value="">Todos</option>
+      <option value="Aberto" selected>⏳ Aberto</option>
+      <option value="Aberto com NF">🧾 Aberto com NF</option>
+      <option value="Finalizado">✅ Finalizado</option>
+      <option value="Cancelado">❌ Cancelado</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="f-anon" onchange="aplicarFiltros()" style="cursor:pointer;accent-color:var(--pr)">
+      Anônimos
+    </label>
+    <span class="f-label" id="f-sup-label">Supervisor:</span>
+    <select class="f-inp" id="f-sup" onchange="sincronizarSupervisorFiltros('superior');aplicarFiltros()" style="max-width:180px">
+      <option value="">Todos</option>
+    </select>
+    <div class="f-spacer"></div>
+    <button class="f-btn f-btn-clear" onclick="abrirFiltrosGestao()">🔎 Filtros</button>
+    <button class="f-btn f-btn-export" onclick="exportarCSV()">⬇ Exportar CSV</button>
+    <button class="f-btn" style="background:var(--pr);color:#fff" onclick="atualizarDados()">🔄 Atualizar Orçamentos</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+  <div class="lista" id="lista"><div class="loading">⏳ Carregando orçamentos...</div></div>
+</div>
+
+<!-- Modal detalhes -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)fecharModal()">
+  <div class="modal" id="modal-content"></div>
+</div>
+
+<!-- Modal de filtros avançados -->
+<div class="overlay" id="filters-overlay" onclick="if(event.target===this)fecharFiltrosGestao()">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-hdr">
+      <div class="modal-title">Filtros dos Orçamentos</div>
+      <button class="modal-close" onclick="fecharFiltrosGestao()">✕ Fechar</button>
+    </div>
+    <div class="filter-modal-grid">
+      <div class="filter-modal-field">
+        <span class="f-label">Período inicial</span>
+        <input class="f-inp" type="date" id="f-de">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label">Período final</span>
+        <input class="f-inp" type="date" id="f-ate">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label">Representante</span>
+        <input class="f-inp" type="text" id="f-rep" placeholder="Nome ou código">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label">Cliente</span>
+        <input class="f-inp" type="text" id="f-cli" placeholder="Nome ou CNPJ/CPF">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label">Nº do pedido</span>
+        <input class="f-inp" type="text" id="f-num" placeholder="GBG-0926-0001">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label" id="f-sup-modal-label">Supervisor</span>
+        <select class="f-inp" id="f-sup-modal">
+          <option value="">Todos</option>
+        </select>
+      </div>
+    </div>
+    <div class="filter-modal-actions">
+      <button class="f-btn f-btn-clear" onclick="limparFiltros()">Limpar filtros</button>
+      <button class="f-btn" style="background:var(--pr);color:#fff" onclick="aplicarFiltrosDaJanela()">Aplicar filtros</button>
+    </div>
+  </div>
+</div>
+
+<!-- Área de impressão (PDF) -->
+<div id="print-area" class="print-only"></div>
+<div class="share-modal no-print" id="share-modal-gestao" hidden>
+  <div class="share-card">
+    <div class="share-icon">✅</div><div class="share-title">PDF gerado</div>
+    <div class="share-text">Toque no botão abaixo e escolha o WhatsApp. O orçamento já seguirá anexado.</div>
+    <button class="share-main" onclick="compartilharPDFGestao()">Compartilhar PDF</button>
+    <button class="share-alt" onclick="baixarPDFGestao()">Somente baixar o PDF</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+// ════ AUTENTICAÇÃO GESTÃO ════
+const API_V5_BASE_G='https://apisenior.ucbvet.com:8444/api/v5';
+const G_SESSION_KEY='gbg_gestao_session',G_SESSION_TTL=86400000;
+let _gAuthUser=null;
+
+function getGAuth(){
+  const app=firebase.apps.find(a=>a.name==='gestao')||firebase.initializeApp(FB_CONFIG,'gestao');
+  return firebase.auth(app);
+}
+function getGDb(){
+  const app=firebase.apps.find(a=>a.name==='gestao')||firebase.initializeApp(FB_CONFIG,'gestao');
+  return firebase.firestore(app);
+}
+function getGSession(){
+  try{const s=JSON.parse(localStorage.getItem(G_SESSION_KEY)||'null');
+  return s&&(Date.now()-s.ts<G_SESSION_TTL)?s:null;}catch(_){return null;}
+}
+function saveGSession(u){localStorage.setItem(G_SESSION_KEY,JSON.stringify({...u,ts:Date.now()}));}
+function clearGSession(){localStorage.removeItem(G_SESSION_KEY);_gAuthUser=null;}
+function showGLogin(){document.getElementById('g-login').style.display='block';document.getElementById('g-prim').style.display='none';}
+function showGPrimAcesso(){document.getElementById('g-login').style.display='none';document.getElementById('g-prim').style.display='block';}
+function toggleGPw(){const el=document.getElementById('g-pw');el.type=el.type==='password'?'text':'password';}
+function fmtDoc(d){
+  d=d.replace(/\D/g,'').slice(0,14);
+  if(d.length<=11){
+    if(d.length>9)return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6,9)+'-'+d.slice(9);
+    if(d.length>6)return d.slice(0,3)+'.'+d.slice(3,6)+'.'+d.slice(6);
+    if(d.length>3)return d.slice(0,3)+'.'+d.slice(3);
+    return d;
+  }
+  if(d.length>12)return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8,12)+'-'+d.slice(12);
+  if(d.length>8)return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5,8)+'/'+d.slice(8);
+  if(d.length>5)return d.slice(0,2)+'.'+d.slice(2,5)+'.'+d.slice(5);
+  if(d.length>2)return d.slice(0,2)+'.'+d.slice(2);
+  return d;
+}
+function fmtGDoc(el){el.value=fmtDoc(el.value);}
+async function apiV5G(path,{method='GET',body=null,signal=null,auth=true,retry=true}={}){
+  const headers={Accept:'application/json'};
+  if(body!==null)headers['Content-Type']='application/json';
+  if(auth){
+    const user=getGAuth().currentUser;
+    if(!user)throw new Error('Sessão expirada. Entre novamente.');
+    headers.Authorization=`Bearer ${await user.getIdToken(false)}`;
+  }
+  let response;
+  try{
+    response=await fetch(`${API_V5_BASE_G}${path}`,{method,headers,signal,body:body===null?undefined:JSON.stringify(body)});
+  }catch(e){
+    if(e.name==='AbortError')throw e;
+    throw new Error('Não foi possível conectar à API segura da GLOBALGEN.');
+  }
+  if(response.status===401&&auth&&retry){
+    const user=getGAuth().currentUser;
+    if(user){await user.getIdToken(true);return apiV5G(path,{method,body,signal,auth,retry:false});}
+  }
+  if(!response.ok){
+    let message=`API respondeu HTTP ${response.status}.`;
+    try{const error=await response.clone().json();message=error.message||message;}catch(_){ }
+    const failure=new Error(message);failure.status=response.status;throw failure;
+  }
+  return response;
+}
+async function obterPerfilApiV5G(){return(await apiV5G('/profile')).json();}
+function usuarioDoPerfilV5G(profile){
+  return{
+    uid:profile.uid,email:profile.email,cpfCnpj:profile.document||'',
+    codRep:profile.representativeCode||'',nomRep:profile.representativeName||'',
+    catRep:profile.category||'',isAdmin:profile.isAdmin===true
+  };
+}
+function aguardarGAuth(auth){
+  return new Promise(resolve=>{
+    let unsubscribe=()=>{};
+    unsubscribe=auth.onAuthStateChanged(user=>{unsubscribe();resolve(user);},()=>resolve(null));
+  });
+}
+// Login gestão
+async function doLoginGestao(){
+  const email=(document.getElementById('g-email').value||'').trim();
+  const pw=document.getElementById('g-pw').value||'';
+  const errEl=document.getElementById('g-login-err');
+  const btn=document.getElementById('g-login-btn');
+  errEl.textContent='';
+  if(!email||!pw){errEl.textContent='Preencha e-mail e senha.';return;}
+  btn.disabled=true;btn.textContent='Verificando...';
+  try{
+    const auth=getGAuth();
+    const cred=await auth.signInWithEmailAndPassword(email,pw);
+    _gAuthUser=usuarioDoPerfilV5G(await obterPerfilApiV5G());
+    if(!_gAuthUser.isAdmin&&!['SUP','GER'].includes(_gAuthUser.catRep)){
+      await auth.signOut();throw new Error('Sem permissão de acesso ao módulo de gestão.');
+    }
+    saveGSession(_gAuthUser);
+    try{await getGDb().collection('representantes').doc(cred.user.uid).update({ultimoLogin:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
+    entrarNoApp(_gAuthUser);
+  }catch(e){
+    const msg=e.code==='auth/wrong-password'||e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'?'E-mail ou senha incorretos.':
+              e.code==='auth/too-many-requests'?'Muitas tentativas. Aguarde alguns minutos.':e.message;
+    errEl.textContent=msg;
+  }finally{btn.disabled=false;btn.textContent='Entrar';}
+}
+function entrarNoApp(u){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  const nm=document.getElementById('g-user-name');if(nm)nm.textContent=u.nomRep||'';
+  // Status padrão conforme perfil
+  const fStatus=document.getElementById('f-status');
+  if(fStatus)fStatus.value='Aberto';
+  iniciarApp().then(()=>travarFiltroSupervisor());
+}
+// Primeiro acesso gestão
+async function doGFirstAccess(){
+  const docRaw=document.getElementById('g-doc').value.replace(/\D/g,'');
+  const email=(document.getElementById('g-first-email').value||'').trim();
+  const errEl=document.getElementById('g-prim-err');
+  const okEl=document.getElementById('g-prim-ok');
+  const btn=document.getElementById('g-prim-btn');
+  errEl.textContent='';okEl.textContent='';
+  if(docRaw.length!==11&&docRaw.length!==14){errEl.textContent='Informe CPF (11 dígitos) ou CNPJ (14 dígitos).';return;}
+  if(!email||!/^\S+@\S+\.\S+$/.test(email)){errEl.textContent='Informe um e-mail válido.';return;}
+  btn.disabled=true;btn.textContent='Buscando...';
+  try{
+    await apiV5G('/public/first-access',{method:'POST',auth:false,body:{document:docRaw,email,app:'gestao'}});
+    okEl.textContent='Se os dados conferirem com o cadastro e o perfil tiver permissão, o link será enviado ao e-mail informado.';
+  }catch(e){errEl.textContent=e.message;}
+  finally{btn.disabled=false;btn.textContent='Buscar e enviar link';}
+}
+// Logout gestão
+async function sairGestao(){
+  try{await getGAuth().signOut();}catch(_){}
+  clearGSession();
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  showGLogin();
+}
+// ════ FIM AUTH GESTÃO ════
+const FB_CONFIG={
+  apiKey:'AIzaSyBohpz0jxsA9TCowjx8COBhQGeRZYBv-yo',
+  authDomain:'globalgen-orcamentos.firebaseapp.com',
+  projectId:'globalgen-orcamentos',
+  storageBucket:'globalgen-orcamentos.firebasestorage.app',
+  messagingSenderId:'643022729799',
+  appId:'1:643022729799:web:d0aa2a959a73f6f4c4f762'
+};
+let db=null, todosOrc=[], filtrados=[];
+let sincronizacaoFaturamentosEmAndamentoG=null;
+
+
+// ════ SINCRONIZAÇÃO SEGURA VIA API V5 ════
+const G_EMP='4',G_FIL='1';
+const CPG_SYNC_INTERVALO=24*60*60*1000;
+const CPG_SYNC_BLOQUEIO=10*60*1000;
+const REP_SYNC_INTERVALO=24*60*60*1000;
+const REP_SYNC_BLOQUEIO=15*60*1000;
+// O serviço de representantes limita cada resposta a 100 registros,
+// mesmo quando um limite maior é solicitado.
+const REP_SYNC_LIMITE_PAGINA=100;
+const REP_SYNC_MAX_PAGINAS=100;
+const NFV_SYNC_INTERVALO=24*60*60*1000;
+const NFV_SYNC_BLOQUEIO=45*60*1000;
+const NFV_SYNC_LIMITE_PAGINA=100;
+const NFV_SYNC_MAX_PAGINAS=1000;
+const NFV_SYNC_SOBREPOSICAO_DIAS=5;
+const NFV_SYNC_REFERENCIA_INICIAL=Date.parse('2026-09-19T12:00:00-03:00');
+const NFV_SYNC_CONTROLE_DOC='notasFiscaisV2';
+async function buscarRepresentanteSeniorFirebaseG(codRep){
+  const codigo=String(codRep||'').trim();
+  if(!codigo)return null;
+  const snap=await db.collection('representantesSenior').doc(codigo).get();
+  if(snap.exists)return{id:snap.id,...snap.data()};
+  const consulta=await db.collection('representantesSenior').where('codRep','==',codigo).limit(1).get();
+  return consulta.empty?null:{id:consulta.docs[0].id,...consulta.docs[0].data()};
+}
+let _lookupRunning=false;
+function sincronizarOpcoesSupervisorModal(){
+  const superior=document.getElementById('f-sup');
+  const modal=document.getElementById('f-sup-modal');
+  const modalLbl=document.getElementById('f-sup-modal-label');
+  if(!superior||!modal)return;
+  const valor=superior.value;
+  modal.innerHTML=superior.innerHTML;
+  modal.value=valor;
+  modal.disabled=superior.disabled;
+  modal.style.opacity=superior.disabled?'.7':'';
+  modal.style.cursor=superior.disabled?'not-allowed':'';
+  if(modalLbl)modalLbl.textContent=superior.disabled?'🔒 Supervisor':'Supervisor';
+}
+function sincronizarSupervisorFiltros(origem){
+  const superior=document.getElementById('f-sup');
+  const modal=document.getElementById('f-sup-modal');
+  if(!superior||!modal)return;
+  if(origem==='modal')superior.value=modal.value;
+  else modal.value=superior.value;
+}
+function popularFiltroSupervisor(){
+  const sel=document.getElementById('f-sup');
+  const lbl=document.getElementById('f-sup-label');
+  // SUP: filtro travado no próprio nome
+  if(_gAuthUser&&_gAuthUser.catRep==='SUP'&&!_gAuthUser.isAdmin){
+    sel.innerHTML=`<option value="${_gAuthUser.nomRep}">${_gAuthUser.nomRep}</option>`;
+    sel.value=_gAuthUser.nomRep;
+    sel.disabled=true;
+    sel.style.opacity='.7';sel.style.cursor='not-allowed';
+    if(lbl)lbl.textContent='🔒 Supervisor:';
+    sincronizarOpcoesSupervisorModal();
+    return;
+  }
+  // GER / Admin: acesso completo
+  sel.disabled=false;sel.style.opacity='';sel.style.cursor='';
+  if(lbl)lbl.textContent='Supervisor:';
+  const current=sel.value;
+  const sups=new Map();
+  todosOrc.forEach(o=>{
+    const nome=o.nomeSup||'';
+    if(nome&&nome!=='Sem supervisor')sups.set(nome,o.codSup||'');
+  });
+  sel.innerHTML='<option value="">Todos</option>';
+  [...sups.keys()].sort().forEach(nome=>{
+    const opt=document.createElement('option');
+    opt.value=nome;opt.textContent=nome;
+    sel.appendChild(opt);
+  });
+  if(current)sel.value=current;
+  // Travar para usuário SUP
+  travarFiltroSupervisor();
+  sincronizarOpcoesSupervisorModal();
+}
+function travarFiltroSupervisor(){
+  const sel=document.getElementById('f-sup');
+  const lbl=document.getElementById('f-sup-label');
+  if(!sel)return;
+  // Desbloquear para admin/GER
+  if(!_gAuthUser||_gAuthUser.isAdmin||_gAuthUser.catRep==='GER'){
+    sel.disabled=false;
+    if(lbl)lbl.style.color='';
+    return;
+  }
+  // Travar para SUP
+  if(_gAuthUser.catRep==='SUP'){
+    // Garantir que a opção do sup está na lista
+    const nomesSup=Array.from(sel.options).map(o=>o.value);
+    if(!nomesSup.includes(_gAuthUser.nomRep)){
+      const opt=document.createElement('option');
+      opt.value=_gAuthUser.nomRep;opt.textContent=_gAuthUser.nomRep;
+      sel.appendChild(opt);
+    }
+    sel.value=_gAuthUser.nomRep;
+    sel.disabled=true;
+    sel.title='Acesso restrito aos seus representantes';
+    if(lbl){lbl.style.color='var(--pr)';lbl.textContent='Supervisor (restrito):';}
+  }
+  sincronizarOpcoesSupervisorModal();
+}
+async function lookupRepresentantes(){
+  if(_lookupRunning)return;
+  _lookupRunning=true;
+  // Filtrar orçamentos que precisam de lookup:
+  // - Não cancelados
+  // - Ainda não tentados (sem repLookupStatus) ou tentados sem sucesso NÃO marcados como erro
+  // - repLookupStatus='error' → NÃO tentar novamente (evitar loop infinito)
+  const semRep=todosOrc.filter(o=>
+    o.status!=='Cancelado'&&
+    o.repLookupStatus!=='error'&&
+    o.codRep!=='000'&& // 000 = não identificado, não tentar novamente
+    (
+      (o.clienteDoc&&!o.codRep)||
+      (o.codRep&&(!o.nomeRep||o.nomeRep.startsWith('Representante ')))||
+      (o.codRep&&o.codSup===undefined&&o.codSup!=='0000') // tem rep mas sem supervisor
+    )
+  );
+  if(!semRep.length){_lookupRunning=false;return;}
+  console.log(`🔍 Buscando representante para ${semRep.length} orçamento(s)...`);
+  for(const orc of semRep){
+    try{
+      let codRep=orc.codRep||'',codCli=orc.codCli||'';
+      if(!codRep){
+        // Caso 1: buscar codRep via SimularPedidos
+        const cnpj=(orc.clienteDoc||'').replace(/\D/g,'');
+        if(!cnpj){continue;}
+        const simResp=await apiV5G('/orders/simulate',{
+          method:'POST',body:{customerDocument:cnpj,paymentCondition:15,products:[]}
+        });
+        const simXml=await simResp.text();
+        if(!simXml.includes('Processado com sucesso'))continue;
+        const crM=simXml.match(/<codRep>(\d+)<\/codRep>/);
+        const ccM=simXml.match(/<codCli>(\d+)<\/codCli>/);
+        if(!crM||crM[1]==='0'){
+        const motivo=simXml.match(/<retorno>([^<]+)/)?.[1]||'codRep não retornado';
+        console.warn(`⚠️ ${orc.numPedido||orc.id} (doc:${cnpj}): ${motivo} | tipoRetorno:${simXml.match(/<tipoRetorno>([^<]+)/)?.[1]||'?'}`);
+        try{await db.collection('orcamentos').doc(orc.id).update({repLookupStatus:'error',repLookupErro:motivo});orc.repLookupStatus='error';}catch(_){}
+        continue;
+      }
+        codRep=crM[1];codCli=ccM?ccM[1]:'';
+      }
+      // Buscar cadastro sincronizado do representante no Firebase.
+      const repInfo=await buscarRepresentanteSeniorFirebaseG(codRep);
+      if(!repInfo)throw new Error(`Representante ${codRep} ainda não foi sincronizado no Firebase.`);
+      const nomeRep=repInfo.nomRep||repInfo.nomeRep||`Representante ${codRep}`;
+      const codSup=String(repInfo.codSup||'0');
+      let nomeSup=repInfo.nomeSup||'Sem supervisor';
+      if(codSup!=='0'){
+        const sup=await buscarRepresentanteSeniorFirebaseG(codSup);
+        if(sup&&(sup.nomRep||sup.nomeRep))nomeSup=sup.nomRep||sup.nomeRep;
+      }
+      // Atualizar Firebase
+      const upd={nomeRep,codSup,nomeSup,codFuncionario:String(repInfo.codFuncionario||''),repLookupStatus:'ok'};
+      if(codRep)upd.codRep=codRep;
+      if(codCli&&codCli!=='0')upd.codCli=codCli;
+      await db.collection('orcamentos').doc(orc.id).update(upd);
+      // Atualizar estado local
+      if(codRep)orc.codRep=codRep;
+      if(codCli&&codCli!=='0')orc.codCli=codCli;
+      orc.nomeRep=nomeRep;orc.codSup=codSup;orc.nomeSup=nomeSup;orc.codFuncionario=upd.codFuncionario;
+      console.log(`✅ ${orc.numPedido||orc.id}: Rep ${nomeRep} (${codRep}) | Sup: ${nomeSup} (${codSup})`);
+      aplicarFiltros(); // atualizar UI a cada orçamento processado
+    }catch(e){
+      console.error(`❌ Erro no lookup de ${orc.numPedido||orc.id}:`,e.message);
+      try{await db.collection('orcamentos').doc(orc.id).update({repLookupStatus:'error',repLookupErro:e.message});orc.repLookupStatus='error';}catch(_){}
+    }
+  }
+  _lookupRunning=false;
+  popularFiltroSupervisor();
+  aplicarFiltros(); // garantir renderização final
+}
+
+function statusOrcamentoG(o){
+  const status=o.status||'Aberto';
+  return status==='Aberto'&&o.faturamentoVinculado===true?'Aberto com NF':status;
+}
+function statusBadgeG(s){
+  const m={'Aberto':{bg:'#FFF3C4',c:'#7A5C00',t:'⏳ Aberto'},'Aberto com NF':{bg:'#D9F2FF',c:'#075985',t:'🧾 Aberto com NF'},'Finalizado':{bg:'#C6F6D5',c:'#1A6B35',t:'✅ Finalizado'},'Cancelado':{bg:'#FED7D7',c:'#9B1C1C',t:'❌ Cancelado'}}[s]||{bg:'#E2E8F0',c:'#4A5568',t:s};
+  return`<span style="background:${m.bg};color:${m.c};font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px">${m.t}</span>`;
+}
+function nomeCliente(o){
+  const nome=o.clienteNome||'Cliente não identificado';
+  const rawCod=o.codCli||'';
+  const cod=(rawCod&&rawCod!=='0')?rawCod:'';
+  return cod?`${nome} (cod.${cod})`:nome;
+}
+function fmt(v){return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v||0)}
+function fmtPct(v){return(v*100).toFixed(1)+'%'}
+
+// ════ SINCRONIZAÇÃO GLOBAL — CONDIÇÕES DE PAGAMENTO ════
+function xmlValorLocalG(el,nome){
+  const alvo=nome.toLowerCase();
+  const nos=el.getElementsByTagName('*');
+  for(const no of nos)if((no.localName||no.nodeName).toLowerCase()===alvo)return(no.textContent||'').trim();
+  return'';
+}
+function parseCondicoesPagamentoG(xmlText){
+  const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+  if(doc.querySelector('parsererror'))throw new Error('Resposta XML inválida do Senior G5.');
+  const soapFault=xmlValorLocalG(doc,'faultstring');
+  const erroExec=xmlValorLocalG(doc,'erroExecucao');
+  const tipoRetorno=xmlValorLocalG(doc,'tipoRetorno');
+  const mensagens=Array.from(doc.getElementsByTagName('*'))
+    .filter(n=>(n.localName||n.nodeName).toLowerCase()==='mensagemerro')
+    .map(n=>(n.textContent||'').trim()).filter(Boolean);
+  if(soapFault||erroExec||mensagens.length||tipoRetorno==='-1')throw new Error(soapFault||erroExec||mensagens.join(' | ')||'Consulta rejeitada pelo Senior G5.');
+  const blocos=Array.from(doc.getElementsByTagName('*')).filter(n=>{
+    const nome=(n.localName||n.nodeName).toLowerCase();
+    return nome==='condicaodepagamento'||nome==='condicaopagamento';
+  });
+  const vistos=new Set();
+  return blocos.map(b=>{
+    const codCpg=xmlValorLocalG(b,'codCpg');
+    const desCpg=xmlValorLocalG(b,'desCpg');
+    const abrCpg=xmlValorLocalG(b,'abrCpg');
+    const aplCpg=xmlValorLocalG(b,'aplCpg').toUpperCase();
+    const sitCpg=xmlValorLocalG(b,'sitCpg').toUpperCase()||'A';
+    const qtdPar=parseInt(xmlValorLocalG(b,'qtdPar'),10)||0;
+    const przMed=parseInt(xmlValorLocalG(b,'przMed'),10)||0;
+    return{codCpg,desCpg,abrCpg,aplCpg,sitCpg,qtdPar,przMed};
+  }).filter(p=>p.codCpg&&p.sitCpg==='A')
+    .filter(p=>{if(vistos.has(p.codCpg))return false;vistos.add(p.codCpg);return true;})
+    .sort((a,b)=>(a.desCpg||a.abrCpg||'').localeCompare(b.desCpg||b.abrCpg||'','pt-BR',{sensitivity:'base'})||a.codCpg.localeCompare(b.codCpg,'pt-BR',{numeric:true}));
+}
+function timestampMsG(valor){
+  if(!valor)return 0;
+  if(typeof valor.toMillis==='function')return valor.toMillis();
+  if(Number.isFinite(valor.seconds))return valor.seconds*1000;
+  const n=Number(valor);return Number.isFinite(n)?n:0;
+}
+function usuarioSincronizacaoG(){
+  const u=_gAuthUser||{};
+  return String(u.uid||u.codRep||u.email||u.nomRep||'gestao');
+}
+async function consultarCondicoesPagamentoSeniorG(){
+  const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    const resp=await apiV5G('/management/payment-conditions/page',{
+      method:'POST',signal:ctrl.signal,body:{pageIndex:1,limit:500}
+    });
+    const lista=parseCondicoesPagamentoG(await resp.text());
+    if(!lista.length)throw new Error('O Senior G5 não retornou condições de pagamento ativas.');
+    return lista;
+  }catch(e){
+    if(e.name==='AbortError')throw new Error('A consulta das condições de pagamento ao Senior excedeu 30 segundos.');
+    throw e;
+  }finally{clearTimeout(timer);}
+}
+async function executarOperacoesEmLotesG(operacoes){
+  for(let inicio=0;inicio<operacoes.length;inicio+=400){
+    const lote=db.batch();
+    for(const op of operacoes.slice(inicio,inicio+400)){
+      if(op.tipo==='set')lote.set(op.ref,op.dados,{merge:true});
+      else lote.update(op.ref,op.dados);
+    }
+    await lote.commit();
+  }
+}
+async function gravarCondicoesPagamentoFirebaseG(lista){
+  const colecao=db.collection('condicoesPagamento');
+  const atuais=await colecao.get();
+  const recebidos=new Set(lista.map(p=>p.codCpg));
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const usuario=usuarioSincronizacaoG();
+  const operacoes=lista.map(p=>({tipo:'set',ref:colecao.doc(p.codCpg),dados:{...p,ativo:true,origem:'Senior G5',sincronizadoEm:ts,sincronizadoPor:usuario}}));
+  atuais.docs.forEach(doc=>{
+    if(!recebidos.has(doc.id))operacoes.push({tipo:'set',ref:doc.ref,dados:{ativo:false,sitCpg:'I',sincronizadoEm:ts,sincronizadoPor:usuario}});
+  });
+  await executarOperacoesEmLotesG(operacoes);
+  return{gravadas:lista.length,inativadas:operacoes.length-lista.length};
+}
+async function sincronizarCondicoesPagamentoSeNecessarioG(forcar=false){
+  const controle=db.collection('controleSincronizacao').doc('condicoesPagamento');
+  const agora=Date.now();
+  const token=`${agora}-${Math.random().toString(36).slice(2)}`;
+  const decisao=await db.runTransaction(async transacao=>{
+    const snap=await transacao.get(controle);
+    const dados=snap.exists?snap.data():{};
+    const ultima=timestampMsG(dados.ultimaSincronizacao);
+    const bloqueadoAte=timestampMsG(dados.bloqueadoAte);
+    if(!forcar&&ultima&&agora-ultima<CPG_SYNC_INTERVALO)return{executar:false,motivo:'atualizada'};
+    if(bloqueadoAte>agora)return{executar:false,motivo:'em_andamento'};
+    transacao.set(controle,{
+      status:'executando',token,bloqueadoAte:firebase.firestore.Timestamp.fromMillis(agora+CPG_SYNC_BLOQUEIO),
+      iniciadoEm:firebase.firestore.FieldValue.serverTimestamp(),iniciadoPor:usuarioSincronizacaoG(),erro:''
+    },{merge:true});
+    return{executar:true};
+  });
+  if(!decisao.executar){
+    console.log(decisao.motivo==='atualizada'?'ℹ️ Condições de pagamento já sincronizadas nas últimas 24 horas.':'ℹ️ Sincronização das condições de pagamento já está sendo executada por outro usuário.');
+    return decisao;
+  }
+  try{
+    console.log('🔄 Sincronizando condições de pagamento: Senior G5 → Firebase...');
+    const lista=await consultarCondicoesPagamentoSeniorG();
+    const resultado=await gravarCondicoesPagamentoFirebaseG(lista);
+    await controle.set({
+      status:'sucesso',ultimaSincronizacao:firebase.firestore.FieldValue.serverTimestamp(),
+      finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,
+      quantidadeRecebida:lista.length,quantidadeGravada:resultado.gravadas,quantidadeInativada:resultado.inativadas,erro:''
+    },{merge:true});
+    console.log(`✅ Condições de pagamento sincronizadas: ${resultado.gravadas} ativa(s), ${resultado.inativadas} inativada(s).`);
+    return{executar:true,sucesso:true,...resultado};
+  }catch(e){
+    console.error('❌ Falha na sincronização das condições de pagamento:',e);
+    try{await controle.set({status:'erro',finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,erro:String(e.message||e).slice(0,500)},{merge:true});}catch(_){ }
+    return{executar:true,sucesso:false,erro:e.message||String(e)};
+  }
+}
+// ════ SINCRONIZAÇÃO GLOBAL — REPRESENTANTES SENIOR ════
+function xmlNosLocalG(el,nome){
+  const alvo=String(nome||'').toLowerCase();
+  return Array.from(el.getElementsByTagName('*')).filter(no=>(no.localName||no.nodeName).toLowerCase()===alvo);
+}
+function xmlFilhoDiretoLocalG(el,nome){
+  const alvo=String(nome||'').toLowerCase();
+  const no=Array.from(el.children||[]).find(item=>(item.localName||item.nodeName).toLowerCase()===alvo);
+  return no?(no.textContent||'').trim():'';
+}
+function parseRepresentantesPaginaG(xmlText){
+  const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+  if(doc.querySelector('parsererror'))throw new Error('Resposta XML inválida ao consultar representantes.');
+  const soapFault=xmlValorLocalG(doc,'faultstring');
+  const erroExec=xmlValorLocalG(doc,'erroExecucao');
+  const tipoRetorno=xmlValorLocalG(doc,'tipoRetorno');
+  const mensagens=xmlNosLocalG(doc,'mensagemErro').map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const fimDaLista=mensagens.length>0&&mensagens.every(m=>{
+    const texto=String(m||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return texto.includes('registro')&&texto.includes('encontrado');
+  });
+  if(!soapFault&&!erroExec&&fimDaLista)return{lista:[],totalRecebido:0,codigosRecebidos:[]};
+  if(soapFault||erroExec||mensagens.length||tipoRetorno==='-1')throw new Error(soapFault||erroExec||mensagens.join(' | ')||'Consulta de representantes rejeitada pelo Senior G5.');
+  const vistos=new Set();
+  const encontrados=xmlNosLocalG(doc,'representante').map(rep=>{
+    const codRep=xmlFilhoDiretoLocalG(rep,'codRep');
+    const historicos=xmlNosLocalG(rep,'historico');
+    const historicosEmpresa=historicos.filter(hist=>xmlFilhoDiretoLocalG(hist,'codEmp')===String(G_EMP));
+    let catRep='',codSup='0';
+    for(let i=historicosEmpresa.length-1;i>=0;i--){
+      const cat=xmlFilhoDiretoLocalG(historicosEmpresa[i],'catRep');
+      const sup=xmlFilhoDiretoLocalG(historicosEmpresa[i],'repSup');
+      if(!catRep&&cat)catRep=cat;
+      if((!codSup||codSup==='0')&&sup)codSup=String(parseInt(sup,10)||0);
+      if(catRep&&codSup!=='0')break;
+    }
+    let codFuncionario='';
+    const campos=historicosEmpresa.flatMap(hist=>Array.from(hist.getElementsByTagName('*')).filter(no=>{
+      const n=(no.localName||no.nodeName).toLowerCase();
+      return n==='campousuariodefinicoes';
+    }));
+    for(const campo of campos){
+      if(xmlValorLocalG(campo,'campo').toUpperCase()==='USU_CODRE2'){
+        codFuncionario=xmlValorLocalG(campo,'valor');
+        if(codFuncionario!=='')break;
+      }
+    }
+    const sitRep=xmlFilhoDiretoLocalG(rep,'sitRep').toUpperCase();
+    return{
+      codRep,nomRep:xmlFilhoDiretoLocalG(rep,'nomRep'),apeRep:xmlFilhoDiretoLocalG(rep,'apeRep'),
+      docIdeRep:xmlFilhoDiretoLocalG(rep,'docIdeRep'),intNet:xmlFilhoDiretoLocalG(rep,'intNet'),
+      codEmp:historicosEmpresa.length?String(G_EMP):'',sitRep,catRep:catRep.toUpperCase(),codSup,codFuncionario,
+      sigUfs:xmlFilhoDiretoLocalG(rep,'sigUfs'),cidRep:xmlFilhoDiretoLocalG(rep,'cidRep'),
+      ativo:sitRep==='A'
+    };
+  });
+  const validos=encontrados.filter(rep=>rep.codRep&&rep.codEmp===String(G_EMP))
+    .filter(rep=>{if(vistos.has(rep.codRep))return false;vistos.add(rep.codRep);return true;});
+  const ignorados=encontrados.length-validos.length;
+  if(ignorados>0)console.warn(`🚫 ${ignorados} representante(s) ignorado(s) por não possuir histórico na empresa ${G_EMP}.`);
+  return{lista:validos,totalRecebido:encontrados.length,codigosRecebidos:encontrados.map(rep=>rep.codRep).filter(Boolean)};
+}
+async function consultarRepresentantesSeniorG(){
+  const mapa=new Map();
+  const assinaturas=new Set();
+  let paginasComDados=0,indiceInicial=1;
+  for(let pagina=1;pagina<=REP_SYNC_MAX_PAGINAS;pagina++){
+    const indiceFinal=indiceInicial+REP_SYNC_LIMITE_PAGINA-1;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),60000);
+    let lista,totalRecebido=0,codigosRecebidos=[];
+    try{
+      const resp=await apiV5G('/management/representatives/query',{
+        method:'POST',signal:ctrl.signal,body:{startIndex:indiceInicial,endIndex:indiceFinal}
+      });
+      const paginaSenior=parseRepresentantesPaginaG(await resp.text());
+      lista=paginaSenior.lista;totalRecebido=paginaSenior.totalRecebido;codigosRecebidos=paginaSenior.codigosRecebidos;
+    }catch(e){
+      if(e.name==='AbortError')throw new Error(`A página ${pagina} da consulta de representantes excedeu 60 segundos.`);
+      throw e;
+    }finally{clearTimeout(timer);}
+    console.log(`📄 Representantes Senior — página ${pagina}, intervalo ${indiceInicial}-${indiceFinal}: ${totalRecebido} recebido(s), ${lista.length} da empresa ${G_EMP}; ${mapa.size} acumulado(s) antes desta página.`);
+    if(!totalRecebido)return{lista:[...mapa.values()],paginas:paginasComDados};
+    const assinatura=codigosRecebidos.join('|');
+    if(assinaturas.has(assinatura))throw new Error(`O Senior repetiu a página ${pagina}; a sincronização foi interrompida para não gravar uma carga incompleta.`);
+    assinaturas.add(assinatura);paginasComDados++;
+    lista.forEach(rep=>mapa.set(rep.codRep,rep));
+    // Nesta API, indicePagina e limitePagina formam um intervalo inclusivo:
+    // 1-100, 101-200, 201-300...
+    indiceInicial+=totalRecebido;
+    // Não encerrar pelo tamanho da página: o Senior pode aplicar um limite
+    // menor que o solicitado. A conclusão segura é somente uma página vazia.
+  }
+  throw new Error(`A consulta atingiu o limite de segurança de ${REP_SYNC_MAX_PAGINAS} páginas.`);
+}
+async function gravarRepresentantesFirebaseG(lista){
+  const colecao=db.collection('representantesSenior');
+  const atuais=await colecao.get();
+  const recebidos=new Set(lista.map(rep=>rep.codRep));
+  const nomes=new Map(lista.map(rep=>[rep.codRep,rep.nomRep||rep.apeRep||'']));
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const usuario=usuarioSincronizacaoG();
+  const operacoes=lista.map(rep=>({tipo:'set',ref:colecao.doc(rep.codRep),dados:{
+    ...rep,nomeSup:rep.codSup&&rep.codSup!=='0'?(nomes.get(rep.codSup)||''):'Sem supervisor',
+    origem:'Senior G5',sincronizadoEm:ts,sincronizadoPor:usuario
+  }}));
+  let inativadas=0;
+  atuais.docs.forEach(doc=>{
+    if(!recebidos.has(doc.id)){
+      inativadas++;
+      operacoes.push({tipo:'set',ref:doc.ref,dados:{ativo:false,sitRep:'I',sincronizadoEm:ts,sincronizadoPor:usuario}});
+    }
+  });
+  await executarOperacoesEmLotesG(operacoes);
+  return{gravadas:lista.length,inativadas};
+}
+async function sincronizarRepresentantesSeNecessarioG(forcar=false){
+  const controle=db.collection('controleSincronizacao').doc('representantes');
+  const agora=Date.now();
+  const token=`${agora}-${Math.random().toString(36).slice(2)}`;
+  const decisao=await db.runTransaction(async transacao=>{
+    const snap=await transacao.get(controle);
+    const dados=snap.exists?snap.data():{};
+    const ultima=timestampMsG(dados.ultimaSincronizacao);
+    const bloqueadoAte=timestampMsG(dados.bloqueadoAte);
+    if(!forcar&&ultima&&agora-ultima<REP_SYNC_INTERVALO)return{executar:false,motivo:'atualizada'};
+    if(bloqueadoAte>agora)return{executar:false,motivo:'em_andamento'};
+    transacao.set(controle,{
+      status:'executando',token,bloqueadoAte:firebase.firestore.Timestamp.fromMillis(agora+REP_SYNC_BLOQUEIO),
+      iniciadoEm:firebase.firestore.FieldValue.serverTimestamp(),iniciadoPor:usuarioSincronizacaoG(),erro:''
+    },{merge:true});
+    return{executar:true};
+  });
+  if(!decisao.executar){
+    console.log(decisao.motivo==='atualizada'?'ℹ️ Representantes já sincronizados nas últimas 24 horas.':'ℹ️ Sincronização de representantes já está sendo executada por outro usuário.');
+    return decisao;
+  }
+  try{
+    console.log('🔄 Sincronizando todos os representantes: Senior G5 → Firebase...');
+    const consulta=await consultarRepresentantesSeniorG();
+    if(!consulta.lista.length)throw new Error('O Senior G5 não retornou representantes; a base atual foi preservada.');
+    const resultado=await gravarRepresentantesFirebaseG(consulta.lista);
+    await controle.set({
+      status:'sucesso',ultimaSincronizacao:firebase.firestore.FieldValue.serverTimestamp(),
+      finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,
+      quantidadeRecebida:consulta.lista.length,quantidadeGravada:resultado.gravadas,
+      quantidadeInativada:resultado.inativadas,paginasConsultadas:consulta.paginas,erro:''
+    },{merge:true});
+    console.log(`✅ Representantes sincronizados: ${resultado.gravadas} recebido(s), ${resultado.inativadas} inativado(s), ${consulta.paginas} página(s).`);
+    return{executar:true,sucesso:true,paginas:consulta.paginas,...resultado};
+  }catch(e){
+    console.error('❌ Falha na sincronização de representantes:',e);
+    try{await controle.set({status:'erro',finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,erro:String(e.message||e).slice(0,500)},{merge:true});}catch(_){ }
+    return{executar:true,sucesso:false,erro:e.message||String(e)};
+  }
+}
+
+// ════ SINCRONIZAÇÃO GLOBAL — NOTAS FISCAIS INDIVIDUAIS ════
+function dataSoapSaoPauloG(valor){
+  const partes=new Intl.DateTimeFormat('pt-BR',{
+    timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit',year:'numeric'
+  }).formatToParts(valor instanceof Date?valor:new Date(valor));
+  const obter=tipo=>partes.find(p=>p.type===tipo)?.value||'';
+  return`${obter('day')}/${obter('month')}/${obter('year')}`;
+}
+function parseDataNotaFiscalG(valor){
+  const texto=String(valor||'').trim();
+  let m=texto.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  let ano,mes,dia;
+  if(m){ano=Number(m[1]);mes=Number(m[2]);dia=Number(m[3]);}
+  else{
+    m=texto.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
+    if(!m)return null;
+    dia=Number(m[1]);mes=Number(m[2]);ano=Number(m[3]);
+  }
+  const teste=new Date(Date.UTC(ano,mes-1,dia));
+  if(teste.getUTCFullYear()!==ano||teste.getUTCMonth()!==mes-1||teste.getUTCDate()!==dia)return null;
+  return{ano,mes,dia,chave:`${String(ano).padStart(4,'0')}-${String(mes).padStart(2,'0')}-${String(dia).padStart(2,'0')}`};
+}
+function parseHoraNotaFiscalG(valor){
+  const original=String(valor??'').trim();
+  if(!original)return null;
+  const comSeparador=original.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if(comSeparador){
+    const hora=Number(comSeparador[1]),minuto=Number(comSeparador[2]),segundo=Number(comSeparador[3]||0);
+    if(hora<24&&minuto<60&&segundo<60)return{hora,minuto,segundo,original};
+    return null;
+  }
+  if(!/^\d+$/.test(original))return null;
+  const numero=Number(original);
+  if(numero===0)return null;
+  // O Senior normalmente devolve HHMM sem os zeros à esquerda.
+  const horaHhmm=Math.floor(numero/100),minutoHhmm=numero%100;
+  if(numero<=2359&&horaHhmm<24&&minutoHhmm<60)return{hora:horaHhmm,minuto:minutoHhmm,segundo:0,original};
+  // Compatibilidade com instalações que devolvem segundos desde 00:00.
+  if(numero<=86399){
+    const hora=Math.floor(numero/3600),resto=numero%3600;
+    return{hora,minuto:Math.floor(resto/60),segundo:resto%60,original};
+  }
+  return null;
+}
+function instanteNotaFiscalG(data,hora){
+  if(!data||!hora)return null;
+  const hh=String(hora.hora).padStart(2,'0'),mm=String(hora.minuto).padStart(2,'0'),ss=String(hora.segundo).padStart(2,'0');
+  const ms=Date.parse(`${data.chave}T${hh}:${mm}:${ss}-03:00`);
+  return Number.isFinite(ms)?ms:null;
+}
+function inicioDataNotaFiscalG(data){
+  if(!data)return null;
+  const ms=Date.parse(`${data.chave}T00:00:00-03:00`);
+  return Number.isFinite(ms)?ms:null;
+}
+function numeroSeniorG(valor){
+  let texto=String(valor??'').trim();
+  if(!texto)return 0;
+  if(texto.includes(','))texto=texto.replace(/\./g,'').replace(',','.');
+  const numero=Number(texto);
+  return Number.isFinite(numero)?numero:0;
+}
+function idNotaFiscalG(nota){
+  const serie=encodeURIComponent(String(nota.codSnf||'SEM_SERIE'));
+  return`${nota.codEmp}_${nota.codFil}_${serie}_${nota.numNfv}`;
+}
+function parseNotasFiscaisPaginaG(xmlText){
+  const doc=new DOMParser().parseFromString(xmlText,'text/xml');
+  if(doc.querySelector('parsererror'))throw new Error('Resposta XML inválida ao consultar notas fiscais.');
+  const soapFault=xmlValorLocalG(doc,'faultstring');
+  const erroExec=xmlValorLocalG(doc,'erroExecucao');
+  const tipoRetorno=xmlValorLocalG(doc,'tipoRetorno');
+  const mensagemRetorno=xmlValorLocalG(doc,'mensagemRetorno');
+  const mensagens=xmlNosLocalG(doc,'mensagemErro').map(n=>(n.textContent||'').trim()).filter(Boolean);
+  const fimDaLista=mensagens.length>0&&mensagens.every(m=>{
+    const texto=String(m||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return texto.includes('registro')&&texto.includes('encontrado');
+  });
+  if(!soapFault&&!erroExec&&fimDaLista)return{lista:[],totalRecebido:0,chavesRecebidas:[],mensagemRetorno,totalBlocos:0,resumoSituacoes:'-',resumoTipos:'-'};
+  if(soapFault||erroExec||mensagens.length||tipoRetorno==='-1')throw new Error(soapFault||erroExec||mensagens.join(' | ')||'Consulta de notas fiscais rejeitada pelo Senior G5.');
+  const blocos=xmlNosLocalG(doc,'notaFiscal');
+  const encontrados=blocos.map(nota=>{
+    const codEmp=String(parseInt(xmlFilhoDiretoLocalG(nota,'codEmp'),10)||0);
+    const codFil=String(parseInt(xmlFilhoDiretoLocalG(nota,'codFil'),10)||0);
+    const codCli=String(parseInt(xmlFilhoDiretoLocalG(nota,'codCli'),10)||0);
+    const numNfv=String(parseInt(xmlFilhoDiretoLocalG(nota,'numNfv'),10)||0);
+    const codSnf=xmlFilhoDiretoLocalG(nota,'codSnf');
+    const sitNfv=String(parseInt(xmlFilhoDiretoLocalG(nota,'sitNfv'),10)||0);
+    const tipNfs=String(parseInt(xmlFilhoDiretoLocalG(nota,'tipNfs'),10)||0);
+    const codRep=String(parseInt(xmlFilhoDiretoLocalG(nota,'codRep'),10)||0);
+    const vlrLiq=numeroSeniorG(xmlFilhoDiretoLocalG(nota,'vlrLiq'));
+    const datEmiOriginal=xmlFilhoDiretoLocalG(nota,'datEmi');
+    const horEmiOriginal=xmlFilhoDiretoLocalG(nota,'horEmi');
+    const datGerOriginal=xmlFilhoDiretoLocalG(nota,'datGer');
+    const horGerOriginal=xmlFilhoDiretoLocalG(nota,'horGer');
+    const chvDoe=xmlFilhoDiretoLocalG(nota,'chvDoe');
+    const codMot=xmlFilhoDiretoLocalG(nota,'codMot');
+    const obsMot=xmlFilhoDiretoLocalG(nota,'obsMot');
+    const data=parseDataNotaFiscalG(datEmiOriginal);
+    const hora=parseHoraNotaFiscalG(horEmiOriginal);
+    const dataHoraMs=instanteNotaFiscalG(data,hora);
+    const dataGer=parseDataNotaFiscalG(datGerOriginal);
+    const horaGer=parseHoraNotaFiscalG(horGerOriginal);
+    const dataHoraGeracaoMs=instanteNotaFiscalG(dataGer,horaGer);
+    const registro={
+      codEmp,codFil,codCli,numNfv,codSnf,sitNfv,tipNfs,codRep,vlrLiq,chvDoe,codMot,obsMot,
+      datEmiOriginal,horEmiOriginal,datGerOriginal,horGerOriginal,
+      dataEmissao:data?.chave||'',temHorario:Number.isFinite(dataHoraMs),
+      dataHoraMs:Number.isFinite(dataHoraMs)?dataHoraMs:inicioDataNotaFiscalG(data),
+      dataGeracao:dataGer?.chave||'',temHorarioGeracao:Number.isFinite(dataHoraGeracaoMs),
+      dataHoraGeracaoMs:Number.isFinite(dataHoraGeracaoMs)?dataHoraGeracaoMs:inicioDataNotaFiscalG(dataGer),
+      segundosEmissao:hora?(hora.hora*3600+hora.minuto*60+hora.segundo):-1,
+      cancelada:sitNfv==='3',chaveNota:`${codEmp}_${codFil}_${codSnf}_${numNfv}`
+    };
+    registro.idNota=idNotaFiscalG(registro);
+    return registro;
+  });
+  const validos=encontrados.filter(n=>
+    n.codEmp===String(Number(G_EMP))&&n.codFil===String(Number(G_FIL))&&n.codCli!=='0'&&
+    ['2','3'].includes(n.sitNfv)&&n.tipNfs==='1'&&n.dataEmissao&&n.numNfv!=='0'
+  );
+  const ignorados=encontrados.length-validos.length;
+  if(ignorados)console.warn(`🚫 ${ignorados} nota(s) ignorada(s) por empresa, filial, situação, tipo, cliente ou data inválida.`);
+  const resumir=campo=>{
+    const contagem={};
+    encontrados.forEach(n=>{const valor=n[campo]||'(vazio)';contagem[valor]=(contagem[valor]||0)+1;});
+    return Object.entries(contagem).sort((a,b)=>a[0].localeCompare(b[0],'pt-BR',{numeric:true})).map(([valor,qtd])=>`${valor}:${qtd}`).join(', ')||'-';
+  };
+  return{
+    lista:validos,totalRecebido:encontrados.length,chavesRecebidas:encontrados.map(n=>n.chaveNota),
+    mensagemRetorno,totalBlocos:blocos.length,resumoSituacoes:resumir('sitNfv'),resumoTipos:resumir('tipNfs')
+  };
+}
+async function consultarNotasFiscaisSeniorG(datGerIni,datGerFim){
+  const notasPorChave=new Map();
+  const assinaturas=new Set();
+  let paginasComDados=0,indiceInicial=1,totalNotasValidas=0;
+  for(let pagina=1;pagina<=NFV_SYNC_MAX_PAGINAS;pagina++){
+    const indiceFinal=indiceInicial+NFV_SYNC_LIMITE_PAGINA-1;
+    const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),120000);
+    let resultado;
+    try{
+      const resp=await apiV5G('/management/invoices/page',{
+        method:'POST',signal:ctrl.signal,
+        body:{generatedFrom:datGerIni,generatedTo:datGerFim,startIndex:indiceInicial,endIndex:indiceFinal}
+      });
+      const xmlResposta=await resp.text();
+      resultado=parseNotasFiscaisPaginaG(xmlResposta);
+      if(pagina===1)console.log(`🧪 Diagnóstico NF — mensagemRetorno: ${resultado.mensagemRetorno||'(vazia)'} | blocos notaFiscal: ${resultado.totalBlocos||0} | resposta: ${xmlResposta.length} caractere(s).`);
+      if(resultado.totalRecebido)console.log(`🧪 Diagnóstico NF — situações [${resultado.resumoSituacoes}] | tipos [${resultado.resumoTipos}] | válidas nesta página: ${resultado.lista.length}.`);
+      if(pagina===1&&!resultado.totalRecebido){
+        const trecho=xmlResposta.replace(/\s+/g,' ').trim().slice(0,1200);
+        console.warn(`⚠️ Senior não retornou notas fiscais. Início da resposta: ${trecho}`);
+      }
+    }catch(e){
+      if(e.name==='AbortError')throw new Error(`A página ${pagina} da consulta de notas fiscais excedeu 120 segundos.`);
+      throw e;
+    }finally{clearTimeout(timer);}
+    console.log(`📄 Notas fiscais Senior — página ${pagina}, intervalo ${indiceInicial}-${indiceFinal}: ${resultado.totalRecebido} recebida(s), ${resultado.lista.length} válida(s); ${notasPorChave.size} NF(s) acumulada(s).`);
+    if(!resultado.totalRecebido)return{lista:[...notasPorChave.values()],paginas:paginasComDados,totalNotasValidas};
+    const assinatura=resultado.chavesRecebidas.join('|');
+    if(assinaturas.has(assinatura))throw new Error(`O Senior repetiu a página ${pagina} de notas fiscais; a carga foi interrompida para preservar o Firebase.`);
+    assinaturas.add(assinatura);paginasComDados++;totalNotasValidas+=resultado.lista.length;
+    resultado.lista.forEach(nota=>notasPorChave.set(nota.idNota,nota));
+    // Nesta porta, indicePagina e limitePagina representam o intervalo inclusivo de registros.
+    indiceInicial=indiceFinal+1;
+  }
+  throw new Error(`A consulta de notas fiscais atingiu o limite de segurança de ${NFV_SYNC_MAX_PAGINAS} páginas.`);
+}
+function periodoSincronizacaoNotasFiscaisG(ultimaSincronizacaoMs){
+  const referencia=ultimaSincronizacaoMs||NFV_SYNC_REFERENCIA_INICIAL;
+  const inicio=referencia-(NFV_SYNC_SOBREPOSICAO_DIAS*24*60*60*1000);
+  return{
+    datGerIni:dataSoapSaoPauloG(inicio),datGerFim:dataSoapSaoPauloG(Date.now()),
+    referenciaMs:referencia,usouReferenciaInicial:!ultimaSincronizacaoMs
+  };
+}
+async function gravarNotasFiscaisFirebaseG(lista,cargaToken){
+  const colecao=db.collection('faturamentosClientes');
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const usuario=usuarioSincronizacaoG();
+  const clientes=new Map();
+  const operacoes=[];
+  lista.forEach(nota=>{
+    const chaveCliente=`${nota.codEmp}_${nota.codCli}`;
+    if(!clientes.has(chaveCliente)){
+      clientes.set(chaveCliente,true);
+      operacoes.push({tipo:'set',ref:colecao.doc(chaveCliente),dados:{
+        codEmp:nota.codEmp,codCli:nota.codCli,origem:'Senior G5',
+        ultimaSincronizacaoEm:ts,ultimaSincronizacaoPor:usuario
+      }});
+    }
+    const dados={
+      codEmp:nota.codEmp,codFil:nota.codFil,codCli:nota.codCli,codSnf:nota.codSnf,numNfv:nota.numNfv,
+      idNota:nota.idNota,chaveNota:nota.chaveNota,sitNfv:nota.sitNfv,tipNfs:nota.tipNfs,
+      codRep:nota.codRep,vlrLiq:nota.vlrLiq,chvDoe:nota.chvDoe||'',codMot:nota.codMot||'',obsMot:nota.obsMot||'',
+      dataEmissao:nota.dataEmissao,datEmiOriginal:nota.datEmiOriginal,horEmiOriginal:nota.horEmiOriginal,
+      temHorario:nota.temHorario,dataHoraEmissaoMs:nota.dataHoraMs,
+      dataHoraEmissao:Number.isFinite(nota.dataHoraMs)?firebase.firestore.Timestamp.fromMillis(nota.dataHoraMs):null,
+      dataGeracao:nota.dataGeracao,datGerOriginal:nota.datGerOriginal,horGerOriginal:nota.horGerOriginal,
+      temHorarioGeracao:nota.temHorarioGeracao,dataHoraGeracaoMs:nota.dataHoraGeracaoMs,
+      dataHoraGeracao:Number.isFinite(nota.dataHoraGeracaoMs)?firebase.firestore.Timestamp.fromMillis(nota.dataHoraGeracaoMs):null,
+      cancelada:nota.cancelada,validaParaOrcamento:!nota.cancelada,
+      statusDescricao:nota.cancelada?'Cancelada':'Fechada',
+      cancelamentoDetectadoEm:nota.cancelada?ts:null,
+      cargaToken,origem:'Senior G5',sincronizadoEm:ts,sincronizadoPor:usuario
+    };
+    operacoes.push({tipo:'set',ref:colecao.doc(chaveCliente).collection('notas').doc(nota.idNota),dados});
+  });
+  await executarOperacoesEmLotesG(operacoes);
+  return{
+    gravadas:lista.length,clientes:clientes.size,
+    fechadas:lista.filter(n=>n.sitNfv==='2').length,
+    canceladas:lista.filter(n=>n.sitNfv==='3').length
+  };
+}
+function codigoNumericoG(valor){
+  const numero=parseInt(String(valor??'').replace(/\D/g,''),10);
+  return Number.isFinite(numero)&&numero>0?String(numero):'';
+}
+function timestampOrcamentoG(orcamento){
+  const direto=orcamento._tsMs||timestampMsG(orcamento.ts);
+  if(direto)return direto;
+  const texto=String(orcamento.dataHora||'').trim();
+  const m=texto.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if(!m)return 0;
+  const ms=Date.parse(`${m[3]}-${m[2]}-${m[1]}T${String(m[4]||0).padStart(2,'0')}:${m[5]||'00'}:${m[6]||'00'}-03:00`);
+  return Number.isFinite(ms)?ms:0;
+}
+function chaveDataSaoPauloG(ms){
+  if(!ms)return'';
+  const partes=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(ms));
+  const obter=tipo=>partes.find(p=>p.type===tipo)?.value||'';
+  return`${obter('year')}-${obter('month')}-${obter('day')}`;
+}
+function notaPosteriorAoOrcamentoG(nota,orcamento){
+  const orcMs=timestampOrcamentoG(orcamento);
+  if(!orcMs)return false;
+  const notaMs=Number(nota.dataHoraEmissaoMs)||timestampMsG(nota.dataHoraEmissao);
+  if(nota.temHorario&&notaMs)return notaMs>=orcMs;
+  return String(nota.dataEmissao||'')>=chaveDataSaoPauloG(orcMs);
+}
+async function carregarNotasFiscaisClientesG(chavesClientes){
+  const resultado=new Map();
+  const chaves=[...new Set(chavesClientes)].filter(Boolean);
+  for(let inicio=0;inicio<chaves.length;inicio+=10){
+    const bloco=chaves.slice(inicio,inicio+10);
+    const retornos=await Promise.all(bloco.map(async chave=>{
+      const snap=await db.collection('faturamentosClientes').doc(chave).collection('notas').get();
+      return[chave,snap.docs.map(doc=>({idNota:doc.id,_ref:doc.ref,...doc.data()}))];
+    }));
+    retornos.forEach(([chave,notas])=>resultado.set(chave,notas));
+  }
+  return resultado;
+}
+async function recalcularVinculosFaturamentoOrcamentosG(fonteOrcamentos=null){
+  let orcamentos=fonteOrcamentos;
+  if(!Array.isArray(orcamentos)){
+    const snap=await db.collection('orcamentos').get();
+    orcamentos=snap.docs.map(doc=>({id:doc.id,...doc.data()}));
+  }
+  const abertos=orcamentos.filter(o=>(o.status||'Aberto')==='Aberto');
+  const chavesClientes=[...new Set(abertos.map(o=>{
+    const codCli=codigoNumericoG(o.codCli);
+    return codCli?`${String(Number(G_EMP))}_${codCli}`:'';
+  }).filter(Boolean))];
+  const notasPorCliente=await carregarNotasFiscaisClientesG(chavesClientes);
+  const grupos=new Map();
+  abertos.forEach(o=>{
+    const codCli=codigoNumericoG(o.codCli),codRep=codigoNumericoG(o.codRep);
+    const chave=codCli&&codRep?`${String(Number(G_EMP))}_${codCli}_${codRep}`:'';
+    if(!chave)return;
+    if(!grupos.has(chave))grupos.set(chave,{orcamentos:[],notas:[]});
+    grupos.get(chave).orcamentos.push(o);
+  });
+  notasPorCliente.forEach(notas=>notas.forEach(nota=>{
+    const codCli=codigoNumericoG(nota.codCli),codRep=codigoNumericoG(nota.codRep);
+    const chave=codCli&&codRep?`${String(Number(G_EMP))}_${codCli}_${codRep}`:'';
+    if(!chave)return;
+    if(!grupos.has(chave))grupos.set(chave,{orcamentos:[],notas:[]});
+    grupos.get(chave).notas.push(nota);
+  }));
+  const vinculos=new Map(),notasUsadas=new Map();
+  grupos.forEach(grupo=>{
+    grupo.orcamentos.sort((a,b)=>timestampOrcamentoG(a)-timestampOrcamentoG(b)||String(a.numPedido||a.id).localeCompare(String(b.numPedido||b.id),'pt-BR',{numeric:true}));
+    grupo.notas=grupo.notas.filter(n=>n.sitNfv==='2'&&!n.cancelada)
+      .sort((a,b)=>(Number(a.dataHoraEmissaoMs)||0)-(Number(b.dataHoraEmissaoMs)||0)||Number(a.numNfv)-Number(b.numNfv));
+    const usadas=new Set();
+    grupo.orcamentos.forEach(orc=>{
+      const nota=grupo.notas.find(n=>!usadas.has(n.idNota)&&notaPosteriorAoOrcamentoG(n,orc));
+      if(nota){usadas.add(nota.idNota);vinculos.set(orc.id,nota);notasUsadas.set(nota.idNota,{nota,orc});}
+    });
+  });
+  const ts=firebase.firestore.FieldValue.serverTimestamp();
+  const operacoes=[];
+  abertos.forEach(orc=>{
+    const nota=vinculos.get(orc.id);
+    const dados=nota?{
+      faturamentoVinculado:true,nfVinculadaId:nota.idNota,nfVinculadaNumero:nota.numNfv,
+      nfVinculadaSerie:nota.codSnf,nfVinculadaData:nota.dataEmissao,
+      nfVinculadaDataHora:nota.dataHoraEmissao||null,nfVinculadaVlrLiq:Number(nota.vlrLiq)||0,
+      nfVinculadaCodRep:nota.codRep,faturamentoVerificadoEm:ts
+    }:{
+      faturamentoVinculado:false,nfVinculadaId:null,nfVinculadaNumero:null,nfVinculadaSerie:null,
+      nfVinculadaData:null,nfVinculadaDataHora:null,nfVinculadaVlrLiq:null,
+      nfVinculadaCodRep:null,faturamentoVerificadoEm:ts
+    };
+    operacoes.push({tipo:'set',ref:db.collection('orcamentos').doc(orc.id),dados});
+  });
+  notasPorCliente.forEach(notas=>notas.forEach(nota=>{
+    const uso=notasUsadas.get(nota.idNota);
+    operacoes.push({tipo:'set',ref:nota._ref,dados:uso?{
+      orcamentoVinculadoId:uso.orc.id,orcamentoVinculadoNumero:uso.orc.numPedido||'',vinculoVerificadoEm:ts
+    }:{orcamentoVinculadoId:null,orcamentoVinculadoNumero:null,vinculoVerificadoEm:ts}});
+  }));
+  await executarOperacoesEmLotesG(operacoes);
+  console.log(`🔗 Relacionamento NF–orçamento: ${vinculos.size} vínculo(s), ${abertos.length-vinculos.size} orçamento(s) aberto(s) sem NF compatível.`);
+  return{vinculados:vinculos.size,semVinculo:abertos.length-vinculos.size,orcamentosAbertos:abertos.length};
+}
+async function sincronizarFaturamentosSeNecessarioG(forcar=false,assumirBloqueio=false){
+  if(sincronizacaoFaturamentosEmAndamentoG){
+    console.log('ℹ️ A sincronização de faturamentos já está em execução nesta tela; aguardando a conclusão da mesma carga.');
+    return sincronizacaoFaturamentosEmAndamentoG;
+  }
+  const tarefa=executarSincronizacaoFaturamentosG(forcar,assumirBloqueio);
+  sincronizacaoFaturamentosEmAndamentoG=tarefa;
+  try{return await tarefa;}
+  finally{
+    if(sincronizacaoFaturamentosEmAndamentoG===tarefa)sincronizacaoFaturamentosEmAndamentoG=null;
+  }
+}
+async function executarSincronizacaoFaturamentosG(forcar=false,assumirBloqueio=false){
+  const controle=db.collection('controleSincronizacao').doc(NFV_SYNC_CONTROLE_DOC);
+  const agora=Date.now();
+  const token=`nfv-${agora}-${Math.random().toString(36).slice(2)}`;
+  const decisao=await db.runTransaction(async transacao=>{
+    const snap=await transacao.get(controle);
+    const dados=snap.exists?snap.data():{};
+    const ultima=timestampMsG(dados.ultimaSincronizacao);
+    const bloqueadoAte=timestampMsG(dados.bloqueadoAte);
+    if(!forcar&&ultima&&agora-ultima<NFV_SYNC_INTERVALO)return{executar:false,motivo:'atualizada'};
+    if(bloqueadoAte>agora&&!assumirBloqueio)return{
+      executar:false,motivo:'em_andamento',bloqueadoAte,
+      iniciadoEm:dados.iniciadoEm||null,iniciadoPor:dados.iniciadoPor||''
+    };
+    transacao.set(controle,{
+      status:'executando',token,bloqueadoAte:firebase.firestore.Timestamp.fromMillis(agora+NFV_SYNC_BLOQUEIO),
+      iniciadoEm:firebase.firestore.FieldValue.serverTimestamp(),iniciadoPor:usuarioSincronizacaoG(),erro:''
+    },{merge:true});
+    return{executar:true,bloqueioSubstituido:bloqueadoAte>agora&&assumirBloqueio,ultimaSincronizacaoMs:ultima};
+  });
+  if(!decisao.executar){
+    console.log(decisao.motivo==='atualizada'?'ℹ️ Faturamentos já sincronizados nas últimas 24 horas.':'ℹ️ Sincronização de faturamentos já está sendo executada por outro usuário.');
+    return decisao;
+  }
+  if(decisao.bloqueioSubstituido)console.warn('⚠️ O bloqueio anterior de faturamentos foi liberado manualmente e uma nova carga foi iniciada.');
+  try{
+    const periodo=periodoSincronizacaoNotasFiscaisG(decisao.ultimaSincronizacaoMs);
+    console.log(`🔄 Sincronizando notas fiscais pela data de geração, de ${periodo.datGerIni} a ${periodo.datGerFim}: Senior G5 → Firebase...`);
+    const consulta=await consultarNotasFiscaisSeniorG(periodo.datGerIni,periodo.datGerFim);
+    const resultado=await gravarNotasFiscaisFirebaseG(consulta.lista,token);
+    const vinculacao=await recalcularVinculosFaturamentoOrcamentosG();
+    await controle.set({
+      status:'sucesso',ultimaSincronizacao:firebase.firestore.FieldValue.serverTimestamp(),
+      finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,
+      ultimaCargaToken:token,datGerIni:periodo.datGerIni,datGerFim:periodo.datGerFim,
+      diasSobreposicao:NFV_SYNC_SOBREPOSICAO_DIAS,usouReferenciaInicial:periodo.usouReferenciaInicial,
+      quantidadeNotasValidas:consulta.totalNotasValidas,quantidadeFechadas:resultado.fechadas,
+      quantidadeCanceladas:resultado.canceladas,quantidadeClientes:resultado.clientes,
+      quantidadeGravada:resultado.gravadas,paginasConsultadas:consulta.paginas,
+      orcamentosVinculados:vinculacao.vinculados,orcamentosSemVinculo:vinculacao.semVinculo,erro:''
+    },{merge:true});
+    console.log(`✅ Notas fiscais sincronizadas: ${resultado.gravadas} NF(s) individual(is), ${resultado.fechadas} fechada(s), ${resultado.canceladas} cancelada(s), ${resultado.clientes} cliente(s), ${consulta.paginas} página(s).`);
+    return{executar:true,sucesso:true,paginas:consulta.paginas,totalNotasValidas:consulta.totalNotasValidas,...resultado,...vinculacao};
+  }catch(e){
+    console.error('❌ Falha na sincronização de faturamentos:',e);
+    try{await controle.set({status:'erro',finalizadoEm:firebase.firestore.FieldValue.serverTimestamp(),bloqueadoAte:null,token:null,erro:String(e.message||e).slice(0,500)},{merge:true});}catch(_){ }
+    return{executar:true,sucesso:false,erro:e.message||String(e)};
+  }
+}
+async function forcarSincronizacaoCadastrosG(){
+  const btn=document.querySelector('[onclick="forcarSincronizacaoCadastrosG()"]');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Atualizando Firebase...';}
+  try{
+    if(!db)throw new Error('Firebase ainda não foi inicializado.');
+    const condicoes=await sincronizarCondicoesPagamentoSeNecessarioG(true);
+    const representantes=await sincronizarRepresentantesSeNecessarioG(true);
+    let faturamentos=await sincronizarFaturamentosSeNecessarioG(true);
+    if(faturamentos.motivo==='em_andamento'){
+      const inicioMs=timestampMsG(faturamentos.iniciadoEm);
+      const inicioTexto=inicioMs?new Date(inicioMs).toLocaleString('pt-BR'):'horário não informado';
+      const usuarioTexto=faturamentos.iniciadoPor||'usuário não informado';
+      const liberar=confirm(`Existe uma sincronização de faturamentos registrada como ativa.\n\nIniciada em: ${inicioTexto}\nUsuário: ${usuarioTexto}\n\nSe as outras abas foram fechadas ou a execução travou, clique em OK para liberar o bloqueio e reiniciar. Caso ela ainda esteja funcionando, clique em Cancelar.`);
+      if(liberar)faturamentos=await sincronizarFaturamentosSeNecessarioG(true,true);
+    }
+    const erros=[];
+    if(condicoes.sucesso===false)erros.push(`Condições de pagamento: ${condicoes.erro}`);
+    if(representantes.sucesso===false)erros.push(`Representantes: ${representantes.erro}`);
+    if(faturamentos.sucesso===false)erros.push(`Faturamentos: ${faturamentos.erro}`);
+    if(erros.length)throw new Error(erros.join('\n'));
+    const msgCond=condicoes.sucesso?`Condições: ${condicoes.gravadas} gravada(s), ${condicoes.inativadas} inativada(s).`:
+      'Condições: sincronização já estava em andamento.';
+    const msgRep=representantes.sucesso?`Representantes: ${representantes.gravadas} gravado(s), ${representantes.inativadas} inativado(s), ${representantes.paginas} página(s).`:
+      'Representantes: sincronização já estava em andamento.';
+    const msgNfv=faturamentos.sucesso?
+      `Notas fiscais: ${faturamentos.gravadas} individual(is), ${faturamentos.fechadas} fechada(s), ${faturamentos.canceladas} cancelada(s), ${faturamentos.clientes} cliente(s), ${faturamentos.vinculados} vínculo(s), ${faturamentos.paginas} página(s).`:
+      'Faturamentos: sincronização já estava em andamento.';
+    alert(`Firebase atualizado.\n\n${msgCond}\n${msgRep}\n${msgNfv}`);
+  }catch(e){alert('Erro ao atualizar o Firebase: '+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent='☁ Atualiza Firebase';}}
+}
+
+// ── AUTH ──
+// entrar() substituída por doLoginGestao()
+// sair() substituída por sairGestao()
+// Verificar sessão salva ao carregar
+(async()=>{
+  // Carregar logo na tela de login (mesma imagem já embutida no header)
+  const loginLogo=document.getElementById('g-logo-login');
+  const hdrLogo=document.querySelector('[style*="rgba(255,255,255"] img');
+  if(loginLogo&&hdrLogo)loginLogo.src=hdrLogo.src;
+  const sess=getGSession();
+  if(sess){
+    try{
+      const firebaseUser=await aguardarGAuth(getGAuth());
+      if(!firebaseUser)throw new Error('Sessão expirada');
+      _gAuthUser=usuarioDoPerfilV5G(await obterPerfilApiV5G());
+      if(!_gAuthUser.isAdmin&&!['SUP','GER'].includes(_gAuthUser.catRep))throw new Error('Sem acesso');
+      saveGSession(_gAuthUser);entrarNoApp(_gAuthUser);
+    }catch(_){clearGSession();}
+  }
+})();
+
+// ── FIREBASE ──
+async function atualizarDados(){
+  const btn=document.querySelector('[onclick="atualizarDados()"]');
+  if(btn){btn.textContent='⏳ Atualizando...';btn.disabled=true;}
+  try{
+    // Resetar erros de lookup para permitir nova tentativa ao atualizar manualmente
+    todosOrc.forEach(o=>{if(o.repLookupStatus==='error')delete o.repLookupStatus;});
+    await carregarOrcamentos();
+    await recalcularVinculosFaturamentoOrcamentosG(todosOrc);
+    await carregarOrcamentos();
+  }catch(e){
+    console.error('Erro ao atualizar orçamentos e vínculos de faturamento:',e);
+    alert('Erro ao atualizar os orçamentos: '+(e.message||e));
+  }finally{
+    if(btn){btn.textContent='🔄 Atualizar Orçamentos';btn.disabled=false;}
+  }
+}
+async function iniciarApp(){
+  try{
+    const app=firebase.apps.find(a=>a.name==='gestao')||firebase.initializeApp(FB_CONFIG,'gestao');
+    db=firebase.firestore(app);
+    // Verificação global em segundo plano: qualquer usuário pode disparar,
+    // mas o Firebase autoriza apenas uma execução a cada 24 horas.
+    sincronizarCondicoesPagamentoSeNecessarioG().catch(e=>console.error('Erro ao iniciar sincronização das condições de pagamento:',e));
+    sincronizarRepresentantesSeNecessarioG().catch(e=>console.error('Erro ao iniciar sincronização dos representantes:',e));
+    await carregarOrcamentos();
+    // A sincronização usa um controle global e cinco dias de sobreposição.
+    // Após gravar as NFs, ela também recalcula os vínculos 1 para 1.
+    sincronizarFaturamentosSeNecessarioG().catch(e=>console.error('Erro ao iniciar sincronização dos faturamentos:',e));
+  }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ Erro ao conectar: ${e.message}</div>`;}
+}
+async function carregarOrcamentos(){
+  document.getElementById('lista').innerHTML='<div class="loading">⏳ Carregando orçamentos...</div>';
+  try{
+    const snap=await db.collection('orcamentos').orderBy('ts','desc').get();
+    todosOrc=snap.docs.map(d=>({id:d.id,...d.data(),
+      _tsMs:d.data().ts?.toMillis()||0,
+      _data:d.data().ts?.toDate()||new Date(0)
+    }));
+    aplicarFiltros();
+    popularFiltroSupervisor();
+    lookupRepresentantes(); // background: busca rep para orçamentos sem representante
+  }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ ${e.message}<br><small>Verifique as regras do Firestore.</small></div>`;}
+}
+
+// ── FILTROS ──
+function abrirFiltrosGestao(){
+  sincronizarOpcoesSupervisorModal();
+  document.getElementById('filters-overlay').classList.add('on');
+}
+function fecharFiltrosGestao(){document.getElementById('filters-overlay').classList.remove('on');}
+function aplicarFiltrosDaJanela(){
+  sincronizarSupervisorFiltros('modal');
+  fecharFiltrosGestao();
+  aplicarFiltros();
+}
+function aplicarFiltros(){
+  const de=document.getElementById('f-de').value;
+  const ate=document.getElementById('f-ate').value;
+  const rep=document.getElementById('f-rep').value.toLowerCase();
+  const cli=document.getElementById('f-cli').value.toLowerCase();
+  const num=document.getElementById('f-num').value.toLowerCase();
+  filtrados=todosOrc.filter(o=>{
+    if(de&&o._data<new Date(de))return false;
+    if(ate&&o._data>new Date(ate+'T23:59:59'))return false;
+    if(rep&&!(o.nomeRep||'').toLowerCase().includes(rep)&&!String(o.codRep).includes(rep))return false;
+    if(cli&&!(o.clienteNome||'').toLowerCase().includes(cli)&&!(o.clienteDoc||'').includes(cli))return false;
+    if(num&&!(o.numPedido||'').toLowerCase().includes(num))return false;
+    const st=document.getElementById('f-status').value;
+    if(st&&statusOrcamentoG(o)!==st)return false;
+    // Restrição de acesso SUP: filtra por codSup === codRep do usuário logado
+    if(_gAuthUser&&!_gAuthUser.isAdmin&&_gAuthUser.catRep==='SUP'){
+      if((o.codSup||'0')!==(_gAuthUser.codRep||''))return false;
+    } else {
+      const sup=document.getElementById('f-sup').value;
+      if(sup&&(o.nomeSup||'Sem supervisor')!==sup)return false;
+    }
+    // Anônimos: desmarcado=oculta anônimos | marcado=mostra SÓ anônimos
+    const showAnon=document.getElementById('f-anon').checked;
+    if(!showAnon&&!o.clienteDoc)return false;   // ocultar anônimos
+    if(showAnon&&o.clienteDoc)return false;     // mostrar apenas anônimos
+    return true;
+  });
+  renderStats();
+  renderLista();
+}
+function limparFiltros(){
+  ['f-de','f-ate','f-rep','f-cli','f-num','f-status'].forEach(id=>document.getElementById(id).value='');
+  // SUP: não resetar o filtro de supervisor (está travado)
+  if(!(_gAuthUser&&_gAuthUser.catRep==='SUP'&&!_gAuthUser.isAdmin)){
+    document.getElementById('f-sup').value='';
+  }
+  sincronizarSupervisorFiltros('superior');
+  document.getElementById('f-anon').checked=false;
+  aplicarFiltros();
+}
+
+// ── STATS ──
+function renderStats(){
+  const total=filtrados.reduce((s,o)=>s+(o.totalFinal||0),0);
+  const bonif=filtrados.reduce((s,o)=>s+(o.totalBonif||0),0);
+  const kits={};filtrados.forEach(o=>{kits[o.kitNome||'?']=(kits[o.kitNome||'?']||0)+1;});
+  const topKit=Object.entries(kits).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-val">${filtrados.length}</div><div class="stat-lbl">Orçamentos</div></div>
+    <div class="stat"><div class="stat-val">${fmt(total)}</div><div class="stat-lbl">Valor Total Final</div></div>
+    <div class="stat"><div class="stat-val">${fmt(bonif)}</div><div class="stat-lbl">Total Bonificado</div></div>
+    <div class="stat"><div class="stat-val">${topKit?topKit[0].split('·')[1]?.trim()||topKit[0]:'—'}</div><div class="stat-lbl">Kit mais orçado</div></div>`;
+}
+
+// ── LISTA ──
+function renderLista(){
+  const el=document.getElementById('lista');
+  if(!filtrados.length){el.innerHTML='<div class="empty">Nenhum orçamento encontrado.</div>';return;}
+  el.innerHTML=filtrados.map((o,i)=>`
+    <div class="card" onclick="abrirModal(${i})">
+      <div class="card-top">
+        <div>
+          <div class="card-cliente">${nomeCliente(o)}</div>
+          <div class="card-doc">${o.clienteDoc||''} · ${o.dataHora||''}</div>
+          ${o.numPedido?`<div style="font-size:11px;font-weight:700;color:var(--pr);margin-top:2px">${o.numPedido}</div>`:''}
+        </div>
+        <div>
+          <div class="card-valor">${fmt(o.totalFinal)}</div>
+          <div class="card-valor-sub">Bonif: ${fmt(o.totalBonif)}</div>
+        </div>
+      </div>
+      <div class="card-mid">
+        <span class="badge">${o.kitNome||''}</span>
+        ${o.tags?`<span class="badge mod">${o.tags}</span>`:''}
+        <span class="badge">${o.nProt||0} protocolos</span>
+        <span class="badge">${o.preco==='campanha'?'Campanha':'Normal'}</span>
+      </div>
+      <div style="display:inline-block;margin-bottom:6px">${statusBadgeG(statusOrcamentoG(o))}</div>
+      ${o.faturamentoVinculado?`<div style="font-size:11.5px;font-weight:750;color:#075985;background:#EAF7FF;border:1px solid #BAE6FD;border-radius:7px;padding:6px 9px;margin-bottom:7px">🧾 NF ${o.nfVinculadaSerie?o.nfVinculadaSerie+'/':''}${o.nfVinculadaNumero||'—'} · ${fmt(o.nfVinculadaVlrLiq)}</div>`:''}
+      <div class="card-bot">
+        <span class="card-rep">👤 ${o.nomeRep||'—'} (Cód: ${o.codRep||'—'})${o.nomeSup&&o.nomeSup!=='Sem supervisor'?' · 🎯 '+o.nomeSup+(o.codSup&&o.codSup!=='0'?' (Cód: '+o.codSup+')':''):''}</span>
+        <span class="card-data">${o.pagamento||''}</span>
+      </div>
+    </div>`).join('');
+}
+
+// ── MODAL ──
+function abrirModal(idx){
+  const o=filtrados[idx];
+  const prods=(o.prods||[]);
+  const avulsos=(o.prodsAvulso||[]);
+  const bonifAplic=(o.bonifAplic||[]);
+  const modal=document.getElementById('modal-content');
+  modal.innerHTML=`
+    <div class="modal-hdr">
+      <div class="modal-title">${o.clienteNome||'Orçamento'}</div>
+      <button class="modal-close" onclick="fecharModal()">✕ Fechar</button>
+    </div>
+    <div class="m-sec">
+      <div class="m-sec-title">Cliente</div>
+      <div class="m-row"><span class="m-rl">CNPJ/CPF</span><span class="m-rv">${o.clienteDoc||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Razão Social</span><span class="m-rv">${nomeCliente(o)}</span></div>
+      <div class="m-row"><span class="m-rl">Representante</span><span class="m-rv">${o.codRep?o.codRep+' - ':''} ${o.nomeRep||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Supervisor</span><span class="m-rv">${o.codSup&&o.codSup!=='0'?o.codSup+' - '+(o.nomeSup||''):(o.nomeSup||'Sem supervisor')}</span></div>
+      <div class="m-row"><span class="m-rl">Nº Pedido</span><span class="m-rv" style="color:var(--pr);font-weight:800">${o.numPedido||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Status</span><span class="m-rv">${statusBadgeG(statusOrcamentoG(o))}</span></div>
+      <div class="m-row"><span class="m-rl">Data/Hora</span><span class="m-rv">${o.dataHora||'—'}</span></div>
+    </div>
+    ${o.faturamentoVinculado?`<div class="m-sec" style="border:1.5px solid #BAE6FD;background:#F4FBFF">
+      <div class="m-sec-title" style="color:#075985">Nota Fiscal Vinculada</div>
+      <div class="m-row"><span class="m-rl">Número da NF</span><span class="m-rv">${o.nfVinculadaNumero||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Série</span><span class="m-rv">${o.nfVinculadaSerie||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Valor líquido</span><span class="m-rv" style="color:#075985;font-weight:800">${fmt(o.nfVinculadaVlrLiq)}</span></div>
+      <div class="m-row"><span class="m-rl">Data de emissão</span><span class="m-rv">${o.nfVinculadaData||'—'}</span></div>
+    </div>`:''}
+    <div class="m-sec">
+      <div class="m-sec-title">Protocolo</div>
+      <div class="m-row"><span class="m-rl">Kit</span><span class="m-rv">${o.kitNome||'—'}</span></div>
+      ${o.tags?`<div class="m-row"><span class="m-rl">Variação</span><span class="m-rv">${o.tags}</span></div>`:''}
+      <div class="m-row"><span class="m-rl">Nº Protocolos</span><span class="m-rv">${o.nProt||0} animais</span></div>
+      ${o.vacinas?`<div class="m-row"><span class="m-rl">Vacinas</span><span class="m-rv">Vac-Cherry ${o.vacinas.frasco} · ${o.vacinas.qtdFrascos}${String(o.vacinas.qtdFrascos).toLowerCase().includes('frasco')?'':' frascos'}</span></div>`:''}
+    </div>
+    ${prods.length?`<div class="m-sec"><div class="m-sec-title">Produtos do Kit</div>
+    <table class="m-table"><thead><tr><th>Produto</th><th class="r">Qtde</th><th class="r">Bonif.</th><th class="r">R$ Unit.</th><th class="r">Valor</th></tr></thead>
+    <tbody>${prods.map((p,i)=>`<tr${i%2?' class="alt"':''}>
+      <td>${p.nome}</td><td class="r">${p.qty-(p.bonif||0)||'—'}</td>
+      <td class="r" style="color:var(--green)">${p.bonif||'—'}</td>
+      <td class="r">${fmt(p.preco)}</td><td class="r">${fmt(p.valor)}</td>
+    </tr>`).join('')}</tbody></table></div>`:''}
+    ${avulsos.length?`<div class="m-sec"><div class="m-sec-title">Itens Avulsos</div>
+    <table class="m-table"><thead><tr><th>Produto</th><th class="r">Qtde</th><th class="r">R$ Unit.</th><th class="r">Valor</th></tr></thead>
+    <tbody>${avulsos.map((p,i)=>`<tr${i%2?' class="alt"':''}>
+      <td>${p.nome}</td><td class="r">${p.qty}</td><td class="r">${fmt(p.preco)}</td><td class="r">${fmt(p.valor)}</td>
+    </tr>`).join('')}</tbody></table></div>`:''}
+    ${bonifAplic.length?`<div class="m-sec"><div class="m-sec-title" style="color:var(--green)">Aplicadores Bonificados</div>
+    <table class="m-table"><thead style="background:var(--green)"><tr><th>Produto</th><th class="r">Qtde Bonif.</th><th class="r">Valor Bonif.</th></tr></thead>
+    <tbody>${bonifAplic.map((p,i)=>`<tr${i%2?' class="alt"':''}>
+      <td>${p.nome}</td><td class="r">${p.qty}</td><td class="r">${fmt(p.valor)}</td>
+    </tr>`).join('')}</tbody></table></div>`:''}
+    <div class="m-sec">
+      <div class="m-sec-title">Totais</div>
+      <div class="m-row"><span class="m-rl">Total Pedido</span><span class="m-rv">${fmt(o.totalPedido)}</span></div>
+      <div class="m-row"><span class="m-rl">Valor Total Protocolos</span><span class="m-rv">${fmt(o.valorProtocolo)}</span></div>
+      <div class="m-row"><span class="m-rl">🎁 Bonificação</span><span class="m-rv neg">− ${fmt(o.totalBonif)}</span></div>
+      <div class="m-row" style="font-size:15px"><span class="m-rl" style="font-weight:700">Total Final</span><span class="m-rv" style="color:var(--pr);font-size:16px;font-weight:800">${fmt(o.totalFinal)}</span></div>
+      <div class="m-row"><span class="m-rl">À Vista (−3%)</span><span class="m-rv pos">${fmt(o.aVista)}</span></div>
+      <div class="m-row"><span class="m-rl">Prazo de Pagamento</span><span class="m-rv">${o.pagamento||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Valor da Parcela</span><span class="m-rv">${fmt(o.valorParcela)}</span></div>
+      <div class="m-row"><span class="m-rl">Valor por Protocolo</span><span class="m-rv">${fmt(o.valorPorProt)}</span></div>
+    </div>
+    ${o.obs?`<div class="m-sec"><div class="m-sec-title">Observações</div><div style="font-size:13px;line-height:1.6">${o.obs}</div></div>`:''}
+    ${o.motivoCancelamento?`<div class="m-sec" style="border:1.5px solid #FED7D7"><div class="m-sec-title" style="color:var(--rd)">Motivo do Cancelamento</div><div style="font-size:13px;line-height:1.6;color:var(--rd)">${o.motivoCancelamento}</div></div>`:''}
+    <div class="m-actions">
+      <button class="m-btn-pdf" onclick="gerarPDFModal(${idx})">📄 Gerar PDF</button>
+    </div>
+    ${(o.status||'Aberto')==='Aberto'?`
+    <div class="m-cancel-area" id="cancel-area-${idx}">
+      <div style="font-size:11px;font-weight:800;color:var(--rd);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Cancelar Orçamento</div>
+      <textarea class="m-cancel-ta" id="cancel-motivo-${idx}" minlength="3" maxlength="250" required placeholder="Motivo do cancelamento (obrigatório · máx. 250 caracteres)"></textarea>
+      <div style="font-size:10.5px;color:var(--rd);margin-top:5px">(obrigatório · máx. 250 caracteres)</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="m-btn-cancel" onclick="cancelarNaGestao(${idx})">❌ Confirmar Cancelamento</button>
+        <div id="cancel-result-${idx}" style="font-size:12px;color:var(--rd);align-self:center"></div>
+      </div>
+    </div>`:''}
+    <div id="cancel-result-${idx}-main"></div>`;
+  document.getElementById('overlay').classList.add('on');
+}
+function fecharModal(){document.getElementById('overlay').classList.remove('on');}
+
+// ── PDF DO MODAL ──
+function escPdfG(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function dataArquivoPdfG(){const d=new Date();return`${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`}
+function modeloPDFGestao(o){
+  const kitProds=(o.prods||[]).map(p=>({...p,qty:Number(p.qty)||0,bonif:Number(p.bonif)||0,preco:Number(p.preco)||0,valor:Number(p.valor)||0}));
+  const avulsos=(o.prodsAvulso||[]).map(p=>({...p,qty:Number(p.qty)||0,bonif:0,preco:Number(p.preco)||0,valor:Number(p.valor)||0}));
+  const bonifAplic=(o.bonifAplic||[]).map(p=>({...p,qty:Number(p.qty)||0,preco:Number(p.preco)||0,valor:Number(p.valor)||0}));
+  const totalKit=kitProds.reduce((s,p)=>s+p.valor,0),totalAvulsos=avulsos.reduce((s,p)=>s+p.valor,0);
+  const vacinas=(o.prodsVacina||[]).map(p=>({...p,qty:Number(p.qty)||0,bonif:0,preco:Number(p.preco)||0,valor:Number(p.valor)||0}));
+  let valorVacina=vacinas.reduce((s,p)=>s+p.valor,0);
+  if(!vacinas.length&&o.vacinas&&parseInt(o.vacinas.qtdFrascos,10)>0){
+    const qty=parseInt(o.vacinas.qtdFrascos,10)||0,frasco=String(o.vacinas.frasco||'');
+    valorVacina=Math.max(0,(Number(o.totalPedido)||0)-totalKit-totalAvulsos);
+    vacinas.push({code:o.vacinas.code||(frasco==='250ml'?'CM10A015':'CM10A016'),nome:o.vacinas.nome||(frasco==='250ml'?'Vac-Cherry 250ml (50ds)':'Vac-Cherry 100ml (20ds)'),qty,bonif:0,preco:Number(o.vacinas.preco)||(qty?valorVacina/qty:0),valor:Number(o.vacinas.valor)||valorVacina});
+  }
+  const mapa=new Map();
+  [...kitProds,...vacinas,...avulsos].forEach((p,i)=>{
+    const chave=String(p.code||p.nome||i),atual=mapa.get(chave);
+    if(atual){atual.qty+=p.qty;atual.valor+=p.valor;atual.bonif+=p.bonif||0;}
+    else mapa.set(chave,{...p,code:chave});
+  });
+  const allProds=[...mapa.values()];
+  const bonifAplicTotal=bonifAplic.reduce((s,p)=>s+p.valor,0);
+  const bonifKit=Math.max(0,(Number(o.totalBonif)||0)-bonifAplicTotal);
+  return{kitProds,avulsos,vacinas,allProds,bonifAplic,bonifAplicTotal,bonifKit,valorVacina,totalAvulsos};
+}
+function montarPDFGestao(o){
+  const M=modeloPDFGestao(o),nProt=Number(o.nProt)||0,taxaBonif=nProt?M.bonifKit/nProt:0;
+  const tags=String(o.tags||'').split(' · ').map(t=>t.trim()).filter(Boolean);
+  const allRows=M.allProds.map((p,i)=>`<tr class="p-prod-row${i%2?' alt':''}" data-prod-code="${escPdfG(p.code)}">
+    <td class="nm">${escPdfG(p.nome||p.code)}</td><td class="c">${p.qty-(p.bonif||0)>0?p.qty-(p.bonif||0):'—'}</td>
+    <td class="c b-col">${p.bonif||'—'}</td><td class="r">${fmt(p.preco)}</td><td class="r">${fmt(p.valor)}</td></tr>`).join('');
+  const bonifRows=M.bonifAplic.map((p,i)=>`<tr${i%2?' class="alt"':''}><td class="nm">${escPdfG(p.nome||p.code)}</td><td class="c b-col">${p.qty}</td><td class="r">${fmt(p.preco)}</td><td class="r b-col">${fmt(p.valor)}</td></tr>`).join('');
+  const dataOrc=String(o.dataHora||'').split(',')[0]||new Date().toLocaleDateString('pt-BR');
+  document.getElementById('print-area').innerHTML=`<div class="pp" id="printpage-gestao">
+    <div class="p-hdr"><img class="p-brand-logo" id="print-logo-gestao" alt="GlobalGen reproductive engineering">
+      <div class="p-orc"><div class="p-orc-lbl">Orçamento</div><div class="p-orc-num">${escPdfG(o.numPedido||'—')}</div>
+      <div class="p-orc-meta">Data: ${escPdfG(dataOrc)}<br>Prazo: ${escPdfG(o.pagamento||'—')}</div></div></div>
+    <div class="p-kit-bar"><div class="p-kit-name">${escPdfG(o.kitNome||'—')}</div>
+      ${tags.length?`<div class="p-kit-tags">${tags.map(t=>`<div class="p-kit-tag">${escPdfG(t)}</div>`).join('')}</div>`:''}</div>
+    <div class="p-conds" style="margin-top:0"><div class="p-cond"><div class="p-cond-l">Cliente</div><div class="p-cond-v">${escPdfG(nomeCliente(o))}</div></div>
+      <div class="p-cond"><div class="p-cond-l">${escPdfG(o.clienteTipo||'CNPJ/CPF')}</div><div class="p-cond-v">${escPdfG(o.clienteDoc||'—')}</div></div></div>
+    <div class="p-sec">Produtos (${nProt} protocolos · ${fmt(taxaBonif)}/protocolo)</div>
+    <table><thead><tr><th>Produto</th><th class="c">Qtde</th><th class="c">Bonif.</th><th class="r">R$ Unit.</th><th class="r">Valor</th></tr></thead><tbody>${allRows}</tbody></table>
+    ${M.bonifAplic.length?`<div class="p-sec" style="color:#2B9960">Aplicadores Bonificados (${fmt(M.bonifAplicTotal)})</div>
+      <table><thead style="background:#2B9960"><tr><th>Produto</th><th class="c">Qtde Bonif.</th><th class="r">R$ Unit.</th><th class="r">Valor Bonif.</th></tr></thead><tbody>${bonifRows}</tbody></table>`:''}
+    <div class="p-tots"><div class="p-ti">
+      <div class="ptr"><span>Total Pedido</span><span class="p-total-pedido">${fmt(o.totalPedido)}</span></div>
+      <div class="ptr mt"><span>Valor Total Protocolos</span><span>${fmt(o.valorProtocolo)}</span></div>
+      ${M.valorVacina>0?`<div class="ptr mt"><span>Valor Vacina</span><span>${fmt(M.valorVacina)}</span></div>`:''}
+      ${M.totalAvulsos>0?`<div class="ptr mt"><span>Valor Avulsos</span><span>${fmt(M.totalAvulsos)}</span></div>`:''}
+      ${M.bonifKit>0?`<div class="ptr neg"><span>🎁 Bonif. kits (${nProt}×${fmt(taxaBonif)})</span><span>− ${fmt(M.bonifKit)}</span></div>`:''}
+      ${M.bonifAplicTotal>0?`<div class="ptr neg"><span>🎁 Bonif. aplicadores</span><span>− ${fmt(M.bonifAplicTotal)}</span></div>`:''}
+      <div class="ptr big"><span>Total Final</span><span class="p-total-final">${fmt(o.totalFinal)}</span></div>
+      <div class="ptr av"><span>À Vista (−3%)</span><span>${fmt(o.aVista)}</span></div>
+      <div class="ptr mt"><span>Prazo de Pagamento</span><span>${escPdfG(o.pagamento||'—')}</span></div>
+      <div class="ptr mt"><span>Valor da Parcela</span><span>${fmt(o.valorParcela)}</span></div>
+      <div class="ptr mt"><span>Valor por Protocolo</span><span>${fmt(o.valorPorProt)}</span></div>
+    </div></div><div class="p-clr"></div>
+    ${o.obs?`<div class="p-obs"><div class="p-obs-l">Observações</div><div class="p-obs-t">${escPdfG(o.obs)}</div></div>`:''}
+    <div class="p-acc">Aceitamos as condições deste pedido. Pedido sujeito a confirmação e aprovação da matriz.</div>
+    <div class="p-sig"><div class="p-sig-l">Assinatura GLOBALGEN / UCBVET</div><div class="p-sig-l">Assinatura do Cliente</div></div>
+    <div class="p-ftr"><span>GLOBALGEN · pedidos@globalgen.vet</span><span>Emitido em: ${new Date().toLocaleDateString('pt-BR')}</span></div>
+  </div>`;
+  const logo=document.getElementById('print-logo-gestao'),origem=document.querySelector('.hdr img')||document.getElementById('g-logo-login');
+  if(logo&&origem&&origem.src)logo.src=origem.src;
+  return M;
+}
+function validarPDFGestao(o,M){
+  const area=document.getElementById('print-area'),linhas=area?area.querySelectorAll('.p-prod-row'):[];
+  if(!area||linhas.length!==M.allProds.length)throw new Error('A quantidade de produtos do PDF não corresponde ao orçamento salvo.');
+  if(area.querySelector('.p-total-pedido')?.textContent.trim()!==fmt(o.totalPedido)||area.querySelector('.p-total-final')?.textContent.trim()!==fmt(o.totalFinal))throw new Error('Os valores totais do PDF não correspondem ao orçamento salvo.');
+}
+function textoWhatsAppGestao(o){return['Olá! Segue o orçamento GLOBALGEN em PDF.','',`Orçamento: ${o.numPedido||'—'}`,`Protocolo: ${o.kitNome||'—'}`,`Quantidade: ${o.nProt||0} animais`,`Total final: ${fmt(o.totalFinal)}`,`Pagamento: ${o.pagamento||'a combinar'}`,'','O orçamento segue anexado a esta mensagem.'].join('\n')}
+function nomeArquivoPDFGestao(o){const doc=String(o.clienteDoc||'').replace(/\D/g,'');return`Orçamento - ${doc?doc+' - ':''}${dataArquivoPdfG()}.pdf`}
+function baixarBlobGestao(blob,nome){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
+function sugerirWhatsAppGestao(o){if(window.confirm('PDF concluído. Deseja abrir o WhatsApp para enviá-lo agora?\n\nO PDF deverá ser anexado à conversa pelo botão de clipe.'))window.open('https://wa.me/?text='+encodeURIComponent(textoWhatsAppGestao(o)),'_blank','noopener,noreferrer')}
+function ativarEstiloPDFGestao(){
+  const style=document.createElement('style');style.id='pdf-print-style-gestao';let css='';
+  for(const sheet of document.styleSheets){
+    try{
+      for(const rule of sheet.cssRules||[]){
+        if(rule.constructor.name==='CSSMediaRule'&&String(rule.conditionText).includes('print')){
+          for(const inner of rule.cssRules)css+=inner.cssText+'\n';
+        }
+      }
+    }catch(e){}
+  }
+  style.textContent=css+'\n#print-area.print-only{display:block!important;position:fixed!important;left:-10000px!important;top:0!important;width:794px!important;background:#fff!important;z-index:-1!important}#print-area .pp{width:794px!important}';
+  document.head.appendChild(style);return style;
+}
+let _pdfGestaoFile=null,_pdfGestaoBlob=null,_pdfGestaoNome='',_pdfGestaoOrc=null;
+function mostrarCompartilhamentoPDFGestao(arquivo,blob,nome,o){_pdfGestaoFile=arquivo;_pdfGestaoBlob=blob;_pdfGestaoNome=nome;_pdfGestaoOrc=o;document.getElementById('share-modal-gestao').hidden=false}
+function fecharCompartilhamentoPDFGestao(){document.getElementById('share-modal-gestao').hidden=true}
+async function compartilharPDFGestao(){if(!_pdfGestaoFile)return;try{await navigator.share({title:'Orçamento GLOBALGEN',text:textoWhatsAppGestao(_pdfGestaoOrc),files:[_pdfGestaoFile]});fecharCompartilhamentoPDFGestao()}catch(e){if(e&&e.name!=='AbortError'){alert('O compartilhamento de arquivos não está disponível neste navegador. O PDF será baixado.');baixarPDFGestao()}}}
+function baixarPDFGestao(){if(_pdfGestaoBlob){baixarBlobGestao(_pdfGestaoBlob,_pdfGestaoNome);fecharCompartilhamentoPDFGestao();setTimeout(()=>sugerirWhatsAppGestao(_pdfGestaoOrc),300)}}
+function criarPDFBlobGestao(escala,qualidade,nome){return html2pdf().set({margin:0,filename:nome,image:{type:'jpeg',quality:qualidade},html2canvas:{scale:escala,useCORS:true,backgroundColor:'#ffffff',logging:false},jsPDF:{unit:'pt',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.p-cond','.p-obs','.p-tots']}}).from(document.getElementById('printpage-gestao')).outputPdf('blob')}
+function gerarPDFGestaoPorImpressao(nome,o){const titulo=document.title;document.title=nome.replace(/\.pdf$/i,'');let sugerido=false;const apos=()=>{if(sugerido)return;sugerido=true;document.title=titulo;window.removeEventListener('afterprint',apos);setTimeout(()=>sugerirWhatsAppGestao(o),250)};window.addEventListener('afterprint',apos);setTimeout(()=>window.print(),500)}
+async function gerarPDFModal(idx){
+  const o=filtrados[idx],btn=document.querySelector(`[onclick="gerarPDFModal(${idx})"]`);if(!o)return;
+  let M;try{M=montarPDFGestao(o);validarPDFGestao(o,M)}catch(e){alert('Não foi possível montar o PDF corretamente:\n'+e.message);return}
+  const nome=nomeArquivoPDFGestao(o);if(btn){btn.disabled=true;btn.textContent='Gerando PDF…'}
+  if(typeof html2pdf==='function'){
+    const style=ativarEstiloPDFGestao(),mobile=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);let blob=null;
+    try{try{blob=await criarPDFBlobGestao(mobile?1.15:2,mobile?0.90:0.98,nome)}catch(primeiroErro){if(!mobile)throw primeiroErro;blob=await criarPDFBlobGestao(0.85,0.86,nome)}}
+    catch(e){alert('Não foi possível gerar o PDF automaticamente. Será aberta a opção de impressão.');gerarPDFGestaoPorImpressao(nome,o)}
+    finally{style.remove();if(btn){btn.disabled=false;btn.textContent='📄 Gerar PDF'}}
+    if(blob){let arquivo=null;try{arquivo=new File([blob],nome,{type:'application/pdf'})}catch(e){}let podeCompartilhar=false;try{podeCompartilhar=!!(arquivo&&navigator.share&&navigator.canShare&&navigator.canShare({files:[arquivo]}))}catch(e){}
+      if(podeCompartilhar){if(mobile)mostrarCompartilhamentoPDFGestao(arquivo,blob,nome,o);else try{await navigator.share({title:'Orçamento GLOBALGEN',text:textoWhatsAppGestao(o),files:[arquivo]})}catch(e){if(e&&e.name!=='AbortError')mostrarCompartilhamentoPDFGestao(arquivo,blob,nome,o)}}
+      else{baixarBlobGestao(blob,nome);setTimeout(()=>sugerirWhatsAppGestao(o),300)}}
+  }else{gerarPDFGestaoPorImpressao(nome,o);if(btn){btn.disabled=false;btn.textContent='📄 Gerar PDF'}}
+}
+
+// ── CANCELAR NA GESTÃO ──
+async function cancelarNaGestao(idx){
+  const o=filtrados[idx];
+  if(!o||!db)return;
+  const motivoEl=document.getElementById(`cancel-motivo-${idx}`);
+  const resultEl=document.getElementById(`cancel-result-${idx}`);
+  const motivo=(motivoEl?.value||'').trim().slice(0,250);
+  if(motivo.length<3){
+    if(resultEl)resultEl.textContent='Informe um motivo com pelo menos 3 caracteres.';
+    motivoEl?.focus();return;
+  }
+  if(!confirm(`Cancelar o orçamento ${o.numPedido||o.id}?\n\nMotivo: ${motivo}\n\nEsta ação não pode ser desfeita.`))return;
+  if(resultEl)resultEl.textContent='⏳ Cancelando...';
+  try{
+    await db.collection('orcamentos').doc(o.id).update({
+      status:'Cancelado',
+      motivoCancelamento:motivo,
+      dataCancelamento:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Atualizar estado local
+    o.status='Cancelado';
+    o.motivoCancelamento=motivo;
+    fecharModal();
+    aplicarFiltros();
+  }catch(e){
+    if(resultEl)resultEl.textContent='❌ Erro: '+e.message;
+  }
+}
+// ── CSV EXPORT ──
+function exportarCSV(){
+  if(!filtrados.length){alert('Nenhum orçamento para exportar.');return;}
+  const cols=['Nº Pedido','Status','NF Vinculada','Série NF','Valor NF','Supervisor','Data/Hora','Cliente Nome','Cliente Doc','Tipo','Cód Representante','Nome Representante','Cód Cliente Senior','Kit','Variação','Nº Protocolos','Tabela Preço','Condição Pagamento','Total Pedido','Bonificação','Total Final','À Vista','Valor por Protocolo','Valor Parcela','Vacinas','Observações'];
+  const rows=filtrados.map(o=>[
+    o.numPedido||'',statusOrcamentoG(o),o.nfVinculadaNumero||'',o.nfVinculadaSerie||'',o.faturamentoVinculado?(Number(o.nfVinculadaVlrLiq)||0).toFixed(2):'',
+    o.nomeSup||'Sem supervisor',o.dataHora||'',o.clienteNome||'',o.clienteDoc||'',o.clienteTipo||'',
+    o.codRep||'',o.nomeRep||'',o.codCli||'',
+    o.kitNome||'',o.tags||'',o.nProt||0,
+    o.preco||'',o.pagamento||'',
+    (o.totalPedido||0).toFixed(2),(o.totalBonif||0).toFixed(2),
+    (o.totalFinal||0).toFixed(2),(o.aVista||0).toFixed(2),
+    (o.valorPorProt||0).toFixed(2),(o.valorParcela||0).toFixed(2),
+    o.vacinas?`Vac-Cherry ${o.vacinas.frasco} ${o.vacinas.qtdFrascos}`:'',
+    o.obs||''
+  ].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';'));
+  const csv='\uFEFF'+[cols.join(';'),...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download=`orcamentos_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+</script>
+</body>
+</html>
