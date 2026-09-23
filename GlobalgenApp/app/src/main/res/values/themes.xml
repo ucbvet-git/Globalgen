@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.Globalgen" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/globalgen_teal</item>
+        <item name="colorPrimaryVariant">@color/globalgen_teal_dark</item>
+        <item name="colorOnPrimary">@android:color/white</item>
+        <item name="colorSecondary">@color/globalgen_gray</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="android:statusBarColor">@color/globalgen_teal_dark</item>
+        <item name="android:navigationBarColor">@color/globalgen_teal_dark</item>
+    </style>
+
+    <style name="Theme.Globalgen.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@color/globalgen_teal</item>
+        <item name="android:navigationBarColor">@android:color/white</item>
+    </style>
+
+</resources>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#FFFFFF"
+    android:padding="40dp">
+
+    <!-- Logo GlobalGen com proporção original -->
+    <ImageView
+        android:layout_width="280dp"
+        android:layout_height="wrap_content"
+        android:src="@drawable/globalgen_logo"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:contentDescription="GlobalGen" />
+
+    <!-- Subtítulo -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="@string/company_name"
+        android:textSize="12sp"
+        android:textColor="#888888"
+        android:letterSpacing="0.08"
+        android:gravity="center" />
+
+    <!-- Indicador de carregamento -->
+    <ProgressBar
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginTop="48dp"
+        android:indeterminateTint="#1A7A7A" />
+
+</LinearLayout>
