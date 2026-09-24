@@ -2553,7 +2553,7 @@ async function iniciarGravacaoVoz() {
     releaseVoiceStream();
     voiceStatus(error?.name === 'NotAllowedError'
       ? 'Permita o uso do microfone nas configurações do aplicativo e tente novamente.'
-      : 'Não foi possível acessar o microfone.', true);
+      : 'Não foi possível acessar o microfone (' + (error?.name || 'erro desconhecido') + ').', true);
     voiceButtons();
   }
 }
