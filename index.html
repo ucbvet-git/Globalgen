@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.2.3</title>
+<title>GLOBALGEN — Orçamento v6.2.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -422,7 +422,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.3</div>
+    <div class="app-version">Orçamento GBG · versão 6.2.4</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -436,7 +436,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.3</div>
+    <div class="app-version">Orçamento GBG · versão 6.2.4</div>
   </div>
 </div>
 <div class="no-print">
@@ -1761,32 +1761,6 @@ function updResumoSeniorInfo(){
   // Mostrar/ocultar botão "Tentar novamente"
   if(tryBtn)tryBtn.style.display=S._seniorLookup.status==='error'?'block':'none';
 }
-async function buscarRepresentanteFirebase(codRep){
-  const codigo=String(codRep||'').trim();
-  if(!codigo)return null;
-  const db=getFbDb();
-  if(!db)throw new Error('Firebase não foi inicializado.');
-  const snap=await db.collection('representantesSenior').doc(codigo).get();
-  if(snap.exists)return{id:snap.id,...snap.data()};
-  const consulta=await db.collection('representantesSenior').where('codRep','==',codigo).limit(1).get();
-  return consulta.empty?null:{id:consulta.docs[0].id,...consulta.docs[0].data()};
-}
-async function fetchRepresentanteInfo(codRep){
-  const rep=await buscarRepresentanteFirebase(codRep);
-  if(!rep)throw new Error(`Representante ${codRep} ainda não foi sincronizado pelo app de gestão.`);
-  const sitRep=String(rep.sitRep||'').toUpperCase();
-  if(rep.ativo===false||(sitRep&&sitRep!=='A'))throw new Error(`Representante ${codRep} está inativo no cadastro sincronizado.`);
-  const codSup=String(rep.codSup||'0');
-  let nomeSup=rep.nomeSup||'Sem supervisor';
-  if(codSup!=='0'){
-    const sup=await buscarRepresentanteFirebase(codSup);
-    if(sup&&(sup.nomRep||sup.nomeRep))nomeSup=sup.nomRep||sup.nomeRep;
-  }
-  return{
-    nomRep:rep.nomRep||rep.nomeRep||`Representante ${codRep}`,
-    codSup,nomeSup,codFuncionario:String(rep.codFuncionario||'')
-  };
-}
 // Lookup em background: SimularPedidos → codRep/codCli → cadastro sincronizado no Firebase.
 async function iniciarLookupSenior(){
   S._seniorLookup={status:'loading',codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
@@ -1794,24 +1768,15 @@ async function iniciarLookupSenior(){
   const ctrl=new AbortController();
   const timer=setTimeout(()=>ctrl.abort(),LOOKUP_SENIOR_TIMEOUT_MS);
   try{
-    const simResp=await apiV5('/orders/simulate',{
-      method:'POST',signal:ctrl.signal,
-      body:{customerDocument:digits(S.clienteDoc)||'',paymentCondition:15,products:[]}
+    const lookupResp=await apiV5('/orders/customer-lookup',{
+      method:'POST',signal:ctrl.signal,body:{customerDocument:digits(S.clienteDoc)||''}
     });
-    const simXml=await simResp.text();
-    const simRes=parseSimularResponse(simXml);
-    if(!simRes.ok||!simRes.codRep||simRes.codRep==='0'){
-      S._seniorLookup={status:'error',codCli:'',codRep:'000',nomeRep:'Não identificado',codSup:'0000',nomeSup:'Não identificado',codFuncionario:'',error:simRes.error||'Representante não identificado para este CNPJ/CPF'};
-      updResumoSeniorInfo();return;
-    }
-    S._seniorLookup.codCli=simRes.codCli||'';
-    S._seniorLookup.codRep=simRes.codRep;
-    updResumoSeniorInfo();
-    // 2. Buscar representante, supervisor e funcionário na base sincronizada.
-    const repInfo=await fetchRepresentanteInfo(simRes.codRep);
-    S._seniorLookup.nomeRep=repInfo.nomRep||`Representante ${simRes.codRep}`;
-    S._seniorLookup.codSup=repInfo.codSup;
-    S._seniorLookup.nomeSup=repInfo.nomeSup;
+    const repInfo=await lookupResp.json();
+    S._seniorLookup.codCli=repInfo.codCli||'';
+    S._seniorLookup.codRep=repInfo.codRep||'';
+    S._seniorLookup.nomeRep=repInfo.nomeRep||'';
+    S._seniorLookup.codSup=repInfo.codSup||'0';
+    S._seniorLookup.nomeSup=repInfo.nomeSup||'Sem supervisor';
     S._seniorLookup.codFuncionario=repInfo.codFuncionario||'';
     S._seniorLookup.status='ok';
     updResumoSeniorInfo();
@@ -1849,17 +1814,6 @@ function gerarSessionId(){
   const rand=Math.random().toString(36).slice(2,6).toUpperCase();
   return`${ts}-${fp}-${rand}`;
 }
-async function gerarNumPedido(db){
-  const now=new Date();
-  const mes=String(now.getMonth()+1).padStart(2,'0')+String(now.getFullYear()).slice(-2);
-  const ref=db.collection('_counters').doc(`GBG-${mes}`);
-  return db.runTransaction(async t=>{
-    const snap=await t.get(ref);
-    const seq=(snap.exists?snap.data().seq:0)+1;
-    t.set(ref,{seq,mes,ts:firebase.firestore.FieldValue.serverTimestamp()});
-    return`GBG-${mes}-${String(seq).padStart(4,'0')}`;
-  });
-}
 async function saveOrcamento(){
   // Retorna o numPedido gerado (ou lança erro se Firebase falhar)
   if(typeof firebase==='undefined')throw new Error('Firebase SDK não carregado');
@@ -1868,7 +1822,7 @@ async function saveOrcamento(){
   if(!S._sessionId)S._sessionId=gerarSessionId();
   try{
     // Timeout de 5 segundos
-    const timeoutP=new Promise((_,rej)=>setTimeout(()=>rej(new Error('A API não respondeu em 20 segundos. Verifique sua conexão.')),20000));
+    const timeoutP=new Promise((_,rej)=>setTimeout(()=>rej(new Error('A API não respondeu em 90 segundos. Verifique sua conexão antes de tentar novamente.')),90000));
     const saveP=async()=>{
       // Gerar número sequencial apenas na primeira vez desta sessão
       const novoDocumento=!S._numPedido;
@@ -1934,7 +1888,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.2.3';
+       doc.versaoOrcamento='6.2.4';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
        doc.protocolosV6=v6Protocols().map(p=>({...p}));
@@ -2015,19 +1969,14 @@ async function recuperarOrcamento(){
   if(!codigo){el.style.color='var(--rd)';el.textContent='Informe o código do orçamento.';return;}
   el.style.color='var(--mt)';el.textContent='🔍 Buscando...';
   try{
-    const db=getFbDb();
-    if(!db)throw new Error('Firebase não disponível');
-    const snap=await db.collection('orcamentos').where('numPedido','==',codigo).limit(1).get();
-    if(snap.empty){el.style.color='var(--rd)';el.textContent='❌ Código não encontrado.';return;}
-    const doc=snap.docs[0];const data=doc.data();
-    if(!usuarioPodeAcessarOrcamento(_authUser,data)){
-      el.style.color='var(--rd)';el.textContent='⛔ Você não tem permissão para carregar este orçamento.';return;
-    }
+    const resp=await apiV5('/budgets/by-number/'+encodeURIComponent(codigo));
+    const found=await resp.json(),data=found.data,docId=found.id;
+    if(!usuarioPodeAcessarOrcamento(_authUser,data))throw new Error('Sem permissão para este orçamento.');
     const status=data.status||'Aberto';
     if(status==='Finalizado'){el.style.color='var(--rd)';el.textContent='🔒 Este orçamento já foi finalizado e não pode ser alterado.';return;}
     if(status==='Cancelado'){el.style.color='var(--rd)';el.textContent='❌ Este orçamento foi cancelado.';return;}
     await carregarTabelaPrecos(data.versaoTabelaPrecos||'legacy-v61');
-    carregarOrcamentoNoEstado(doc.id,data);
+    carregarOrcamentoNoEstado(docId,data);
     sid='resumo';render();
   }catch(e){el.style.color='var(--rd)';el.textContent='❌ Erro: '+e.message;}
 }
@@ -2164,31 +2113,16 @@ async function sairDaConta(){
 }
 // ════ FIM AUTENTICAÇÃO ════
 // ── Modal: Meus Orçamentos Abertos ──
-async function buscarOrcamentosAbertosPorPerfil(db,usuario){
-  if(!usuario)throw new Error('Usuário não identificado. Entre novamente no aplicativo.');
-  const queryBase=db.collection('orcamentos').where('status','==','Aberto');
-  const categoria=String(usuario.catRep||'').trim().toUpperCase();
-  let docs=[];
-  if(usuario.isAdmin||categoria==='GER')docs=(await queryBase.get()).docs;
-  else{
-  const codRep=String(usuario.codRep||'').trim();
-  if(!codRep)throw new Error('Código do representante não identificado no usuário logado.');
-  const campoVinculo=categoria==='SUP'?'codSup':categoria==='REP'?'codRep':'';
-  const consultas=[queryBase.where('codUsuario','==',codRep).get(),queryBase.where('codFuncionario','==',codRep).get()];
-  if(campoVinculo)consultas.push(queryBase.where(campoVinculo,'==',codRep).get());
-  const resultados=await Promise.all(consultas);
-  const unicos=new Map();
-  resultados.forEach(resultado=>resultado.docs.forEach(doc=>unicos.set(doc.id,doc)));
-  docs=[...unicos.values()];
-  }
-  await sincronizarSubstatusOrcamentos(db,docs);
-  return docs;
+async function buscarOrcamentosAbertosPorPerfil(_db,usuario){
+  if(!usuario)throw new Error('Entre novamente no aplicativo.');
+  const resp=await apiV5('/budgets?status=Aberto');
+  return (await resp.json()).map(item=>({id:item.id,data:()=>item.data}));
 }
 function usuarioPodeAcessarOrcamento(usuario,orcamento){
   if(!usuario||!orcamento)return false;
   if(usuario.isAdmin)return true;
   const categoria=String(usuario.catRep||'').trim().toUpperCase();
-  if(categoria==='GER')return true;
+  if(categoria==='GER'||categoria==='SUB')return true;
   const normalizarCodigo=v=>String(v||'').trim().replace(/^0+(?=\d)/,'');
   const codUsuario=normalizarCodigo(usuario.codRep);
   if(!codUsuario)return false;
@@ -2198,20 +2132,10 @@ function usuarioPodeAcessarOrcamento(usuario,orcamento){
   if(categoria==='REP')return normalizarCodigo(orcamento.codRep)===codUsuario;
   return false;
 }
-async function sincronizarSubstatusOrcamentos(db,documentos){
-  const alterados=[];
-  documentos.forEach(doc=>{
-    const dados=doc.data(),substatus=calcularSubstatusOrcamento(dados);
-    if((dados.status||'Aberto')==='Aberto'&&dados.substatus!==substatus)alterados.push({ref:doc.ref,substatus});
-  });
-  try{
-    for(let inicio=0;inicio<alterados.length;inicio+=400){
-      const batch=db.batch();
-      alterados.slice(inicio,inicio+400).forEach(item=>batch.update(item.ref,{substatus:item.substatus,substatusAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()}));
-      await batch.commit();
-    }
-  }catch(e){console.warn('Não foi possível gravar todas as subclassificações dos orçamentos:',e.message);}
-  return alterados.length;
+async function sincronizarSubstatusOrcamentos(_db,documentos){
+  // O substatus é calculado localmente para exibição; o navegador não grava orçamentos.
+  documentos.forEach(doc=>{const dados=doc.data();dados.substatus=calcularSubstatusOrcamento(dados);});
+  return 0;
 }
 async function atualizarResumoOrcamentosAbertos(){
   const el=document.getElementById('orc-abertos-contagem');if(!el||!_authUser)return;
@@ -2264,7 +2188,7 @@ async function abrirMeusOrcamentos(){
     const db=getFbDb();
     if(!db){listEl.innerHTML='<div class="orc-empty">Firebase não disponível.</div>';return;}
     const encontrados=await buscarOrcamentosAbertosPorPerfil(db,_authUser);
-    let docs=encontrados.map(d=>({id:d.id,...d.data(),_ts:d.data().ts?.toMillis()||0}));
+    let docs=encontrados.map(d=>({id:d.id,...d.data(),_ts:converterDataFirebase(d.data().ts)?.getTime()||0}));
     // Ordenar alfabeticamente pelo cliente
     docs.sort((a,b)=>(a.clienteNome||'').localeCompare(b.clienteNome||'','pt-BR'));
     _orcamentosAbertosModal=docs;popularFiltrosOrcamentosAbertos();renderOrcamentosAbertosModal();
@@ -2330,10 +2254,10 @@ function classificarUsuarioNoOrcamento(usuario,o){
 async function consultarPendenciasUsuario(){
   if(!_authUser||_authUser.isAdmin||String(_authUser.catRep||'').trim().toUpperCase()==='GER')return[];
   const db=getFbDb();if(!db)throw new Error('Firebase não disponível.');
-  const snap=await db.collection('orcamentos').where('status','==','Aberto').get();
-  await sincronizarSubstatusOrcamentos(db,snap.docs.filter(doc=>classificarUsuarioNoOrcamento(_authUser,doc.data())));
+  const docs=await buscarOrcamentosAbertosPorPerfil(db,_authUser);
+  await sincronizarSubstatusOrcamentos(db,docs.filter(doc=>classificarUsuarioNoOrcamento(_authUser,doc.data())));
   const agora=new Date();const lista=[];
-  snap.docs.forEach(doc=>{
+  docs.forEach(doc=>{
     const o={id:doc.id,...doc.data()};
     if(possuiNfValidaVinculada(o))return;
     const papel=classificarUsuarioNoOrcamento(_authUser,o);if(!papel)return;
@@ -2426,17 +2350,10 @@ async function continuarAposNotificacao(){
   _pendenciasProcessando=true;
   const btn=document.querySelector('.pend-continuar');if(btn){btn.disabled=true;btn.textContent='Salvando...';}
   try{
-    const db=getFbDb();const agora=firebase.firestore.Timestamp.now();
-    const proxima=firebase.firestore.Timestamp.fromMillis(agora.toMillis()+PENDENCIA_INTERVALO_NOTIFICACAO_HORAS*60*60*1000);
-    for(let i=0;i<_pendenciasAtuais.length;i+=400){
-      const batch=db.batch();
-      _pendenciasAtuais.slice(i,i+400).forEach(p=>batch.update(db.collection('orcamentos').doc(p.id),{
-        ultimaNotificacaoNaoBloqueadosEm:agora,
-        proximaNotificacaoNaoBloqueadosEm:proxima,
-        ultimaNotificacaoNaoBloqueadosCodUsuario:String(_authUser?.codRep||''),
-        ultimaNotificacaoNaoBloqueadosNomeUsuario:String(_authUser?.nomRep||'')
-      }));
-      await batch.commit();
+    for(const p of _pendenciasAtuais){
+      await apiV5('/budgets/'+encodeURIComponent(p.id)+'/action',{
+        method:'POST',body:{action:'adiarPendencia'}
+      });
     }
     fecharPendenciasModal();
   }catch(e){document.getElementById('pendencias-msg').textContent='Não foi possível registrar a continuação: '+e.message;}
@@ -2447,37 +2364,10 @@ async function aplicarDecisaoPendencia(p,decisao){
     await apiV5('/budgets/'+encodeURIComponent(p.id)+'/action',{method:'POST',body:{action:decisao.acao,reason:decisao.motivo}});
     return decisao.acao;
   }
-  const db=getFbDb();const ref=db.collection('orcamentos').doc(p.id);
-  return db.runTransaction(async tx=>{
-    const snap=await tx.get(ref);if(!snap.exists)return'ignorado';
-    const atual=snap.data();
-    if((atual.status||'Aberto')!=='Aberto'||possuiNfValidaVinculada(atual))return'ignorado';
-    const agora=firebase.firestore.Timestamp.now();
-    const prazoAnterior=prazoAtualPendencia(atual);
-    const historico=Array.isArray(atual.historicoPendencia)?atual.historicoPendencia.slice():[];
-    const controleCategoria=_pendenciaCategoriaAtual==='bloqueado'?{ultimaDecisaoBloqueadosEm:agora}:{ultimaDecisaoNaoBloqueadosEm:agora};
-    const baseHistorico={
-      categoria:_pendenciaCategoriaAtual,
-      codUsuario:String(_authUser?.codRep||''),
-      nomeUsuario:String(_authUser?.nomRep||''),
-      dataHora:agora,
-      prazoAnterior:prazoAnterior?firebase.firestore.Timestamp.fromDate(prazoAnterior):null
-    };
-    const novoPrazo=firebase.firestore.Timestamp.fromMillis(agora.toMillis()+PENDENCIA_PRORROGACAO_HORAS*60*60*1000);
-    historico.push({...baseHistorico,acao:'PRORROGADO_72H',prazoNovo:novoPrazo});
-    tx.update(ref,{
-      ...controleCategoria,
-      substatus:'Prorrogado',
-      prazoPendencia:novoPrazo,
-      proximaNotificacaoBloqueadosEm:novoPrazo,
-      proximaNotificacaoNaoBloqueadosEm:novoPrazo,
-      ultimaProrrogacaoEm:firebase.firestore.FieldValue.serverTimestamp(),
-      ultimaProrrogacaoPorCodUsuario:String(_authUser?.codRep||''),ultimaProrrogacaoPorNomeUsuario:String(_authUser?.nomRep||''),
-      quantidadeProrrogacoes:Number(atual.quantidadeProrrogacoes||0)+1,
-      ultimaAcaoPendencia:'PRORROGADO_72H',ultimaAcaoPendenciaEm:firebase.firestore.FieldValue.serverTimestamp(),historicoPendencia:historico
-    });
-    return'prorrogado';
+  await apiV5('/budgets/'+encodeURIComponent(p.id)+'/action',{
+    method:'POST',body:{action:'prorrogar'}
   });
+  return 'prorrogado';
 }
 async function confirmarDecisoesPendencias(){
   if(_pendenciasProcessando)return;
@@ -2518,7 +2408,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.2.3';
+const VOICE_APP_VERSION = '6.2.4';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -3618,8 +3508,8 @@ novoOrcamento = async function() {
 let faturadosPendentes = [];
 async function verificarFaturadosPendentes(){
   if(!_authUser||_authUser.isAdmin||_authUser.catRep==='GER')return false;
-  const snap=await getFbDb().collection('orcamentos').where('status','==','Faturado').get();
-  faturadosPendentes=snap.docs.map(doc=>({id:doc.id,...doc.data()})).filter(o=>{
+  const resp=await apiV5('/budgets?status=Faturado');
+  faturadosPendentes=(await resp.json()).map(item=>({id:item.id,...item.data})).filter(o=>{
     if(o.faturamentoConferido===true||o.faturamentoVinculado!==true)return false;
     const role=classificarUsuarioNoOrcamento(_authUser,o);
     if(!role)return false;
@@ -3667,10 +3557,11 @@ async function conferirFaturadoPendente(id){
 }
 async function adiarFaturadosPendentes(){
   try{
-    const next=firebase.firestore.Timestamp.fromMillis(Date.now()+24*60*60*1000);
     for(const o of faturadosPendentes){
       if(o._papelPendencia.categoria==='bloqueado')continue;
-      await getFbDb().collection('orcamentos').doc(o.id).update({proximaNotificacaoFaturamentoEm:next});
+      await apiV5('/budgets/'+encodeURIComponent(o.id)+'/action',{
+        method:'POST',body:{action:'adiarFaturamento'}
+      });
     }
     document.getElementById('faturados-pendentes-modal').hidden=true;
   }catch(e){document.getElementById('faturados-pendentes-msg').textContent=e.message;}

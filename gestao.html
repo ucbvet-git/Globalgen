@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.0.8</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.0.9</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.0.8</div>
+    <div class="login-version">Gestão GBG · versão 5.0.9</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +191,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.0.8</div>
+    <div class="login-version">Gestão GBG · versão 5.0.9</div>
   </div>
 </div>
 <!-- App -->
@@ -477,14 +477,6 @@ const NFV_SYNC_MAX_PAGINAS=1000;
 const NFV_SYNC_SOBREPOSICAO_DIAS=5;
 const NFV_SYNC_REFERENCIA_INICIAL=Date.parse('2026-09-19T12:00:00-03:00');
 const NFV_SYNC_CONTROLE_DOC='notasFiscaisV2';
-async function buscarRepresentanteSeniorFirebaseG(codRep){
-  const codigo=String(codRep||'').trim();
-  if(!codigo)return null;
-  const snap=await db.collection('representantesSenior').doc(codigo).get();
-  if(snap.exists)return{id:snap.id,...snap.data()};
-  const consulta=await db.collection('representantesSenior').where('codRep','==',codigo).limit(1).get();
-  return consulta.empty?null:{id:consulta.docs[0].id,...consulta.docs[0].data()};
-}
 let _lookupRunning=false;
 function sincronizarOpcoesSupervisorModal(){
   const superior=document.getElementById('f-sup');
@@ -568,75 +560,22 @@ function travarFiltroSupervisor(){
 async function lookupRepresentantes(){
   if(_lookupRunning)return;
   _lookupRunning=true;
-  // Filtrar orçamentos que precisam de lookup:
-  // - Não cancelados
-  // - Ainda não tentados (sem repLookupStatus) ou tentados sem sucesso NÃO marcados como erro
-  // - repLookupStatus='error' → NÃO tentar novamente (evitar loop infinito)
-  const semRep=todosOrc.filter(o=>
-    o.status!=='Cancelado'&&
-    o.repLookupStatus!=='error'&&
-    o.codRep!=='000'&& // 000 = não identificado, não tentar novamente
-    (
-      (o.clienteDoc&&!o.codRep)||
-      (o.codRep&&(!o.nomeRep||o.nomeRep.startsWith('Representante ')))||
-      (o.codRep&&o.codSup===undefined&&o.codSup!=='0000') // tem rep mas sem supervisor
-    )
-  );
-  if(!semRep.length){_lookupRunning=false;return;}
-  console.log(`🔍 Buscando representante para ${semRep.length} orçamento(s)...`);
-  for(const orc of semRep){
-    try{
-      let codRep=orc.codRep||'',codCli=orc.codCli||'';
-      if(!codRep){
-        // Caso 1: buscar codRep via SimularPedidos
-        const cnpj=(orc.clienteDoc||'').replace(/\D/g,'');
-        if(!cnpj){continue;}
-        const simResp=await apiV5G('/orders/simulate',{
-          method:'POST',body:{customerDocument:cnpj,paymentCondition:15,products:[]}
+  try{
+    const semRep=todosOrc.filter(o=>o.clienteDoc&&o.repLookupStatus!=='error'&&
+      (!o.codRep||!o.nomeRep||o.codSup===undefined));
+    for(const o of semRep){
+      try{
+        const resp=await apiV5G('/management/budgets/'+encodeURIComponent(o.id)+'/resolve-representative',{
+          method:'POST',body:{}
         });
-        const simXml=await simResp.text();
-        if(!simXml.includes('Processado com sucesso'))continue;
-        const crM=simXml.match(/<codRep>(\d+)<\/codRep>/);
-        const ccM=simXml.match(/<codCli>(\d+)<\/codCli>/);
-        if(!crM||crM[1]==='0'){
-        const motivo=simXml.match(/<retorno>([^<]+)/)?.[1]||'codRep não retornado';
-        console.warn(`⚠️ ${orc.numPedido||orc.id} (doc:${cnpj}): ${motivo} | tipoRetorno:${simXml.match(/<tipoRetorno>([^<]+)/)?.[1]||'?'}`);
-        try{await db.collection('orcamentos').doc(orc.id).update({repLookupStatus:'error',repLookupErro:motivo});orc.repLookupStatus='error';}catch(_){}
-        continue;
-      }
-        codRep=crM[1];codCli=ccM?ccM[1]:'';
-      }
-      // Buscar cadastro sincronizado do representante no Firebase.
-      const repInfo=await buscarRepresentanteSeniorFirebaseG(codRep);
-      if(!repInfo)throw new Error(`Representante ${codRep} ainda não foi sincronizado no Firebase.`);
-      const nomeRep=repInfo.nomRep||repInfo.nomeRep||`Representante ${codRep}`;
-      const codSup=String(repInfo.codSup||'0');
-      let nomeSup=repInfo.nomeSup||'Sem supervisor';
-      if(codSup!=='0'){
-        const sup=await buscarRepresentanteSeniorFirebaseG(codSup);
-        if(sup&&(sup.nomRep||sup.nomeRep))nomeSup=sup.nomRep||sup.nomeRep;
-      }
-      // Atualizar Firebase
-      const upd={nomeRep,codSup,nomeSup,codFuncionario:String(repInfo.codFuncionario||''),repLookupStatus:'ok'};
-      if(codRep)upd.codRep=codRep;
-      if(codCli&&codCli!=='0')upd.codCli=codCli;
-      await db.collection('orcamentos').doc(orc.id).update(upd);
-      // Atualizar estado local
-      if(codRep)orc.codRep=codRep;
-      if(codCli&&codCli!=='0')orc.codCli=codCli;
-      orc.nomeRep=nomeRep;orc.codSup=codSup;orc.nomeSup=nomeSup;orc.codFuncionario=upd.codFuncionario;
-      console.log(`✅ ${orc.numPedido||orc.id}: Rep ${nomeRep} (${codRep}) | Sup: ${nomeSup} (${codSup})`);
-      aplicarFiltros(); // atualizar UI a cada orçamento processado
-    }catch(e){
-      console.error(`❌ Erro no lookup de ${orc.numPedido||orc.id}:`,e.message);
-      try{await db.collection('orcamentos').doc(orc.id).update({repLookupStatus:'error',repLookupErro:e.message});orc.repLookupStatus='error';}catch(_){}
+        const rep=await resp.json();
+        Object.assign(o,{codRep:rep.codRep,codCli:rep.codCli,nomeRep:rep.nomeRep,
+          codSup:rep.codSup,nomeSup:rep.nomeSup,codFuncionario:rep.codFuncionario,repLookupStatus:'ok'});
+      }catch(error){console.warn('Representante não atualizado:',error.message);}
     }
-  }
-  _lookupRunning=false;
-  popularFiltroSupervisor();
-  aplicarFiltros(); // garantir renderização final
+    popularFiltroSupervisor();aplicarFiltros();
+  }finally{_lookupRunning=false;}
 }
-
 function statusOrcamentoG(o){
   const status=o.status||'Aberto';
   if(status!=='Aberto')return status;
@@ -653,17 +592,10 @@ function calcularSubstatusOrcamentoG(o){
   return'No prazo';
 }
 async function sincronizarSubstatusOrcamentosG(orcamentos){
-  const alterados=(orcamentos||[]).filter(o=>(o.status||'Aberto')==='Aberto').map(o=>({o,substatus:calcularSubstatusOrcamentoG(o)})).filter(x=>x.o.substatus!==x.substatus);
-  if(!alterados.length)return 0;
-  alterados.forEach(x=>{x.o.substatus=x.substatus;});
-  try{
-    for(let inicio=0;inicio<alterados.length;inicio+=400){
-      const batch=db.batch();
-      alterados.slice(inicio,inicio+400).forEach(x=>batch.update(db.collection('orcamentos').doc(x.o.id),{substatus:x.substatus,substatusAtualizadoEm:firebase.firestore.FieldValue.serverTimestamp()}));
-      await batch.commit();
-    }
-  }catch(e){console.warn('Não foi possível gravar todas as subclassificações dos orçamentos:',e.message);}
-  return alterados.length;
+  (orcamentos||[]).forEach(o=>{
+    if((o.status||'Aberto')==='Aberto')o.substatus=calcularSubstatusOrcamentoG(o);
+  });
+  return 0;
 }
 function statusBadgeG(s){
   const m={'Aberto':{bg:'#FFF3C4',c:'#7A5C00',t:'⏳ Aberto'},'Vencido':{bg:'#FFE0E0',c:'#A61B1B',t:'⌛ Vencido'},'Prorrogado':{bg:'#FFF0D6',c:'#9A5700',t:'↻ Prorrogado'},'Faturado':{bg:'#D9F2FF',c:'#075985',t:'🧾 Faturado'},'Enviado ao ERP':{bg:'#DFEAFE',c:'#1E40AF',t:'📤 Enviado ao ERP'},'No prazo':{bg:'#FFF3C4',c:'#7A5C00',t:'⏳ No prazo'},'Excluído':{bg:'#FED7D7',c:'#9B1C1C',t:'❌ Excluído'},'Finalizado':{bg:'#C6F6D5',c:'#1A6B35',t:'✅ Finalizado'},'Cancelado':{bg:'#FED7D7',c:'#9B1C1C',t:'❌ Cancelado'}}[s]||{bg:'#E2E8F0',c:'#4A5568',t:s};
@@ -778,15 +710,15 @@ async function iniciarApp(){
 async function carregarOrcamentos(){
   document.getElementById('lista').innerHTML='<div class="loading">⏳ Carregando orçamentos...</div>';
   try{
-    const snap=await db.collection('orcamentos').orderBy('ts','desc').get();
-    todosOrc=snap.docs.map(d=>({id:d.id,...d.data(),
-      _tsMs:d.data().ts?.toMillis()||0,
-      _data:d.data().ts?.toDate()||new Date(0)
+    const resp=await apiV5G('/budgets');
+    todosOrc=(await resp.json()).map(item=>({id:item.id,...item.data,
+      _tsMs:timestampMsG(item.data.ts),
+      _data:new Date(timestampMsG(item.data.ts)||0)
     }));
     aplicarFiltros();
     popularFiltroSupervisor();
     lookupRepresentantes(); // background: busca rep para orçamentos sem representante
-  }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ ${e.message}<br><small>Verifique as regras do Firestore.</small></div>`;}
+  }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ ${e.message}<br><small>Verifique a conexão com a API.</small></div>`;}
 }
 
 // ── FILTROS ──
@@ -815,9 +747,10 @@ function aplicarFiltros(){
     const st=document.getElementById('f-status').value;
     if(st==='AbertoTodos'&&(o.status||'Aberto')!=='Aberto')return false;
     if(st&&st!=='AbertoTodos'&&statusOrcamentoG(o)!==st)return false;
-    // Restrição de acesso SUP: filtra por codSup === codRep do usuário logado
+    // A API já limita a leitura; este filtro organiza a exibição do supervisor.
     if(_gAuthUser&&!_gAuthUser.isAdmin&&_gAuthUser.catRep==='SUP'){
-      if((o.codSup||'0')!==(_gAuthUser.codRep||''))return false;
+      const codigo=String(_gAuthUser.codRep||'').replace(/^0+(?=\d)/,'');
+      if(!['codSup','codUsuario','codFuncionario'].some(c=>String(o[c]||'').replace(/^0+(?=\d)/,'')===codigo))return false;
     } else {
       const sup=document.getElementById('f-sup').value;
       if(sup&&(o.nomeSup||'Sem supervisor')!==sup)return false;
