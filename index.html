@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.2.2</title>
+<title>GLOBALGEN — Orçamento v6.2.3</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -422,7 +422,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.2</div>
+    <div class="app-version">Orçamento GBG · versão 6.2.3</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -436,7 +436,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.2</div>
+    <div class="app-version">Orçamento GBG · versão 6.2.3</div>
   </div>
 </div>
 <div class="no-print">
@@ -471,6 +471,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="share-icon">✅</div><div class="share-title" id="share-title">PDF pronto</div>
     <div class="share-text" id="share-text">Escolha como deseja utilizar o arquivo.</div>
     <button class="share-main" id="share-button" onclick="compartilharPDFGerado()">Compartilhar PDF</button>
+    <button class="share-alt" onclick="copiarMensagemPDF()">Copiar mensagem para o WhatsApp</button>
     <button class="share-download" id="download-button" onclick="baixarPDFGerado()">Baixar PDF</button>
     <button class="share-alt" id="open-button" onclick="abrirPDFGerado()">Abrir PDF em outra aba</button>
     <button class="share-close" onclick="fecharCompartilhamento()">Fechar</button>
@@ -522,56 +523,56 @@ async function carregarTabelaPrecos(versao = null){
 // H=ml por animal | vol=ml ou unidades por frasco/pack | bc: always/dbl/max/alwmax
 // ECG→variante eCGen/Ecegon | IND→variante Induscio 20/50ml | MAX→variante Maxrelin 20/50ml
 const KITS={
-  C1:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One Novilhas',sub:'1ml eCG · 0,3ml Cipion',label:'GlobalBeefSync',prods:[
+  C1:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One Novilhas',sub:'1ml eCG · 0,3ml Cipion',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1,vol:25,bc:'always'},{c:'CM10A002',H:0.3,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A012',H:1,vol:10,bc:'always'},
     {c:'CM10A003',H:1,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C2:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One Novilhas',sub:'1,5ml eCG · 0,5ml Cipion',label:'GlobalBeefSync',prods:[
+  C2:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One Novilhas',sub:'1,5ml eCG · 0,5ml Cipion',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A012',H:1,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C3:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One 0,5g',sub:'1 uso',label:'GlobalBeefSync',prods:[
+  C3:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro One 0,5g',sub:'1 uso',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A011',H:1,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C4:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'1 uso',label:'GlobalBeefSync',prods:[
+  C4:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'1 uso',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A010',H:1,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C5:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'2 usos',label:'GlobalBeefSync',prods:[
+  C5:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'2 usos',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A010',H:0.5,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C6:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'3 usos',label:'GlobalBeefSync',prods:[
+  C6:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Neo 1g',sub:'3 usos',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A010',H:1/3,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  C7:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Sync 2g',sub:'4 usos',label:'GlobalBeefSync',prods:[
+  C7:{tipo:'corte',hasEcg:true,hasInd:true,nome:'Repro Sync 2g',sub:'4 usos',label:'Gado de Corte',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A009',H:0.25,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  L1:{tipo:'leite',hasEcg:false,hasInd:true,hasMaxrelin:true,nome:'Leiteiras Alta Produção',sub:'4 manejos',label:'GlobalDairySync',prods:[
+  L1:{tipo:'leite',hasEcg:false,hasInd:true,hasMaxrelin:true,nome:'Leiteiras Alta Produção',sub:'4 manejos',label:'Gado de Leite',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'CM10A002',H:0.5,vol:10,bc:'always'},{c:'IND',H:4,bc:'always'},
     {c:'CM10A009',H:0.5,vol:10,bc:'always'},{c:'MAX',H:1,bc:'alwmax'}]},
-  L2:{tipo:'leite',hasEcg:true,hasInd:true,nome:'Vacas Cruzadas',sub:'3 manejos',label:'GlobalDairySync',prods:[
+  L2:{tipo:'leite',hasEcg:true,hasInd:true,nome:'Vacas Cruzadas',sub:'3 manejos',label:'Gado de Leite',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1.5,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A010',H:0.5,vol:10,bc:'always'},
     {c:'CM10A003',H:1.5,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  L3:{tipo:'leite',hasEcg:true,hasInd:true,nome:'Repro One Novilhas - Zebuínas',sub:'Zebuínas',label:'GlobalDairySync',prods:[
+  L3:{tipo:'leite',hasEcg:true,hasInd:true,nome:'Repro One Novilhas - Zebuínas',sub:'Zebuínas',label:'Gado de Leite',prods:[
     {c:'CM10A008',H:2,vol:100,bc:'always'},
     {c:'ECG',H:1,vol:25,bc:'always'},{c:'CM10A002',H:0.5,vol:10,bc:'always'},
     {c:'IND',H:2,bc:'dbl'},{c:'CM10A012',H:1,vol:10,bc:'always'},
     {c:'CM10A003',H:1,vol:25,bc:'always'},{c:'MAX',H:1,bc:'max'}]},
-  L4:{tipo:'leite',hasEcg:false,hasInd:true,hasMaxrelin:true,nome:'Repro One Novilhas - Taurinas',sub:'Taurinas',label:'GlobalDairySync',prods:[
+  L4:{tipo:'leite',hasEcg:false,hasInd:true,hasMaxrelin:true,nome:'Repro One Novilhas - Taurinas',sub:'Taurinas',label:'Gado de Leite',prods:[
     {c:'IND',H:4,bc:'always'},
     {c:'CM10A012',H:1,vol:10,bc:'always'},{c:'MAX',H:1.5,bc:'alwmax'}]}
 };
@@ -722,6 +723,8 @@ function hoje(){return new Date().toLocaleDateString('pt-BR')}
 function gerarNum(){const d=new Date();return`ORC-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}-${String(Math.floor(Math.random()*899)+100)}`}
 let _num=gerarNum();
 function getKit(){return KITS[S.kit]||null}
+function nomeKit(k){return k?.nome?`${k.nome}${k.sub&&!k.nome.includes(k.sub)?' · '+k.sub:''}`:''}
+function rotuloParcela(pg){return `Valor da Parcela (${quantidadeParcelasPagamento(pg)}x)`}
 function getPagamentoSelecionado(){
   return PAGS.find(p=>p.id===S.pag)||(S.pag?{id:S.pag,codCpg:S.pag,lbl:S._pagamentoSalvo||`Condição ${S.pag}`,par:'',qtdParcelas:S._pagamentoQtdParSalvo}:null);
 }
@@ -974,8 +977,8 @@ function renderStep(){
     </div>`;
   }
   if(sid==='tipo') return cards([
-    {id:'corte',ic:'🐂',nm:'Gado de Corte',ds:'Protocolos GlobalBeefSync'},
-    {id:'leite',ic:'🐄',nm:'Gado de Leite',ds:'Protocolos GlobalDairySync'}
+    {id:'corte',ic:'🐂',nm:'Gado de Corte',ds:'Protocolos para gado de corte'},
+    {id:'leite',ic:'🐄',nm:'Gado de Leite',ds:'Protocolos para gado de leite'}
   ],S.tipo,'setTipo');
   if(sid==='kit'){
     if(S.tipo==='leite'){
@@ -1132,9 +1135,9 @@ function renderStep(){
     return`${S.clienteNome||S.clienteDoc?`<div class="res-sec"><div class="res-shdr">Cliente</div>
       ${(S.clienteNome||(S._seniorLookup?.codCli&&S._seniorLookup.codCli!=='0'))?`<div class="res-row"><span class="res-rl">Nome / Razão Social</span><span class="res-rv" id="res-cli-nome">${esc(nomeClienteExibicao())}</span></div>`:''}
       ${S.clienteDoc?`<div class="res-row"><span class="res-rl">${S.clienteTipo}</span><span class="res-rv">${esc(formatDoc(S.clienteDoc))}</span></div>`:''}
-    </div>`:''}<div class="res-kit">
+    </div>`:''}<div class="res-sec"><div class="res-row"><span class="res-rl">Nº do orçamento</span><span class="res-rv" id="res-num-pedido">${esc(S._numPedido||'Atribuído ao salvar')}</span></div></div><div class="res-kit">
       <div class="res-kit-tipo" style="display:flex;justify-content:space-between;align-items:center"><span>${k.tipo==='corte'?'GADO DE CORTE':'GADO DE LEITE'}</span>${S._statusOrc?statusBadge(statusVisualEstadoAtual()):''}</div>
-      <div class="res-kit-name">${k.label} · ${k.nome}</div>
+      <div class="res-kit-name">${nomeKit(k)}</div>
       ${tags.length?`<div class="res-tags">${tags.map(t=>`<div class="res-tag">${t}</div>`).join('')}</div>`:''}
     </div>
     <!-- Protocolos -->
@@ -1186,7 +1189,7 @@ function renderStep(){
     <div class="res-total-box"><span class="res-tl">Total Final</span><span class="res-tv">${fmt(T.totalFinal)}</span></div>
     <div class="res-av-box"><span class="av-l">À Vista (−3%)</span><span class="av-v">${fmt(T.aVista)}</span></div>
     <div class="res-sec" style="margin-bottom:8px">
-      <div class="res-row"><span class="res-rl">Valor da Parcela</span><span class="res-rv">${fmt(valorParcelaPagamento(pg,T))}</span></div>
+      <div class="res-row"><span class="res-rl">${rotuloParcela(pg)}</span><span class="res-rv">${fmt(valorParcelaPagamento(pg,T))}</span></div>
       <div class="res-row"><span class="res-rl">Valor por Protocolo</span><span class="res-rv">${fmt(S.prot>0?(T.valorProtocolo-T.bonif.total)/S.prot:0)}</span></div>
     </div>
     <!-- Observações -->
@@ -1394,7 +1397,7 @@ function buildPrint(){
     </div>
   </div>
   <div class="p-kit-bar">
-    <div class="p-kit-name">${k.label} · ${k.nome}${k.sub?' · '+k.sub:''}</div>
+    <div class="p-kit-name">${nomeKit(k)}</div>
     ${tags.length?`<div class="p-kit-tags">${tags.map(t=>`<div class="p-kit-tag">${t}</div>`).join('')}</div>`:''}
   </div>
   ${S.clienteNome||S.clienteDoc?`<div class="p-conds" style="margin-top:0">
@@ -1423,7 +1426,7 @@ function buildPrint(){
       <div class="ptr big"><span>Total Final</span><span class="p-total-final">${fmt(T.totalFinal)}</span></div>
       <div class="ptr av"><span>À Vista (−3%)</span><span>${fmt(T.aVista)}</span></div>
       <div class="ptr mt"><span>Prazo de Pagamento</span><span>${pg?pg.lbl:'—'}</span></div>
-      <div class="ptr mt"><span>Valor da Parcela</span><span>${fmt(valorParcelaPagamento(pg,T))}</span></div>
+      <div class="ptr mt"><span>${rotuloParcela(pg)}</span><span>${fmt(valorParcelaPagamento(pg,T))}</span></div>
       <div class="ptr mt"><span>Valor por Protocolo</span><span>${fmt(S.prot>0?(T.valorProtocolo-T.bonif.total)/S.prot:0)}</span></div>
     </div>
   </div>
@@ -1455,8 +1458,8 @@ function textoWhatsApp(){
   return[
     'Olá! Segue o orçamento GLOBALGEN em PDF.',
     '',
-    `Orçamento: ${_num}`,
-    `Protocolo: ${k.label} · ${k.nome}`,
+    `Orçamento: ${S._numPedido||_num}`,
+    `Protocolo: ${nomeKit(k)}`,
     `Quantidade: ${S.prot} animais`,
     `Total final: ${fmt(T.totalFinal)}`,
     `Pagamento: ${pg?pg.lbl:'a combinar'}`,
@@ -1503,9 +1506,17 @@ function mostrarCompartilhamento(arquivo,blob,nome){
   if(botao)botao.hidden=!pode;
   if(abrir)abrir.textContent=nativo?'Abrir PDF':'Abrir PDF em outra aba';
   atualizarMensagemCompartilhamento('PDF pronto',pode
-    ?(nativo?'Escolha Compartilhar para abrir o menu de aplicativos do Android. Você também pode baixar ou abrir o arquivo.':'Escolha Compartilhar para enviar o PDF pelo WhatsApp, e-mail ou outro aplicativo. Você também pode baixar ou abrir o arquivo.')
+    ?(nativo?'Escolha Compartilhar para abrir o menu de aplicativos do Android. Você também pode copiar a mensagem, baixar ou abrir o arquivo.':'Escolha Compartilhar para enviar o PDF pelo WhatsApp, e-mail ou outro aplicativo. Você também pode copiar a mensagem, baixar ou abrir o arquivo.')
     :'Este navegador não permite compartilhar o PDF diretamente. Use Baixar PDF ou abra o arquivo em outra aba para salvá-lo e enviá-lo.');
   document.getElementById('share-modal').hidden=false;
+}
+async function copiarMensagemPDF(){
+  try{await copiarTextoCompartilhamento(textoWhatsApp());atualizarMensagemCompartilhamento('Mensagem copiada','Compartilhe o PDF e cole a mensagem na conversa do WhatsApp, se ela não aparecer automaticamente.');}
+  catch(e){atualizarMensagemCompartilhamento('Não foi possível copiar','Selecione e copie o texto da mensagem manualmente.');}
+}
+async function copiarTextoCompartilhamento(valor){
+  if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(valor);return;}
+  const campo=document.createElement('textarea');campo.value=valor;campo.style.position='fixed';campo.style.opacity='0';document.body.appendChild(campo);campo.select();const copiado=document.execCommand('copy');campo.remove();if(!copiado)throw new Error('Falha ao copiar');
 }
 function fecharCompartilhamento(){
   document.getElementById('share-modal').hidden=true;
@@ -1901,7 +1912,7 @@ async function saveOrcamento(){
       clienteNomeCompleto:nomeClienteExibicao(),
       tipo:S.tipo,
       kitId:S.kit,
-      kitNome:k?`${k.label} · ${k.nome}`:'',
+      kitNome:k?`${nomeKit(k)}`:'',
       kitMod:S.mod||'nenhum',
       tags:tags.join(' · '),
       nProt:S.prot,
@@ -1923,7 +1934,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.2.2';
+       doc.versaoOrcamento='6.2.3';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
        doc.protocolosV6=v6Protocols().map(p=>({...p}));
@@ -1937,6 +1948,7 @@ async function saveOrcamento(){
       S._statusOrc='Aberto';S._substatusOrc=doc.substatus;
       const response=await apiV5('/budgets/save',{method:'POST',body:{sessionId:S._sessionId,document:doc}});
       const saved=await response.json();S._numPedido=saved.numPedido;
+      const numeroNoResumo=document.getElementById('res-num-pedido');if(numeroNoResumo)numeroNoResumo.textContent=S._numPedido;
       console.log('✅ Orçamento salvo:',S._numPedido,'sessionId:',S._sessionId);
       return S._numPedido;
     };
@@ -2506,7 +2518,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.2.2';
+const VOICE_APP_VERSION = '6.2.3';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -2922,7 +2934,7 @@ function renderPendenciasVoz() {
   if (faltam.includes('tipo')) partes.push(selecaoRapida('tipo', 'Tipo de gado', [['corte','Corte'],['leite','Leite']], S.tipo));
   if (faltam.includes('kit')) partes.push(selecaoRapida('kit', 'Kit', Object.entries(KITS)
     .filter(([, k]) => !S.tipo || k.tipo === S.tipo)
-    .map(([id,k]) => [id, `${k.nome} · ${k.label}`]), S.kit));
+    .map(([id,k]) => [id, `${nomeKit(k)}`]), S.kit));
   if (faltam.includes('varEcg')) partes.push(selecaoRapida('varEcg', 'eCG do kit', [['ecegon','Ecegon'],['ecgen','eCGen']], S.varEcg));
   if (faltam.includes('varInd')) partes.push(selecaoRapida('varInd', 'Induscio do kit', [['20ml','20 ml'],['50ml','50 ml']], S.varInd));
   if (faltam.includes('varMax')) partes.push(selecaoRapida('varMax', 'Maxrelin do kit', [['20ml','20 ml'],['50ml','50 ml']], S.varMax));
@@ -3054,7 +3066,7 @@ function removerProtocoloV6(index) {
 }
 function v6ProtocolLabel(p) {
   const k=KITS[p.kit];
-  return `${k?.label||p.kit} · ${k?.nome||''} · ${p.prot} protocolos${p.tipo==='corte'?' · '+(p.mod==='maxrelin'?'Padrão +Maxrelin':p.mod==='bestchoice'?'Best Choice':'Padrão'):''}${k?.hasEcg?' · '+(p.varEcg==='ecegon'?'Ecegon':'eCGen'):''}`;
+  return `${nomeKit(k)||p.kit} · ${p.prot} protocolos${p.tipo==='corte'?' · '+(p.mod==='maxrelin'?'Padrão +Maxrelin':p.mod==='bestchoice'?'Best Choice':'Padrão'):''}${k?.hasEcg?' · '+(p.varEcg==='ecegon'?'Ecegon':'eCGen'):''}`;
 }
 function v6BonifGlobal(prods,budget) {
   const elig=prods.filter(p=>!BONIF_EXCLUIDOS.includes(p.code)&&p.qty>0&&p.preco>0);
@@ -3210,7 +3222,7 @@ renderStep=function(){
       <div class="res-sec"><div class="res-shdr">Totais</div><div class="res-row"><span class="res-rl">Total Pedido</span><span class="res-rv">${fmt(T.totalPedido)}</span></div><div class="res-row"><span class="res-rl">🎁 (−) Bonificação</span><span class="res-rv neg">− ${fmt(T.totalBonif)}</span></div></div>
       <div class="res-total-box"><span class="res-tl">Total Final</span><span class="res-tv">${fmt(T.totalFinal)}</span></div>
       <div class="res-av-box"><span class="av-l">À Vista (−3%)</span><span class="av-v">${fmt(T.aVista)}</span></div>
-      <div class="res-sec"><div class="res-row"><span class="res-rl">Valor da Parcela</span><span class="res-rv">${fmt(valorParcelaPagamento(pg,T))}</span></div></div>`;
+      <div class="res-sec"><div class="res-row"><span class="res-rl">${rotuloParcela(pg)}</span><span class="res-rv">${fmt(valorParcelaPagamento(pg,T))}</span></div></div>`;
     return original.slice(0,begin)+sum+original.slice(end);
   }
   if(sid==='pag'){
@@ -3293,13 +3305,13 @@ buildPrint=function(){
     <div class="ptr big"><span>Total Final</span><span class="p-total-final">${fmt(T.totalFinal)}</span></div>
     <div class="ptr av"><span>À Vista (−3%)</span><span>${fmt(T.aVista)}</span></div>
     <div class="ptr mt"><span>Prazo de Pagamento</span><span>${pg?esc(pg.lbl):'—'}</span></div>
-    <div class="ptr mt"><span>Valor da Parcela</span><span>${fmt(valorParcelaPagamento(pg,T))}</span></div></div></div>`;
+    <div class="ptr mt"><span>${rotuloParcela(pg)}</span><span>${fmt(valorParcelaPagamento(pg,T))}</span></div></div></div>`;
   root.innerHTML=original.slice(0,begin)+kits+original.slice(end);
   const logo=document.getElementById('print-logo');if(logo)logo.src=GLOBALGEN_LOGO;
 };
 textoWhatsApp=function(){
   const T=calcOrder(),pg=getPagamentoSelecionado();if(!T)return v6OldWhatsApp();
-  return ['Olá! Segue o orçamento GLOBALGEN em PDF.','',`Orçamento: ${_num}`,
+  return ['Olá! Segue o orçamento GLOBALGEN em PDF.','',`Orçamento: ${S._numPedido||_num}`,
     ...T.protocols.map(p=>`Protocolo: ${v6ProtocolLabel(p)}`),
     `Total final: ${fmt(T.totalFinal)}`,`Pagamento: ${pg?pg.lbl:'a combinar'}`,'','O orçamento segue anexado a esta mensagem.'].join('\n');
 };

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.0.7</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.0.8</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.0.7</div>
+    <div class="login-version">Gestão GBG · versão 5.0.8</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +191,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.0.7</div>
+    <div class="login-version">Gestão GBG · versão 5.0.8</div>
   </div>
 </div>
 <!-- App -->
@@ -302,8 +302,9 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
 <div class="share-modal no-print" id="share-modal-gestao" hidden>
   <div class="share-card">
     <div class="share-icon">✅</div><div class="share-title">PDF gerado</div>
-    <div class="share-text">Toque no botão abaixo e escolha o WhatsApp. O orçamento já seguirá anexado.</div>
+    <div class="share-text">Toque no botão abaixo e escolha o WhatsApp. O PDF será anexado. Se a mensagem não aparecer no WhatsApp, use Copiar mensagem e cole na conversa.</div>
     <button class="share-main" onclick="compartilharPDFGestao()">Compartilhar PDF</button>
+    <button class="share-alt" onclick="copiarMensagemPDFGestao()">Copiar mensagem para o WhatsApp</button>
     <button class="share-alt" onclick="baixarPDFGestao()">Somente baixar o PDF</button>
   </div>
 </div>
@@ -845,13 +846,13 @@ function limparFiltros(){
 function renderStats(){
   const total=filtrados.reduce((s,o)=>s+(o.totalFinal||0),0);
   const bonif=filtrados.reduce((s,o)=>s+(o.totalBonif||0),0);
-  const kits={};filtrados.forEach(o=>{kits[o.kitNome||'?']=(kits[o.kitNome||'?']||0)+1;});
+  const kits={};filtrados.forEach(o=>{kits[resumoKitsG(o)]=(kits[resumoKitsG(o)]||0)+1;});
   const topKit=Object.entries(kits).sort((a,b)=>b[1]-a[1])[0];
   document.getElementById('stats').innerHTML=`
     <div class="stat"><div class="stat-val">${filtrados.length}</div><div class="stat-lbl">Orçamentos</div></div>
     <div class="stat"><div class="stat-val">${fmt(total)}</div><div class="stat-lbl">Valor Total Final</div></div>
     <div class="stat"><div class="stat-val">${fmt(bonif)}</div><div class="stat-lbl">Total Bonificado</div></div>
-    <div class="stat"><div class="stat-val">${topKit?topKit[0].split('·')[1]?.trim()||topKit[0]:'—'}</div><div class="stat-lbl">Kit mais orçado</div></div>`;
+    <div class="stat"><div class="stat-val">${topKit?escPdfG(topKit[0]):'—'}</div><div class="stat-lbl">Kit mais orçado</div></div>`;
 }
 
 // ── LISTA ──
@@ -872,7 +873,7 @@ function renderLista(){
         </div>
       </div>
       <div class="card-mid">
-        <span class="badge">${o.kitNome||''}</span>
+        <span class="badge">${escPdfG(resumoKitsG(o))}</span>
         ${o.tags?`<span class="badge mod">${o.tags}</span>`:''}
         <span class="badge">${o.nProt||0} protocolos</span>
         <span class="badge">${o.preco==='campanha'?'Campanha':'Normal'}</span>
@@ -917,9 +918,9 @@ function abrirModal(idx){
     </div>`:''}
     <div class="m-sec">
       <div class="m-sec-title">Protocolo</div>
-      <div class="m-row"><span class="m-rl">Kit</span><span class="m-rv">${o.kitNome||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Kit</span><span class="m-rv">${escPdfG(resumoKitsG(o))}</span></div>
       ${o.tags?`<div class="m-row"><span class="m-rl">Variação</span><span class="m-rv">${o.tags}</span></div>`:''}
-      <div class="m-row"><span class="m-rl">Nº Protocolos</span><span class="m-rv">${o.nProt||0} animais</span></div>
+      <div class="m-row"><span class="m-rl">Nº Protocolos</span><span class="m-rv">${o.totalProtocolosV6||o.nProt||0} animais</span></div>
       ${o.vacinas?`<div class="m-row"><span class="m-rl">Vacinas</span><span class="m-rv">Vac-Cherry ${o.vacinas.frasco} · ${o.vacinas.qtdFrascos}${String(o.vacinas.qtdFrascos).toLowerCase().includes('frasco')?'':' frascos'}</span></div>`:''}
     </div>
     ${prods.length?`<div class="m-sec"><div class="m-sec-title">Produtos do Kit</div>
@@ -947,7 +948,7 @@ function abrirModal(idx){
       <div class="m-row" style="font-size:15px"><span class="m-rl" style="font-weight:700">Total Final</span><span class="m-rv" style="color:var(--pr);font-size:16px;font-weight:800">${fmt(o.totalFinal)}</span></div>
       <div class="m-row"><span class="m-rl">À Vista (−3%)</span><span class="m-rv pos">${fmt(o.aVista)}</span></div>
       <div class="m-row"><span class="m-rl">Prazo de Pagamento</span><span class="m-rv">${o.pagamento||'—'}</span></div>
-      <div class="m-row"><span class="m-rl">Valor da Parcela</span><span class="m-rv">${fmt(o.valorParcela)}</span></div>
+      <div class="m-row"><span class="m-rl">${rotuloParcelaG(o)}</span><span class="m-rv">${fmt(o.valorParcela)}</span></div>
       <div class="m-row"><span class="m-rl">Valor por Protocolo</span><span class="m-rv">${fmt(o.valorPorProt)}</span></div>
     </div>
     ${o.obs?`<div class="m-sec"><div class="m-sec-title">Observações</div><div style="font-size:13px;line-height:1.6">${o.obs}</div></div>`:''}
@@ -974,17 +975,40 @@ function fecharModal(){document.getElementById('overlay').classList.remove('on')
 function escPdfG(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function dataArquivoPdfG(){const d=new Date();return`${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`}
 const PDF_G_KITS={
-  C1:['GlobalBeefSync','Repro One Novilhas',true],C2:['GlobalBeefSync','Repro One Novilhas',true],
-  C3:['GlobalBeefSync','Repro One 0,5g',true],C4:['GlobalBeefSync','Repro Neo 1g',true],
-  C5:['GlobalBeefSync','Repro Neo 1g',true],C6:['GlobalBeefSync','Repro Neo 1g',true],
-  C7:['GlobalBeefSync','Repro Sync 2g',true],L1:['GlobalDairySync','Leiteiras Alta Produção',false],
-  L2:['GlobalDairySync','Vacas Cruzadas',true],L3:['GlobalDairySync','Repro One Novilhas - Zebuínas',true],
-  L4:['GlobalDairySync','Repro One Novilhas - Taurinas',false]
+  C1:['Repro One Novilhas','1ml eCG · 0,3ml Cipion',true],C2:['Repro One Novilhas','1,5ml eCG · 0,5ml Cipion',true],
+  C3:['Repro One 0,5g','1 uso',true],C4:['Repro Neo 1g','1 uso',true],
+  C5:['Repro Neo 1g','2 usos',true],C6:['Repro Neo 1g','3 usos',true],
+  C7:['Repro Sync 2g','4 usos',true],L1:['Leiteiras Alta Produção','4 manejos',false],
+  L2:['Vacas Cruzadas','3 manejos',true],L3:['Repro One Novilhas - Zebuínas','Zebuínas',true],
+  L4:['Repro One Novilhas - Taurinas','Taurinas',false]
 };
-function rotuloProtocoloPdfG(p){
-  const k=PDF_G_KITS[p.kit]||['',p.kit||'—',false];
-  return `${k[0]} · ${k[1]} · ${p.prot} protocolos${p.tipo==='corte'?' · '+(p.mod==='maxrelin'?'Padrão +Maxrelin':p.mod==='bestchoice'?'Best Choice':'Padrão'):''}${k[2]?' · '+(p.varEcg==='ecegon'?'Ecegon':'eCGen'):''}`;
+function nomeKitPdfG(id){
+  const k=PDF_G_KITS[id];if(!k)return '';
+  return k[0]+(k[1]&&!k[0].includes(k[1])?' · '+k[1]:'');
 }
+function nomeKitSalvoG(o){
+  if(o.kitId&&PDF_G_KITS[o.kitId])return nomeKitPdfG(o.kitId);
+  return String(o.kitNome||'').replace(/^(?:GlobalBeefSync|GlobalDairySync)\s*·\s*/i,'').trim()||'—';
+}
+function resumoKitsG(o){
+  const protocolos=Array.isArray(o.protocolosV6)?o.protocolosV6:[];
+  if(!protocolos.length)return nomeKitSalvoG(o);
+  const nomes=[...new Set(protocolos.map(p=>nomeKitPdfG(p.kit)||p.kit).filter(Boolean))];
+  return nomes.join(' + ')||nomeKitSalvoG(o);
+}
+function rotuloProtocoloPdfG(p){
+  const k=PDF_G_KITS[p.kit];
+  return `${nomeKitPdfG(p.kit)||p.kit||'—'} · ${p.prot} protocolos${p.tipo==='corte'?' · '+(p.mod==='maxrelin'?'Padrão +Maxrelin':p.mod==='bestchoice'?'Best Choice':'Padrão'):''}${k?.[2]?' · '+(p.varEcg==='ecegon'?'Ecegon':'eCGen'):''}`;
+}
+function qtdParcelasG(o){
+  const salvo=Math.trunc(Number(o.pagamentoQtdPar));if(salvo>0)return salvo;
+  const condicao=String(o.pagamento||'');
+  const vezes=condicao.match(/(?:^|\s)([1-9]\d*)\s*x\b/i);if(vezes)return Number(vezes[1]);
+  if(/\bDIAS?\b/i.test(condicao)&&/^\s*\d+(?:\s*\/\s*\d+)*\s*DIAS?\s*$/i.test(condicao))return condicao.split('/').length;
+  if(/À\s*VISTA/i.test(condicao))return 1;
+  return {15:1,53:2,45:3,54:4,124:5}[String(o.pagamentoCodCpg||'')]||null;
+}
+function rotuloParcelaG(o){const qtd=qtdParcelasG(o);return `Valor da Parcela${qtd?` (${qtd}x)`:''}`}
 function tabelaItensPdfG(rows){
   return `<table class="p-items-final"><colgroup><col style="width:11%"><col style="width:29%"><col style="width:7%"><col style="width:7%"><col style="width:14%"><col style="width:16%"><col style="width:16%"></colgroup><thead><tr><th>Código</th><th>Produto</th><th class="c">Venda</th><th class="c">Bonif.</th><th class="r">R$ unit.</th><th class="r">R$ venda</th><th class="r">R$ Bonif.</th></tr></thead><tbody>
     ${rows.map((p,i)=>`<tr class="p-prod-row${i%2?' alt':''}" data-prod-code="${escPdfG(p.code)}"><td>${escPdfG(p.code)}</td><td class="nm">${escPdfG(p.nome||p.code)}</td><td class="c">${p.saleQty||'—'}</td><td class="c b-col">${p.bonusQty||'—'}</td><td class="r">${fmt(p.salePrice)}</td><td class="r">${p.saleQty?fmt(p.saleQty*p.salePrice):'—'}</td><td class="r b-col">${p.bonusQty?fmt(p.bonusQty*p.salePrice):'—'}</td></tr>`).join('')}</tbody></table>`;
@@ -1033,7 +1057,7 @@ function montarPDFGestao(o){
   const kitBlock=protocols?`<div class="p-kit-bar"><div class="p-kit-name">${protocols.length} protocolo(s) · ${protocols[0].tipo==='corte'?'Gado de Corte':'Gado de Leite'}</div></div>
     <div class="p-sec">Kits e quantidades</div><table><thead><tr><th>Kit e configuração</th><th class="c">Protocolos</th></tr></thead><tbody>
     ${protocols.map(p=>`<tr><td class="nm">${escPdfG(rotuloProtocoloPdfG(p))}</td><td class="c">${Number(p.prot)||0}</td></tr>`).join('')}</tbody></table>`
-    :`<div class="p-kit-bar"><div class="p-kit-name">${escPdfG(o.kitNome||'—')}</div>
+    :`<div class="p-kit-bar"><div class="p-kit-name">${escPdfG(resumoKitsG(o))}</div>
       ${tags.length?`<div class="p-kit-tags">${tags.map(t=>`<div class="p-kit-tag">${escPdfG(t)}</div>`).join('')}</div>`:''}</div>`;
   document.getElementById('print-area').innerHTML=`<div class="pp" id="printpage-gestao">
     <div class="p-hdr"><img class="p-brand-logo" id="print-logo-gestao" alt="GlobalGen reproductive engineering">
@@ -1049,7 +1073,7 @@ function montarPDFGestao(o){
       <div class="ptr big"><span>Total Final</span><span class="p-total-final">${fmt(o.totalFinal)}</span></div>
       <div class="ptr av"><span>À Vista (−3%)</span><span>${fmt(o.aVista)}</span></div>
       <div class="ptr mt"><span>Prazo de Pagamento</span><span>${escPdfG(o.pagamento||'—')}</span></div>
-      <div class="ptr mt"><span>Valor da Parcela</span><span>${fmt(o.valorParcela)}</span></div>
+      <div class="ptr mt"><span>${rotuloParcelaG(o)}</span><span>${fmt(o.valorParcela)}</span></div>
     </div></div><div class="p-clr"></div>
     ${o.obs?`<div class="p-obs"><div class="p-obs-l">Observações</div><div class="p-obs-t">${escPdfG(o.obs)}</div></div>`:''}
     <div class="p-acc">Aceitamos as condições deste pedido. Pedido sujeito a confirmação e aprovação da matriz.</div>
@@ -1070,7 +1094,12 @@ function validarPDFGestao(o,M){
       throw new Error('Os valores dos itens finais não correspondem aos totais do orçamento salvo.');
   }
 }
-function textoWhatsAppGestao(o){return['Olá! Segue o orçamento GLOBALGEN em PDF.','',`Orçamento: ${o.numPedido||'—'}`,`Protocolo: ${o.kitNome||'—'}`,`Quantidade: ${o.nProt||0} animais`,`Total final: ${fmt(o.totalFinal)}`,`Pagamento: ${o.pagamento||'a combinar'}`,'','O orçamento segue anexado a esta mensagem.'].join('\n')}
+function textoWhatsAppGestao(o){
+  const protocolos=Array.isArray(o.protocolosV6)?o.protocolosV6:[];
+  return ['Olá! Segue o orçamento GLOBALGEN em PDF.','',`Orçamento: ${o.numPedido||'—'}`,
+    ...(protocolos.length?protocolos.map(p=>`Protocolo: ${rotuloProtocoloPdfG(p)}`):[`Protocolo: ${nomeKitSalvoG(o)}`,`Quantidade: ${o.nProt||0} animais`]),
+    `Total final: ${fmt(o.totalFinal)}`,`Pagamento: ${o.pagamento||'a combinar'}`,'','O orçamento segue anexado a esta mensagem.'].join('\n');
+}
 function nomeArquivoPDFGestao(o){const numero=String(o.numPedido||'').trim().replace(/[\\/:*?"<>|]/g,'-');return`Orçamento ${numero||'sem-numero'}.pdf`}
 function baixarBlobGestao(blob,nome){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000)}
 function sugerirWhatsAppGestao(o){if(window.confirm('PDF concluído. Deseja abrir o WhatsApp para enviá-lo agora?\n\nO PDF deverá ser anexado à conversa pelo botão de clipe.'))window.open('https://wa.me/?text='+encodeURIComponent(textoWhatsAppGestao(o)),'_blank','noopener,noreferrer')}
@@ -1090,6 +1119,14 @@ function ativarEstiloPDFGestao(){
 }
 let _pdfGestaoFile=null,_pdfGestaoBlob=null,_pdfGestaoNome='',_pdfGestaoOrc=null;
 function mostrarCompartilhamentoPDFGestao(arquivo,blob,nome,o){_pdfGestaoFile=arquivo;_pdfGestaoBlob=blob;_pdfGestaoNome=nome;_pdfGestaoOrc=o;document.getElementById('share-modal-gestao').hidden=false}
+async function copiarMensagemPDFGestao(){
+  if(!_pdfGestaoOrc)return;try{
+    const mensagem=textoWhatsAppGestao(_pdfGestaoOrc);
+    if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(mensagem);
+    else{const campo=document.createElement('textarea');campo.value=mensagem;campo.style.position='fixed';campo.style.opacity='0';document.body.appendChild(campo);campo.select();const copiado=document.execCommand('copy');campo.remove();if(!copiado)throw new Error('Falha ao copiar');}
+    document.querySelector('#share-modal-gestao .share-text').textContent='Mensagem copiada. Compartilhe o PDF e cole a mensagem na conversa do WhatsApp, se ela não aparecer automaticamente.';
+  }catch(e){document.querySelector('#share-modal-gestao .share-text').textContent='Não foi possível copiar automaticamente a mensagem.';}
+}
 function fecharCompartilhamentoPDFGestao(){document.getElementById('share-modal-gestao').hidden=true}
 async function compartilharPDFGestao(){if(!_pdfGestaoFile)return;try{await navigator.share({title:'Orçamento GLOBALGEN',text:textoWhatsAppGestao(_pdfGestaoOrc),files:[_pdfGestaoFile]});fecharCompartilhamentoPDFGestao()}catch(e){if(e&&e.name!=='AbortError'){alert('O compartilhamento de arquivos não está disponível neste navegador. O PDF será baixado.');baixarPDFGestao()}}}
 function baixarPDFGestao(){if(_pdfGestaoBlob){baixarBlobGestao(_pdfGestaoBlob,_pdfGestaoNome);fecharCompartilhamentoPDFGestao();setTimeout(()=>sugerirWhatsAppGestao(_pdfGestaoOrc),300)}}
@@ -1147,7 +1184,7 @@ function exportarCSV(){
     o.numPedido||'',statusOrcamentoG(o),o.substatus||'',o.pedidoVendaSenior||'',o.pedidoBonificacaoSenior||'',o.faturamentoConferido?'Sim':'Não',o.nfVinculadaNumero||'',o.nfVinculadaSerie||'',o.faturamentoVinculado?(Number(o.nfVinculadaVlrLiq)||0).toFixed(2):'',
     o.nomeSup||'Sem supervisor',o.dataHora||'',o.clienteNome||'',o.clienteDoc||'',o.clienteTipo||'',
     o.codRep||'',o.nomeRep||'',o.codCli||'',
-    o.kitNome||'',o.tags||'',o.nProt||0,
+    resumoKitsG(o),o.tags||'',o.nProt||0,
     o.preco||'',o.versaoTabelaPrecos||'Legado',o.pagamento||'',
     (o.totalPedido||0).toFixed(2),(o.totalBonif||0).toFixed(2),
     (o.totalFinal||0).toFixed(2),(o.aVista||0).toFixed(2),
