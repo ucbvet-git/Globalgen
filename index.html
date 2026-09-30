@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.2.4</title>
+<title>GLOBALGEN — Orçamento v6.3.0</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -350,6 +350,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
       <div class="orc-filter-field"><label for="orc-filtro-rep">Representante</label><select id="orc-filtro-rep" onchange="aplicarFiltrosOrcamentosAbertos()"><option value="">Todos</option></select></div>
       <div class="orc-filter-field"><label for="orc-filtro-sup">Supervisor</label><select id="orc-filtro-sup" onchange="aplicarFiltrosOrcamentosAbertos()"><option value="">Todos</option></select></div>
     </div>
+    <div style="padding:8px 15px;display:flex;gap:8px;align-items:center"><label for="orc-ordenar" style="font-size:12px;font-weight:700">Ordenar</label><select class="f-inp" id="orc-ordenar" onchange="renderOrcamentosAbertosModal()"><option value="data-asc">Data (asc)</option><option value="data-desc" selected>Data (desc)</option><option value="nome">Nome Cliente</option><option value="codigo">Cod. Orçamento</option></select></div>
     <div class="orc-modal-list" id="orc-modal-list">
       <div class="orc-empty">⏳ Carregando...</div>
     </div>
@@ -422,7 +423,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.4</div>
+    <div class="app-version">Orçamento GBG · versão 6.3.0</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -436,7 +437,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.2.4</div>
+    <div class="app-version">Orçamento GBG · versão 6.3.0</div>
   </div>
 </div>
 <div class="no-print">
@@ -697,7 +698,7 @@ const PRODS_AVULSO=[
 const APLIC_CODES=['CM10A001','CM10A023'];
 // ════ ESTADO ════
 const S={
-  clienteDoc:'',clienteTipo:'',clienteNome:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
+  clienteDoc:'',clienteTipo:'',clienteNome:'',clienteNomeFantasia:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
   tipo:null,kit:null,mod:null,varEcg:null,varInd:null,varMax:null,
   prot:0,bonifAplic:{},vac:'sim',vacF:null,vacD:0,
   av:{},preco:'campanha',pag:null,obs:'',
@@ -1133,7 +1134,8 @@ function renderStep(){
     const bonifAplicEntries=PRODS_AVULSO.filter(p=>APLIC_CODES.includes(p.code)&&(S.bonifAplic[p.code]||0)>0);
     const avlList=T.avProds;
     return`${S.clienteNome||S.clienteDoc?`<div class="res-sec"><div class="res-shdr">Cliente</div>
-      ${(S.clienteNome||(S._seniorLookup?.codCli&&S._seniorLookup.codCli!=='0'))?`<div class="res-row"><span class="res-rl">Nome / Razão Social</span><span class="res-rv" id="res-cli-nome">${esc(nomeClienteExibicao())}</span></div>`:''}
+      ${(S.clienteNome||(S._seniorLookup?.codCli&&S._seniorLookup.codCli!=='0'))?`<div class="res-row"><span class="res-rl">${S.clienteTipo==='CNPJ'?'Razão Social':'Nome completo'}</span><span class="res-rv" id="res-cli-nome">${esc(S.clienteTipo==='CNPJ'?S.clienteNome:nomeClienteExibicao())}</span></div>`:''}
+      ${S.clienteTipo==='CNPJ'?`<div class="res-row"><span class="res-rl">Nome Fantasia</span><span class="res-rv">${esc(S.clienteNomeFantasia||'Não informado')}</span></div>`:''}
       ${S.clienteDoc?`<div class="res-row"><span class="res-rl">${S.clienteTipo}</span><span class="res-rv">${esc(formatDoc(S.clienteDoc))}</span></div>`:''}
     </div>`:''}<div class="res-sec"><div class="res-row"><span class="res-rl">Nº do orçamento</span><span class="res-rv" id="res-num-pedido">${esc(S._numPedido||'Atribuído ao salvar')}</span></div></div><div class="res-kit">
       <div class="res-kit-tipo" style="display:flex;justify-content:space-between;align-items:center"><span>${k.tipo==='corte'?'GADO DE CORTE':'GADO DE LEITE'}</span>${S._statusOrc?statusBadge(statusVisualEstadoAtual()):''}</div>
@@ -1205,9 +1207,9 @@ function renderStep(){
     </div>
     ${S._seniorLookup.status==='error'?`<button onclick="iniciarLookupSenior()" style="width:100%;padding:10px;background:#fff;border:1.5px solid var(--rd);color:var(--rd);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">🔄 Tentar novamente</button>`:''}
     <button onclick="sendToSenior()" id="btn-enviar-senior"
-      ${S._seniorLookup.status!=='ok'?'disabled':''} 
-      style="width:100%;padding:13px;background:${S._seniorLookup.status==='ok'?'var(--deep)':'var(--bd)'};color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:${S._seniorLookup.status==='ok'?'pointer':'not-allowed'};font-family:inherit;margin-bottom:8px;-webkit-tap-highlight-color:transparent">
-      ${S._seniorLookup.status==='loading'?'⏳ Aguardando consulta...':S._seniorLookup.status==='ok'?'🚀 Enviar para Senior G5':'⚠️ Consulta pendente'}
+      ${!podeEnviarSenior()?'disabled':''} 
+      style="width:100%;padding:13px;background:${podeEnviarSenior()?'var(--deep)':'var(--bd)'};color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:${podeEnviarSenior()?'pointer':'not-allowed'};font-family:inherit;margin-bottom:8px;-webkit-tap-highlight-color:transparent">
+      ${S._seniorLookup.status==='loading'?'⏳ Aguardando consulta...':podeEnviarSenior()?'🚀 Enviar para Senior G5':'⚠️ Vínculo comercial pendente ou sem permissão'}
     </button>
     <div id="send-result"></div>
     ${S._modoRecuperado&&S._statusOrc==='Aberto'?`
@@ -1290,23 +1292,23 @@ function formatDoc(v){const d=digits(v);if(d.length===11)return d.replace(/(\d{3
 function validaDV(d,tamanho){if(d.length!==tamanho||/^(\d)\1+$/.test(d))return false;const base=tamanho===11?9:12;const calc=n=>{let soma=0,peso=n===9?10:(n===10?11:(n===12?5:6));for(let i=0;i<n;i++){soma+=(+d[i])*peso--;if(peso===1)peso=9}const r=(soma*10)%11;return r===10?0:r};return +d[base]===calc(base)&&+d[base+1]===calc(base+1)}
 function validarDocumento(v){const d=digits(v);return d.length===11?validaDV(d,11):d.length===14?validaDV(d,14):false}
 function manualNameHtml(){return`<div class="manual-name"><label class="doc-label" for="cliente-nome">Nome completo</label><input id="cliente-nome" maxlength="150" placeholder="Digite o nome do cliente" value="${esc(S.clienteNome)}" oninput="S.clienteNome=this.value.trimStart();S.clienteFonte='informado';updNav()"></div>`}
-function clienteResultHtml(){return`<div class="client-found"><small>${S.clienteFonte==='cnpj-publico'?'CNPJ localizado':'Cliente identificado'}</small><strong>${esc(S.clienteNome)}</strong>${S.clienteMunicipio?`<br><span style="font-size:11.5px;color:var(--mt)">${esc(S.clienteMunicipio)} / ${esc(S.clienteUF)}</span>`:''}</div>`;}
+function clienteResultHtml(){return`<div class="client-found"><small>${S.clienteFonte==='cnpj-publico'?'CNPJ localizado':'Cliente identificado'}</small>${digits(S.clienteDoc).length===14?`<div>Razão Social: <strong>${esc(S.clienteNome)}</strong></div><label class="doc-label" for="cliente-fantasia">Nome Fantasia (opcional)</label><input id="cliente-fantasia" maxlength="150" value="${esc(S.clienteNomeFantasia||'')}" placeholder="Não informado" oninput="S.clienteNomeFantasia=this.value.trimStart()">`:`<strong>${esc(S.clienteNome)}</strong>`}${S.clienteMunicipio?`<br><span style="font-size:11.5px;color:var(--mt)">${esc(S.clienteMunicipio)} / ${esc(S.clienteUF)}</span>`:''}</div>`;}
 let clienteBuscaVersao = 0;
 let clienteBuscaTimer = null;
 async function consultarCnpjPublico(documento) {
   const resposta = await fetch('https://brasilapi.com.br/api/cnpj/v1/' + documento, {headers:{Accept:'application/json'}});
   if (!resposta.ok) throw new Error(resposta.status === 404 ? 'CNPJ não localizado.' : 'Consulta indisponível.');
   const dados = await resposta.json();
-  const nome = String(dados.razao_social || dados.nome_fantasia || '').trim();
+  const nome = String(dados.razao_social || '').trim();
   if (!nome) throw new Error('Razão Social não disponível.');
-  return {nome, municipio:String(dados.municipio || '').trim(), uf:String(dados.uf || '').trim()};
+  return {nome, fantasia:String(dados.nome_fantasia || '').trim(), municipio:String(dados.municipio || '').trim(), uf:String(dados.uf || '').trim()};
 }
 function clienteDocInput(el) {
   const doc = digits(el.value).slice(0,14);
   el.value = formatDoc(doc);
   S.clienteDoc = doc;
   S.clienteTipo = doc.length === 14 ? 'CNPJ' : doc.length === 11 ? 'CPF' : '';
-  S.clienteNome = ''; S.clienteFonte = ''; S.clienteMunicipio = ''; S.clienteUF = '';
+  S.clienteNome = ''; S.clienteNomeFantasia = ''; S.clienteFonte = ''; S.clienteMunicipio = ''; S.clienteUF = '';
   S._seniorLookup = {status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
   const versao = ++clienteBuscaVersao;
   clearTimeout(clienteBuscaTimer);
@@ -1331,6 +1333,7 @@ async function consultarCliente(versao = clienteBuscaVersao) {
     const dados = await consultarCnpjPublico(doc);
     if (versao !== clienteBuscaVersao || digits(S.clienteDoc) !== doc) return;
     S.clienteNome = dados.nome;
+    S.clienteNomeFantasia = dados.fantasia;
     S.clienteMunicipio = dados.municipio;
     S.clienteUF = dados.uf;
     S.clienteFonte = 'cnpj-publico';
@@ -1340,7 +1343,7 @@ async function consultarCliente(versao = clienteBuscaVersao) {
     if (versao !== clienteBuscaVersao || digits(S.clienteDoc) !== doc) return;
     if (status) { status.className = 'lookup-status err'; status.textContent = 'Não foi possível consultar o CNPJ. Você pode informar a Razão Social abaixo.'; }
     if (resultado) {
-      resultado.innerHTML = `<div class="manual-name"><label class="doc-label">Razão Social</label><input maxlength="150" placeholder="Digite a Razão Social" oninput="S.clienteNome=this.value.trimStart();S.clienteFonte='informado';updNav()"></div>`;
+      resultado.innerHTML = `<div class="manual-name"><label class="doc-label">Razão Social</label><input maxlength="150" placeholder="Digite a Razão Social" oninput="S.clienteNome=this.value.trimStart();S.clienteFonte='informado';updNav()"><label class="doc-label">Nome Fantasia (opcional)</label><input maxlength="150" placeholder="Não informado" oninput="S.clienteNomeFantasia=this.value.trimStart()"></div>`;
     }
   } finally { updNav(); }
 }
@@ -1708,10 +1711,12 @@ function pedidoApiV5(numInt,type,codCpg,prods,codCli,codRep){
 function parseSoapResponse(xmlText){
   try{
     const doc=new DOMParser().parseFromString(xmlText,'text/xml');
-    const erros=Array.from(doc.querySelectorAll('erros descErr')).map(e=>e.textContent.trim()).filter(Boolean);
+    const erros=Array.from(doc.querySelectorAll('descErr,erroExecucao,faultstring')).map(e=>e.textContent.trim()).filter(Boolean);
     if(erros.length)return{ok:false,error:erros.join(' | ')};
+    if(Array.from(doc.querySelectorAll('tipoRetorno')).some(e=>e.textContent.trim()==='-1'))return{ok:false,error:'O ERP recusou o pedido.'};
     const numPed=doc.querySelector('numPed');
-    return{ok:true,numPed:numPed?numPed.textContent.trim():'—'};
+    const numero=numPed?numPed.textContent.trim():'';
+    return{ok:/^[0-9]*[1-9][0-9]*$/.test(numero),numPed:numero};
   }catch(e){return{ok:false,error:'Erro ao processar resposta: '+e.message};}
 }
 
@@ -1741,6 +1746,15 @@ function renderSeniorLookupField(field){
   if(field==='nomeRep')return`<span style="color:var(--rd);font-size:11px">${lk.error||'Erro na consulta ao Senior G5'}</span>`;
   return`<span style="color:var(--rd)">⚠️ Erro</span>`;
 }
+function podeEnviarSenior(){
+  const lk=S._seniorLookup||{},u=_authUser;
+  if(!u||lk.status!=='ok'||!lk.codCli||!String(lk.codRep||'').replace(/^0+/,''))return false;
+  const code=String(u.codRep||'').trim().replace(/^0+/,'');
+  if(u.isAdmin||['SUB','GER'].includes(String(u.catRep||'').toUpperCase()))return true;
+  return !!code&&(code===String(lk.codFuncionario||'').trim().replace(/^0+/,'')||
+    (u.catRep==='REP'&&code===String(lk.codRep).trim().replace(/^0+/,''))||
+    (u.catRep==='SUP'&&code===String(lk.codSup||'').trim().replace(/^0+/,'')));
+}
 // Atualiza o bloco de lookup no Resumo sem re-renderizar a tela toda
 function updResumoSeniorInfo(){
   const repEl=document.getElementById('sl-rep');
@@ -1750,13 +1764,13 @@ function updResumoSeniorInfo(){
   if(repEl)repEl.innerHTML=renderRepField();
   if(supEl)supEl.innerHTML=renderSupField();
   const cliNome=document.getElementById('res-cli-nome');
-  if(cliNome&&S.clienteNome)cliNome.textContent=nomeClienteExibicao();
+  if(cliNome&&S.clienteNome)cliNome.textContent=S.clienteTipo==='CNPJ'?S.clienteNome:nomeClienteExibicao();
   if(btn){
-    const ok=S._seniorLookup.status==='ok';
+    const ok=podeEnviarSenior();
     btn.disabled=!ok;
     btn.style.background=ok?'var(--deep)':'var(--bd)';
     btn.style.cursor=ok?'pointer':'not-allowed';
-    btn.textContent=S._seniorLookup.status==='loading'?'⏳ Aguardando consulta...':ok?'🚀 Enviar para Senior G5':'⚠️ Consulta pendente';
+    btn.textContent=S._seniorLookup.status==='loading'?'⏳ Aguardando consulta...':ok?'🚀 Enviar para Senior G5':'⚠️ Vínculo comercial pendente ou sem permissão';
   }
   // Mostrar/ocultar botão "Tentar novamente"
   if(tryBtn)tryBtn.style.display=S._seniorLookup.status==='error'?'block':'none';
@@ -1783,7 +1797,7 @@ async function iniciarLookupSenior(){
     if(sid==='resumo')render(); // re-render para exibir codCli no nome do cliente
   }catch(e){
     const msg=e.name==='AbortError'?'Tempo esgotado (60s) ao consultar a API segura da GLOBALGEN.':e.message;
-    S._seniorLookup={status:'error',codCli:'',codRep:'000',nomeRep:'Não identificado',codSup:'0000',nomeSup:'Não identificado',codFuncionario:'',error:msg};
+    S._seniorLookup={status:'error',codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:msg};
     updResumoSeniorInfo();
   }finally{clearTimeout(timer);}
 }
@@ -1852,15 +1866,16 @@ async function saveOrcamento(){
       }:{}),
       clienteDoc:formatDoc(S.clienteDoc),
       clienteNome:S.clienteNome||'',
+      clienteNomeFantasia:S.clienteNomeFantasia||'',
       clienteTipo:S.clienteTipo||'',
       clienteMunicipio:S.clienteMunicipio||'',
       clienteUF:S.clienteUF||'',
-      codRep:lk.status==='error'?'000':(lk.codRep||'000'),
-      nomeRep:lk.status==='error'?'Não identificado':(lk.nomeRep||'Não identificado'),
-      codCli:lk.codCli||'',
-      codSup:lk.status==='error'?'0000':(lk.codSup||'0000'),
-      nomeSup:lk.status==='error'?'Não identificado':(lk.nomeSup||'Sem supervisor'),
-      codFuncionario:lk.status==='error'?'':(lk.codFuncionario||''),
+      codRep:lk.status==='ok'?(lk.codRep||''):'',
+      nomeRep:lk.status==='ok'?(lk.nomeRep||''):'',
+      codCli:lk.status==='ok'?(lk.codCli||''):'',
+      codSup:lk.status==='ok'?(lk.codSup||''):'',
+      nomeSup:lk.status==='ok'?(lk.nomeSup||''):'',
+      codFuncionario:lk.status==='ok'?(lk.codFuncionario||''):'',
       codUsuario:(_authUser&&!_authUser.isAdmin)?(_authUser.codRep||''):'admin',
       nomeUsuario:(_authUser&&!_authUser.isAdmin)?(_authUser.nomRep||''):'Administrador',
       clienteNomeCompleto:nomeClienteExibicao(),
@@ -1888,7 +1903,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.2.4';
+       doc.versaoOrcamento='6.3.0';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
        doc.protocolosV6=v6Protocols().map(p=>({...p}));
@@ -1934,13 +1949,13 @@ function statusVisualOrcamento(o){
 function statusVisualEstadoAtual(){return statusVisualOrcamento({status:S._statusOrc||'Aberto',substatus:S._substatusOrc,prazoPendencia:S._prazoPendencia,quantidadeProrrogacoes:S._quantidadeProrrogacoes,faturamentoVinculado:S._faturamentoVinculado});}
 function carregarOrcamentoNoEstado(docId,data){
   Object.assign(S,{
-    clienteDoc:digits(data.clienteDoc||''),clienteNome:data.clienteNome||'',clienteTipo:data.clienteTipo||'',clienteMunicipio:data.clienteMunicipio||'',clienteUF:data.clienteUF||'',
+    clienteDoc:digits(data.clienteDoc||''),clienteNome:data.clienteNome||'',clienteNomeFantasia:data.clienteNomeFantasia||'',clienteTipo:data.clienteTipo||'',clienteMunicipio:data.clienteMunicipio||'',clienteUF:data.clienteUF||'',
     tipo:data.tipo||null,kit:data.kitId||null,
     prot:data.nProt||0,preco:data.preco||'campanha',obs:data.obs||'',
     _sessionId:docId,_numPedido:data.numPedido||null,_erpSaleNumber:data.pedidoVendaSenior||'',_erpBonusNumber:data.pedidoBonificacaoSenior||'',
     _modoRecuperado:true,_statusOrc:data.status||'Aberto',_substatusOrc:data.status==='Aberto'?calcularSubstatusOrcamento(data):(data.substatus||''),_prazoPendencia:data.prazoPendencia||null,_quantidadeProrrogacoes:Number(data.quantidadeProrrogacoes||0),_cancelMotivo:'',
     _faturamentoVinculado:possuiNfValidaVinculada(data),_nfVinculadaNumero:data.nfVinculadaNumero||'',_nfVinculadaVlrLiq:Number(data.nfVinculadaVlrLiq||0),_faturamentoConferido:data.faturamentoConferido===true,
-    _seniorLookup:{status:'ok',codRep:data.codRep||'',codCli:data.codCli||'',nomeRep:data.nomeRep||'',codSup:data.codSup||'0',nomeSup:data.nomeSup||'Sem supervisor',codFuncionario:data.codFuncionario||'',error:''},
+    _seniorLookup:{status:data.codRep&&data.codCli?'ok':'error',codRep:data.codRep||'',codCli:data.codCli||'',nomeRep:data.nomeRep||'',codSup:data.codSup||'',nomeSup:data.nomeSup||'',codFuncionario:data.codFuncionario||'',error:'Vínculo comercial pendente.'},
     codRep:data.codRep||''
   });
   // Reconstruir variantes a partir dos produtos salvos
@@ -2016,7 +2031,7 @@ async function novoOrcamento(){
   if(!confirm(msg))return;
   // Resetar estado completo e gerar novo sessionId
   Object.assign(S,{
-    clienteDoc:'',clienteTipo:'',clienteNome:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
+    clienteDoc:'',clienteTipo:'',clienteNome:'',clienteNomeFantasia:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
     tipo:null,kit:null,mod:null,varEcg:null,varInd:null,varMax:null,
     prot:0,bonifAplic:{},vac:'sim',vacF:null,vacD:0,
     av:{},preco:'campanha',pag:null,obs:'',
@@ -2168,6 +2183,11 @@ function renderOrcamentosAbertosModal(){
   const listEl=document.getElementById('orc-modal-list');if(!listEl)return;
   const rep=document.getElementById('orc-filtro-rep')?.value||'',sup=document.getElementById('orc-filtro-sup')?.value||'';
   const docs=_orcamentosAbertosModal.filter(o=>(!rep||chaveFiltroOrcamento(o.codRep,o.nomeRep)===rep)&&(!sup||chaveFiltroOrcamento(o.codSup,o.nomeSup||'Sem supervisor')===sup));
+  const ordem=document.getElementById('orc-ordenar')?.value||'data-desc';
+  const codigo=(a,b)=>String(a.numPedido||a.id).localeCompare(String(b.numPedido||b.id),'pt-BR',{numeric:true});
+  docs.sort((a,b)=>ordem==='nome'?String(a.clienteNome||'').localeCompare(String(b.clienteNome||''),'pt-BR',{sensitivity:'base'})||codigo(a,b):
+    ordem==='codigo'?codigo(a,b):
+    ordem==='data-asc'?(a._ts-b._ts)||codigo(a,b):(b._ts-a._ts)||codigo(a,b));
   if(!docs.length){listEl.innerHTML='<div class="orc-empty">Nenhum orçamento em aberto para os filtros selecionados.</div>';return;}
   listEl.innerHTML=docs.map(o=>`
     <div class="orc-item" onclick="selecionarOrcamentoModal('${esc(o.numPedido||o.id)}')">
@@ -2183,14 +2203,13 @@ async function abrirMeusOrcamentos(){
   const modal=document.getElementById('orc-modal');
   const listEl=document.getElementById('orc-modal-list');
   modal.style.display='flex';
+  const ordenar=document.getElementById('orc-ordenar');if(ordenar)ordenar.value='data-desc';
   listEl.innerHTML='<div class="orc-empty">⏳ Carregando...</div>';
   try{
     const db=getFbDb();
     if(!db){listEl.innerHTML='<div class="orc-empty">Firebase não disponível.</div>';return;}
     const encontrados=await buscarOrcamentosAbertosPorPerfil(db,_authUser);
-    let docs=encontrados.map(d=>({id:d.id,...d.data(),_ts:converterDataFirebase(d.data().ts)?.getTime()||0}));
-    // Ordenar alfabeticamente pelo cliente
-    docs.sort((a,b)=>(a.clienteNome||'').localeCompare(b.clienteNome||'','pt-BR'));
+    let docs=encontrados.map(d=>({id:d.id,...d.data(),_ts:dataOrcamentoPendencia(d.data())?.getTime()||0}));
     _orcamentosAbertosModal=docs;popularFiltrosOrcamentosAbertos();renderOrcamentosAbertosModal();
   }catch(e){listEl.innerHTML=`<div class="orc-empty">❌ ${esc(e.message)}</div>`;}
 }
@@ -2408,7 +2427,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.2.4';
+const VOICE_APP_VERSION = '6.3.0';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -2700,6 +2719,8 @@ function mostrarEditorCliente(id, proposta) {
     <input class="doc-input" id="${id}-doc" inputmode="numeric" maxlength="18" value="${esc(formatDoc(proposta.document))}" oninput="clienteEdicaoDocumento(this)">
     <label class="doc-label" for="${id}-name">Nome / Razão Social</label>
     <input class="doc-input" id="${id}-name" maxlength="150" value="${esc(proposta.name)}" oninput="clienteEdicaoNome(this)">
+    <div id="${id}-fantasia-field" ${proposta.document.length===14?'':'hidden'}><label class="doc-label" for="${id}-fantasia">Nome Fantasia (opcional)</label>
+    <input class="doc-input" id="${id}-fantasia" maxlength="150" placeholder="Não informado" value="${esc(proposta.fantasia||'')}" oninput="clienteEdicaoFantasia(this)"></div>
     <div class="voice-help" id="${id}-status" role="status">${proposta.municipio ? esc(proposta.municipio + ' / ' + proposta.uf) : proposta.document && !validarDocumento(proposta.document) ? 'Número inválido. Confira cada dígito e corrija antes de confirmar.' : 'Confira ou complete os dados.'}</div>
     ${id === 'voice-client-editor' ? '<div class="voice-actions"><button class="voice-primary" onclick="confirmarClienteVoz()">Confirmar cliente</button><button onclick="ignorarClienteVoz()">Continuar sem cliente</button></div>' : ''}`;
 }
@@ -2709,11 +2730,13 @@ function clienteEdicaoDocumento(input) {
   const doc = digits(input.value).slice(0, 14);
   input.value = formatDoc(doc);
   proposta.document = doc;
-  proposta.name = ''; proposta.municipio = ''; proposta.uf = ''; proposta.fonte = '';
+  proposta.name = ''; proposta.fantasia = ''; proposta.municipio = ''; proposta.uf = ''; proposta.fonte = '';
   proposta.consultando = false;
   clienteConsultaSequencia++;
   const name = voiceElement(clienteEditorAtivo + '-name');
   if (name) name.value = '';
+  const fantasy = voiceElement(clienteEditorAtivo + '-fantasia');if(fantasy)fantasy.value='';
+  const fantasyField=voiceElement(clienteEditorAtivo + '-fantasia-field');if(fantasyField)fantasyField.hidden=doc.length!==14;
   if (clienteEditorAtivo === 'voice-client-editor') { voiceClientConfirmed = false; voiceButtons(); }
   const status = voiceElement(clienteEditorAtivo + '-status');
   status.textContent = !doc ? 'Cliente não informado.' : !validarDocumento(doc) ? 'Confira os dígitos do CPF/CNPJ.' :
@@ -2726,6 +2749,7 @@ function clienteEdicaoNome(input) {
   clienteEdicaoAtiva.fonte = 'informado';
   if (clienteEditorAtivo === 'voice-client-editor') { voiceClientConfirmed = false; voiceButtons(); }
 }
+function clienteEdicaoFantasia(input){if(clienteEdicaoAtiva)clienteEdicaoAtiva.fantasia=input.value.trimStart();}
 function agendarConsultaCliente(id, proposta) {
   const sequencia = ++clienteConsultaSequencia;
   proposta.consultando = true;
@@ -2735,8 +2759,9 @@ function agendarConsultaCliente(id, proposta) {
     try {
       const dados = await consultarCnpjPublico(doc);
       if (sequencia !== clienteConsultaSequencia || proposta.document !== doc || clienteEdicaoAtiva !== proposta) return;
-      proposta.name = dados.nome; proposta.municipio = dados.municipio; proposta.uf = dados.uf; proposta.fonte = 'cnpj-publico';
+      proposta.name = dados.nome; proposta.fantasia = dados.fantasia; proposta.municipio = dados.municipio; proposta.uf = dados.uf; proposta.fonte = 'cnpj-publico';
       const input = voiceElement(id + '-name'); if (input) input.value = dados.nome;
+      const fantasiaInput=voiceElement(id+'-fantasia');if(fantasiaInput)fantasiaInput.value=dados.fantasia;
       voiceElement(id + '-status').textContent = `CNPJ localizado: ${dados.municipio || 'município não informado'} / ${dados.uf || 'UF não informada'}. Confira os dados.`;
     } catch (_) {
       if (sequencia !== clienteConsultaSequencia || proposta.document !== doc || clienteEdicaoAtiva !== proposta) return;
@@ -2767,13 +2792,14 @@ function aplicarClienteProposto(proposta) {
   S.clienteDoc = proposta.document;
   S.clienteTipo = proposta.document.length === 14 ? 'CNPJ' : 'CPF';
   S.clienteNome = proposta.name.trim();
+  S.clienteNomeFantasia = proposta.document.length===14?(proposta.fantasia||'').trim():'';
   S.clienteFonte = proposta.fonte || 'informado';
   S.clienteMunicipio = proposta.municipio || '';
   S.clienteUF = proposta.uf || '';
   S._seniorLookup = {status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
 }
 function abrirClienteResumo() {
-  const proposta = {document:digits(S.clienteDoc), name:S.clienteNome || '', municipio:S.clienteMunicipio || '', uf:S.clienteUF || '', fonte:S.clienteFonte || '', consultando:false};
+  const proposta = {document:digits(S.clienteDoc), name:S.clienteNome || '', fantasia:S.clienteNomeFantasia||'', municipio:S.clienteMunicipio || '', uf:S.clienteUF || '', fonte:S.clienteFonte || '', consultando:false};
   voiceElement('summary-client-modal').hidden = false;
   mostrarEditorCliente('summary-client-editor', proposta);
   if (proposta.document.length === 14 && validarDocumento(proposta.document) && !proposta.name)
@@ -3223,6 +3249,8 @@ novoOrcamento=async function(){
   }
 };
 async function sendToSenior(){
+  if(!podeEnviarSenior()){alert('Seu perfil não possui vínculo comercial autorizado para enviar este orçamento ao ERP.');return;}
+  if(S._erpSaleNumber==='0'||S._erpBonusNumber==='0'){alert('Número de pedido legado igual a zero. Confira o ERP antes de novo envio.');return;}
   const senha=prompt('🔒 Informe a senha para envio dos pedidos:');
   if(senha===null)return;
   if(senha!==SENHA_ENVIO_SENIOR){alert('Senha incorreta. Envio cancelado.');return;}
@@ -3243,7 +3271,7 @@ async function sendToSenior(){
       resultEl.textContent='Enviando pedido de venda...';
       const resp=await apiV5('/orders/create',{method:'POST',body:pedidoApiV5(Date.now(),'sale',pg.codCpg,sale,lk.codCli||'',lk.codRep)});
       const venda=parseSoapResponse(await resp.text());
-      if(!venda.ok||!/^\d+$/.test(venda.numPed)){resultEl.textContent='Confira o pedido de venda no ERP antes de tentar novamente.';return;}
+      if(!venda.ok){resultEl.textContent='Confira o pedido de venda no ERP antes de tentar novamente.';return;}
       S._erpSaleNumber=venda.numPed;S._statusOrc='Enviado ao ERP';S._substatusOrc='Aguardando faturamento';
     }
     const bonus=T.rows.filter(p=>p.bonusQty>0).map(p=>({code:p.code,qty:p.bonusQty,preco:p.bonusPrice}));
@@ -3251,7 +3279,7 @@ async function sendToSenior(){
     resultEl.textContent=`Venda Nº ${S._erpSaleNumber}. Enviando bonificação...`;
     const resp=await apiV5('/orders/create',{method:'POST',body:pedidoApiV5(Date.now()+1,'bonus',API_CPG_BON,bonus,lk.codCli||'',lk.codRep)});
     const bon=parseSoapResponse(await resp.text());
-    if(!bon.ok||!/^\d+$/.test(bon.numPed)){resultEl.textContent=`Venda Nº ${S._erpSaleNumber}. Verifique a bonificação no ERP antes de repetir.`;return;}
+    if(!bon.ok){resultEl.textContent=`Venda Nº ${S._erpSaleNumber}. Verifique a bonificação no ERP antes de repetir.`;return;}
     S._erpBonusNumber=bon.numPed;
     resultEl.textContent=`Venda Nº ${S._erpSaleNumber}. Bonificação Nº ${bon.numPed}.`;
   }catch(e){resultEl.textContent='Falha no envio. Confira o pedido no ERP antes de tentar novamente: '+e.message;}

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.0.9</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.1.0</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.0.9</div>
+    <div class="login-version">Gestão GBG · versão 5.1.0</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +191,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.0.9</div>
+    <div class="login-version">Gestão GBG · versão 5.1.0</div>
   </div>
 </div>
 <!-- App -->
@@ -208,18 +208,17 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="f-btn" style="background:var(--deep);color:#fff" onclick="forcarSincronizacaoCadastrosG()">☁ Atualizar Firebase</button>
     <button class="f-btn" style="background:var(--pr);color:#fff" onclick="abrirTabelasPrecosG()">💲 Tabelas de preços</button>
     <span class="f-label">Status:</span>
-    <select class="f-inp" id="f-status" onchange="aplicarFiltros()">
+    <select class="f-inp" id="f-status" onchange="alterarStatusGestao()">
       <option value="">Todos</option>
-      <option value="AbertoTodos" selected>⏳ Abertos (todos)</option>
-      <option value="No prazo">⏳ No prazo</option>
-      <option value="Vencido">⌛ Vencido</option>
-      <option value="Prorrogado">↻ Prorrogado</option>
+      <option value="Aberto" selected>⏳ Abertos</option>
       <option value="Enviado ao ERP">📤 Enviado ao ERP</option>
       <option value="Faturado">🧾 Faturado</option>
       <option value="Finalizado">✅ Finalizado</option>
       <option value="Excluído">❌ Excluído</option>
       <option value="Cancelado">Cancelado (legado)</option>
     </select>
+    <span class="f-label">Substatus:</span>
+    <select class="f-inp" id="f-substatus" onchange="aplicarFiltros()"><option value="">Todos</option></select>
     <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;white-space:nowrap">
       <input type="checkbox" id="f-anon" onchange="aplicarFiltros()" style="cursor:pointer;accent-color:var(--pr)">
       Anônimos
@@ -235,6 +234,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
   </div>
 
   <div id="sync-status" style="padding:6px 18px;font-size:11px;color:#52616b" aria-live="polite">Consultando sincronizações...</div>
+  <div id="security-alerts" style="padding:0 18px;font-size:12px;color:#943c12" role="status"></div>
   <div class="stats" id="stats"></div>
   <div class="lista" id="lista"><div class="loading">⏳ Carregando orçamentos...</div></div>
 </div>
@@ -282,6 +282,10 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
       <div class="filter-modal-field">
         <span class="f-label">Nº do pedido</span>
         <input class="f-inp" type="text" id="f-num" placeholder="GBG-0926-0001">
+      </div>
+      <div class="filter-modal-field">
+        <span class="f-label">Protocolo</span>
+        <select class="f-inp" id="f-protocolo"><option value="">Todos</option></select>
       </div>
       <div class="filter-modal-field">
         <span class="f-label" id="f-sup-modal-label">Supervisor</span>
@@ -423,7 +427,7 @@ function entrarNoApp(u){
   if(pricesButton)pricesButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
   // Status padrão conforme perfil
   const fStatus=document.getElementById('f-status');
-  if(fStatus)fStatus.value='AbertoTodos';
+  if(fStatus)fStatus.value='Aberto';
   iniciarApp().then(()=>travarFiltroSupervisor());
 }
 // Primeiro acesso gestão
@@ -557,25 +561,6 @@ function travarFiltroSupervisor(){
   }
   sincronizarOpcoesSupervisorModal();
 }
-async function lookupRepresentantes(){
-  if(_lookupRunning)return;
-  _lookupRunning=true;
-  try{
-    const semRep=todosOrc.filter(o=>o.clienteDoc&&o.repLookupStatus!=='error'&&
-      (!o.codRep||!o.nomeRep||o.codSup===undefined));
-    for(const o of semRep){
-      try{
-        const resp=await apiV5G('/management/budgets/'+encodeURIComponent(o.id)+'/resolve-representative',{
-          method:'POST',body:{}
-        });
-        const rep=await resp.json();
-        Object.assign(o,{codRep:rep.codRep,codCli:rep.codCli,nomeRep:rep.nomeRep,
-          codSup:rep.codSup,nomeSup:rep.nomeSup,codFuncionario:rep.codFuncionario,repLookupStatus:'ok'});
-      }catch(error){console.warn('Representante não atualizado:',error.message);}
-    }
-    popularFiltroSupervisor();aplicarFiltros();
-  }finally{_lookupRunning=false;}
-}
 function statusOrcamentoG(o){
   const status=o.status||'Aberto';
   if(status!=='Aberto')return status;
@@ -689,9 +674,10 @@ async function atualizarDados(){
   const btn=document.querySelector('[onclick="atualizarDados()"]');
   if(btn){btn.textContent='⏳ Atualizando...';btn.disabled=true;}
   try{
-    todosOrc.forEach(o=>{if(o.repLookupStatus==='error')delete o.repLookupStatus;});
+    await apiV5G('/management/budgets/resolve-pending',{method:'POST',body:{}});
     await carregarOrcamentos();
     await atualizarStatusSincronizacaoG();
+    await atualizarAlertasSegurancaG();
   }catch(e){
     console.error('Erro ao atualizar orçamentos e vínculos de faturamento:',e);
     alert('Erro ao atualizar os orçamentos: '+(e.message||e));
@@ -703,8 +689,10 @@ async function iniciarApp(){
   try{
     const app=firebase.apps.find(a=>a.name==='gestao')||firebase.initializeApp(FB_CONFIG,'gestao');
     db=firebase.firestore(app);
+    popularFiltroProtocolosG();alterarStatusGestao();
     await carregarOrcamentos();
     await atualizarStatusSincronizacaoG();
+    await atualizarAlertasSegurancaG();
   }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ Erro ao conectar: ${e.message}</div>`;}
 }
 async function carregarOrcamentos(){
@@ -717,11 +705,38 @@ async function carregarOrcamentos(){
     }));
     aplicarFiltros();
     popularFiltroSupervisor();
-    lookupRepresentantes(); // background: busca rep para orçamentos sem representante
   }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ ${e.message}<br><small>Verifique a conexão com a API.</small></div>`;}
 }
 
 // ── FILTROS ──
+const SUBSTATUS_G={
+  Aberto:['No prazo','Prorrogado','Vencido'],
+  'Enviado ao ERP':['Aguardando faturamento'],
+  Faturado:['Integral','Com divergência','Com validação'],
+  Finalizado:['Preço alto','Falta de produto','Prazo de entrega'],
+  'Excluído':['Dados incompletos','Erro de digitação','Teste de Orçamento']
+};
+function alterarStatusGestao(){
+  const status=document.getElementById('f-status').value;
+  const el=document.getElementById('f-substatus');
+  el.innerHTML='<option value="">Todos</option>'+(SUBSTATUS_G[status]||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
+  el.disabled=!status||status==='Cancelado';
+  aplicarFiltros();
+}
+function popularFiltroProtocolosG(){
+  document.getElementById('f-protocolo').innerHTML='<option value="">Todos</option>'+
+    Object.entries(PDF_G_KITS).map(([id,k])=>`<option value="${id}">${id} · ${k[0]} · ${k[1]}</option>`).join('');
+}
+async function atualizarAlertasSegurancaG(){
+  const el=document.getElementById('security-alerts');if(!el)return;
+  if(!_gAuthUser?.isAdmin&&!['GER','SUB'].includes(_gAuthUser?.catRep)){el.textContent='';return;}
+  try{
+    const resp=await apiV5G('/management/security-alerts');
+    const alerts=await resp.json();
+    el.textContent=alerts.length?`⚠️ ${alerts.length} conta(s) com 10 ou mais buscas de orçamento negadas em 24 horas. `+
+      alerts.map(a=>`Usuário ${a.codigoUsuario||'sem código'}: ${a.falhas24h} tentativas`).join(' · '):'';
+  }catch(_){el.textContent='';}
+}
 function abrirFiltrosGestao(){
   sincronizarOpcoesSupervisorModal();
   document.getElementById('filters-overlay').classList.add('on');
@@ -745,8 +760,12 @@ function aplicarFiltros(){
     if(cli&&!(o.clienteNome||'').toLowerCase().includes(cli)&&!(o.clienteDoc||'').includes(cli))return false;
     if(num&&!(o.numPedido||'').toLowerCase().includes(num))return false;
     const st=document.getElementById('f-status').value;
-    if(st==='AbertoTodos'&&(o.status||'Aberto')!=='Aberto')return false;
-    if(st&&st!=='AbertoTodos'&&statusOrcamentoG(o)!==st)return false;
+    if(st&&(o.status||'Aberto')!==st)return false;
+    const sub=document.getElementById('f-substatus').value;
+    if(sub&&(st==='Aberto'?calcularSubstatusOrcamentoG(o):o.substatus)!==sub)return false;
+    const protocolo=document.getElementById('f-protocolo').value;
+    if(protocolo&&!(Array.isArray(o.protocolosV6)&&o.protocolosV6.length
+      ?o.protocolosV6.some(p=>p.kit===protocolo):o.kitId===protocolo))return false;
     // A API já limita a leitura; este filtro organiza a exibição do supervisor.
     if(_gAuthUser&&!_gAuthUser.isAdmin&&_gAuthUser.catRep==='SUP'){
       const codigo=String(_gAuthUser.codRep||'').replace(/^0+(?=\d)/,'');
@@ -765,7 +784,9 @@ function aplicarFiltros(){
   renderLista();
 }
 function limparFiltros(){
-  ['f-de','f-ate','f-rep','f-cli','f-num','f-status'].forEach(id=>document.getElementById(id).value='');
+  ['f-de','f-ate','f-rep','f-cli','f-num','f-protocolo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-status').value='Aberto';
+  alterarStatusGestao();
   // SUP: não resetar o filtro de supervisor (está travado)
   if(!(_gAuthUser&&_gAuthUser.catRep==='SUP'&&!_gAuthUser.isAdmin)){
     document.getElementById('f-sup').value='';
