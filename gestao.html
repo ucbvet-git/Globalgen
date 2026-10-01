@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.1.0</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.2.0</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.1.0</div>
+    <div class="login-version">Gestão GBG · versão 5.2.0</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +191,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.1.0</div>
+    <div class="login-version">Gestão GBG · versão 5.2.0</div>
   </div>
 </div>
 <!-- App -->
@@ -613,6 +613,32 @@ function timestampOrcamentoG(orcamento){
   return Number.isFinite(ms)?ms:0;
 }
 const SENHA_SYNC_FIREBASE='gbg123';
+function escolherSincronizacoesG(){
+  const choices=[
+    ['representantes','Representantes'],
+    ['condicoesPagamento','Condições de pagamento'],
+    ['notasFiscaisV2','Notas fiscais'],
+    ['clientesSenior','Clientes']
+  ];
+  return new Promise(resolve=>{
+    const overlay=document.createElement('div');
+    overlay.style.cssText='position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;z-index:10050;padding:20px';
+    const panel=document.createElement('div');
+    panel.style.cssText='background:white;max-width:460px;width:100%;padding:22px;border-radius:14px;box-shadow:0 12px 30px #0003';
+    panel.innerHTML='<h2 style="margin:0 0 12px">Atualizar Firebase</h2><p>Escolha o que deseja atualizar. Todas as opções começam desmarcadas.</p>'+
+      choices.map(([value,label])=>`<label style="display:block;padding:9px 0"><input type="checkbox" value="${value}"> ${label}</label>`).join('')+
+      '<p style="font-size:12px">Ao atualizar Clientes ou Representantes, os vínculos dos orçamentos Abertos também serão revistos.</p>'+
+      '<div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" data-cancelar>Cancelar</button><button type="button" data-confirmar disabled>Iniciar atualização</button></div>';
+    overlay.append(panel);document.body.append(overlay);
+    const done=value=>{overlay.remove();resolve(value)};
+    const confirm=panel.querySelector('[data-confirmar]');
+    panel.querySelectorAll('input[type=checkbox]').forEach(box=>box.addEventListener('change',()=>{
+      confirm.disabled=!panel.querySelector('input[type=checkbox]:checked');
+    }));
+    panel.querySelector('[data-cancelar]').onclick=()=>done([]);
+    confirm.onclick=()=>done([...panel.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value));
+  });
+}
 // Atualização manual usa a mesma rotina da tarefa agendada no servidor.
 async function forcarSincronizacaoCadastrosG(){
   if(!_gAuthUser||(!_gAuthUser.isAdmin&&!['SUB','GER'].includes(_gAuthUser.catRep))){
@@ -621,14 +647,16 @@ async function forcarSincronizacaoCadastrosG(){
   const senha=prompt('Digite a senha para atualizar o Firebase:');
   if(senha===null)return;
   if(senha!==SENHA_SYNC_FIREBASE){alert('Senha incorreta. A atualização não foi iniciada.');return;}
+  const selecionadas=await escolherSincronizacoesG();
+  if(!selecionadas.length)return;
   const btn=document.querySelector('[onclick="forcarSincronizacaoCadastrosG()"]');
   if(btn){btn.disabled=true;btn.textContent='⏳ Atualizando Firebase...';}
   try{
-    const resp=await apiV5G('/management/sync/run',{method:'POST',body:{}});
+    const resp=await apiV5G('/management/sync/run',{method:'POST',body:{collections:selecionadas}});
     const etapas=await resp.json();
     await atualizarStatusSincronizacaoG();
     await carregarOrcamentos();
-    const nomes={condicoesPagamento:'Condições de pagamento',representantes:'Representantes',notasFiscaisV2:'Notas fiscais'};
+    const nomes={condicoesPagamento:'Condições de pagamento',representantes:'Representantes',notasFiscaisV2:'Notas fiscais',clientesSenior:'Clientes',vinculosOrcamentos:'Vínculos dos orçamentos Abertos'};
     const mensagens=etapas.map(x=>`${nomes[x.colecao]||x.colecao}: ${x.sucesso?`${x.gravadas} gravada(s)`:(x.motivo==='em_andamento'?'outra atualização está em andamento':'falha; consulte o estado da sincronização')}`);
     alert(mensagens.join('\n'));
   }catch(e){alert('Erro ao atualizar o Firebase: '+e.message);}
@@ -640,7 +668,7 @@ async function atualizarStatusSincronizacaoG(){
   try{
     const resp=await apiV5G('/management/sync/status');
     const dados=await resp.json();
-    const nomes={condicoesPagamento:'Pagamentos',representantes:'Representantes',notasFiscaisV2:'Notas fiscais'};
+    const nomes={condicoesPagamento:'Pagamentos',representantes:'Representantes',notasFiscaisV2:'Notas fiscais',clientesSenior:'Clientes'};
     el.textContent=dados.map(x=>{
       const quando=x.ultimaSincronizacaoUtc?new Date(x.ultimaSincronizacaoUtc).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):'ainda não concluída';
       return`${nomes[x.colecao]||x.colecao}: ${quando}${x.status==='erro'?' (erro)':''}`;
