@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.3.0</title>
+<title>GLOBALGEN — Orçamento v6.4.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -423,7 +423,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.3.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.4.1</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -437,7 +437,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.3.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.4.1</div>
   </div>
 </div>
 <div class="no-print">
@@ -699,6 +699,7 @@ const APLIC_CODES=['CM10A001','CM10A023'];
 // ════ ESTADO ════
 const S={
   clienteDoc:'',clienteTipo:'',clienteNome:'',clienteNomeFantasia:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
+  cadastroClienteId:'',clienteCadastroStatus:'',clienteSincronizadoEm:null,_revision:null,
   tipo:null,kit:null,mod:null,varEcg:null,varInd:null,varMax:null,
   prot:0,bonifAplic:{},vac:'sim',vacF:null,vacD:0,
   av:{},preco:'campanha',pag:null,obs:'',
@@ -873,7 +874,7 @@ function getSteps(){
 }
 function canNext(){
   const k=getKit();
-  if(sid==='cliente')return true;
+  if(sid==='cliente')return !['bloqueado','selecionar','consultando','indisponivel'].includes(S.clienteCadastroStatus);
   if(sid==='tipo')return!!S.tipo;
   if(sid==='kit')return!!S.kit;
   if(sid==='mod')return!!S.mod;
@@ -1293,6 +1294,31 @@ function validaDV(d,tamanho){if(d.length!==tamanho||/^(\d)\1+$/.test(d))return f
 function validarDocumento(v){const d=digits(v);return d.length===11?validaDV(d,11):d.length===14?validaDV(d,14):false}
 function manualNameHtml(){return`<div class="manual-name"><label class="doc-label" for="cliente-nome">Nome completo</label><input id="cliente-nome" maxlength="150" placeholder="Digite o nome do cliente" value="${esc(S.clienteNome)}" oninput="S.clienteNome=this.value.trimStart();S.clienteFonte='informado';updNav()"></div>`}
 function clienteResultHtml(){return`<div class="client-found"><small>${S.clienteFonte==='cnpj-publico'?'CNPJ localizado':'Cliente identificado'}</small>${digits(S.clienteDoc).length===14?`<div>Razão Social: <strong>${esc(S.clienteNome)}</strong></div><label class="doc-label" for="cliente-fantasia">Nome Fantasia (opcional)</label><input id="cliente-fantasia" maxlength="150" value="${esc(S.clienteNomeFantasia||'')}" placeholder="Não informado" oninput="S.clienteNomeFantasia=this.value.trimStart()">`:`<strong>${esc(S.clienteNome)}</strong>`}${S.clienteMunicipio?`<br><span style="font-size:11.5px;color:var(--mt)">${esc(S.clienteMunicipio)} / ${esc(S.clienteUF)}</span>`:''}</div>`;}
+const CLIENTE_BLOQUEADO='Cliente indisponível para novos orçamentos. Entre em contato com o Departamento Comercial da GLOBALGEN.';
+let cadastrosEncontrados=[];
+async function buscarClienteNoCadastro(documento){
+  const resp=await apiV5('/clients?document='+encodeURIComponent(documento));
+  return await resp.json();
+}
+function aplicarEscolhaCliente(c){
+  S.cadastroClienteId=String(c.cadastroId||'');
+  S.clienteNome=c.nome||'';S.clienteNomeFantasia=c.nomeFantasia||'';
+  S.clienteMunicipio=c.cidade||'';S.clienteUF=c.uf||'';
+  S.clienteFonte='firebase';S.clienteSincronizadoEm=c.sincronizadoEmUtc||null;
+  S.clienteCadastroStatus=c.disponivel?'aprovado':'bloqueado';
+  S._seniorLookup={status:c.representante?'ok':'error',codCli:c.representante?c.codigoCliente:'',
+    codRep:c.representante||'',nomeRep:c.nomeRepresentante||'',codSup:c.supervisor||'',
+    nomeSup:c.nomeSupervisor||'',codFuncionario:c.funcionario||'',error:'Vínculo comercial pendente.'};
+  const resultado=document.getElementById('cliente-result'),status=document.getElementById('lookup-status');
+  if(resultado)resultado.innerHTML=clienteResultHtml();
+  if(status){status.className='lookup-status '+(c.disponivel?'ok':'err');
+    status.textContent=c.disponivel?'Cadastro '+c.codigoCliente+' confirmado no Firebase.':CLIENTE_BLOQUEADO;}
+  updNav();
+}
+function selecionarCadastroCliente(codigo){
+  const c=cadastrosEncontrados.find(x=>String(x.cadastroId)===String(codigo));
+  if(c)aplicarEscolhaCliente(c);
+}
 let clienteBuscaVersao = 0;
 let clienteBuscaTimer = null;
 async function consultarCnpjPublico(documento) {
@@ -1309,28 +1335,48 @@ function clienteDocInput(el) {
   S.clienteDoc = doc;
   S.clienteTipo = doc.length === 14 ? 'CNPJ' : doc.length === 11 ? 'CPF' : '';
   S.clienteNome = ''; S.clienteNomeFantasia = ''; S.clienteFonte = ''; S.clienteMunicipio = ''; S.clienteUF = '';
+  S.cadastroClienteId='';S.clienteCadastroStatus='';cadastrosEncontrados=[];
   S._seniorLookup = {status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
   const versao = ++clienteBuscaVersao;
   clearTimeout(clienteBuscaTimer);
   const resultado = document.getElementById('cliente-result');
   const status = document.getElementById('lookup-status');
-  if (resultado) resultado.innerHTML = doc.length === 11 && validarDocumento(doc) ? manualNameHtml() : '';
+  if (resultado) resultado.innerHTML = '';
   if (status) {
     status.className = 'lookup-status';
     status.textContent = !doc ? 'O cliente é opcional.' : !validarDocumento(doc) ? 'Digite um CPF ou CNPJ válido.' :
-      doc.length === 11 ? 'CPF válido. Se desejar, complete o nome abaixo.' : 'CNPJ completo. Buscando automaticamente…';
+      'Consultando o cadastro do cliente…';
   }
-  if (doc.length === 14 && validarDocumento(doc))
+  if ((doc.length === 14 || doc.length === 11) && validarDocumento(doc)){
+    S.clienteCadastroStatus='consultando';
     clienteBuscaTimer = setTimeout(() => consultarCliente(versao), 400);
+  }
   updNav();
 }
 async function consultarCliente(versao = clienteBuscaVersao) {
   const doc = digits(S.clienteDoc);
-  if (!validarDocumento(doc) || doc.length !== 14) return;
+  if (!validarDocumento(doc)) return;
   const status = document.getElementById('lookup-status');
   const resultado = document.getElementById('cliente-result');
   try {
-    const dados = await consultarCnpjPublico(doc);
+    const encontrados=await buscarClienteNoCadastro(doc);
+    if (versao !== clienteBuscaVersao || digits(S.clienteDoc) !== doc) return;
+    cadastrosEncontrados=encontrados;
+    if(encontrados.length>1){
+      S.clienteCadastroStatus='selecionar';
+      if(status){status.className='lookup-status';status.textContent='Há mais de um cadastro para este documento. Selecione o código do cliente.';}
+      if(resultado)resultado.innerHTML='<label class="doc-label" for="cliente-cadastro">Cadastro do cliente</label><select class="doc-input" id="cliente-cadastro" onchange="selecionarCadastroCliente(this.value)"><option value="">Selecione o cadastro</option>'+
+        encontrados.map(c=>`<option value="${esc(c.cadastroId)}">Código ${esc(c.codigoCliente)} · ${esc(c.nome)} · ${esc(c.cidade)}/${esc(c.uf)}</option>`).join('')+'</select>';
+      updNav();return;
+    }
+    if(encontrados.length===1){aplicarEscolhaCliente(encontrados[0]);return;}
+    S.clienteCadastroStatus='nao_verificado';
+    if(doc.length===11){
+      if(status){status.className='lookup-status';status.textContent='CPF não encontrado no cadastro sincronizado. Informe o nome manualmente.';}
+      if(resultado)resultado.innerHTML=manualNameHtml();
+      updNav();return;
+    }
+    const dados=await consultarCnpjPublico(doc);
     if (versao !== clienteBuscaVersao || digits(S.clienteDoc) !== doc) return;
     S.clienteNome = dados.nome;
     S.clienteNomeFantasia = dados.fantasia;
@@ -1341,6 +1387,11 @@ async function consultarCliente(versao = clienteBuscaVersao) {
     if (resultado) resultado.innerHTML = clienteResultHtml();
   } catch (_) {
     if (versao !== clienteBuscaVersao || digits(S.clienteDoc) !== doc) return;
+    if(S.clienteCadastroStatus!=='nao_verificado'){
+      S.clienteCadastroStatus='indisponivel';
+      if(status){status.className='lookup-status err';status.textContent='Cadastro temporariamente indisponível. Aguarde a sincronização ou tente novamente.';}
+      updNav();return;
+    }
     if (status) { status.className = 'lookup-status err'; status.textContent = 'Não foi possível consultar o CNPJ. Você pode informar a Razão Social abaixo.'; }
     if (resultado) {
       resultado.innerHTML = `<div class="manual-name"><label class="doc-label">Razão Social</label><input maxlength="150" placeholder="Digite a Razão Social" oninput="S.clienteNome=this.value.trimStart();S.clienteFonte='informado';updNav()"><label class="doc-label">Nome Fantasia (opcional)</label><input maxlength="150" placeholder="Não informado" oninput="S.clienteNomeFantasia=this.value.trimStart()"></div>`;
@@ -1775,31 +1826,12 @@ function updResumoSeniorInfo(){
   // Mostrar/ocultar botão "Tentar novamente"
   if(tryBtn)tryBtn.style.display=S._seniorLookup.status==='error'?'block':'none';
 }
-// Lookup em background: SimularPedidos → codRep/codCli → cadastro sincronizado no Firebase.
+// Os vínculos são recebidos exclusivamente da API de cadastro sincronizado.
 async function iniciarLookupSenior(){
-  S._seniorLookup={status:'loading',codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
+  if(S.cadastroClienteId){updResumoSeniorInfo();return;}
+  S._seniorLookup={status:'error',codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',
+    codFuncionario:'',error:'Cadastro não verificado no Senior. Aguarde a próxima sincronização.'};
   updResumoSeniorInfo();
-  const ctrl=new AbortController();
-  const timer=setTimeout(()=>ctrl.abort(),LOOKUP_SENIOR_TIMEOUT_MS);
-  try{
-    const lookupResp=await apiV5('/orders/customer-lookup',{
-      method:'POST',signal:ctrl.signal,body:{customerDocument:digits(S.clienteDoc)||''}
-    });
-    const repInfo=await lookupResp.json();
-    S._seniorLookup.codCli=repInfo.codCli||'';
-    S._seniorLookup.codRep=repInfo.codRep||'';
-    S._seniorLookup.nomeRep=repInfo.nomeRep||'';
-    S._seniorLookup.codSup=repInfo.codSup||'0';
-    S._seniorLookup.nomeSup=repInfo.nomeSup||'Sem supervisor';
-    S._seniorLookup.codFuncionario=repInfo.codFuncionario||'';
-    S._seniorLookup.status='ok';
-    updResumoSeniorInfo();
-    if(sid==='resumo')render(); // re-render para exibir codCli no nome do cliente
-  }catch(e){
-    const msg=e.name==='AbortError'?'Tempo esgotado (60s) ao consultar a API segura da GLOBALGEN.':e.message;
-    S._seniorLookup={status:'error',codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:msg};
-    updResumoSeniorInfo();
-  }finally{clearTimeout(timer);}
 }
 // Parser da resposta do SimularPedidos — tenta múltiplos nomes de tag para codRep/nome
 function parseSimularResponse(xmlText){
@@ -1865,6 +1897,7 @@ async function saveOrcamento(){
         historicoPendencia:[]
       }:{}),
       clienteDoc:formatDoc(S.clienteDoc),
+      cadastroClienteId:S.cadastroClienteId||'',
       clienteNome:S.clienteNome||'',
       clienteNomeFantasia:S.clienteNomeFantasia||'',
       clienteTipo:S.clienteTipo||'',
@@ -1903,7 +1936,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.3.0';
+       doc.versaoOrcamento='6.4.1';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
        doc.protocolosV6=v6Protocols().map(p=>({...p}));
@@ -1915,8 +1948,8 @@ async function saveOrcamento(){
       doc.status='Aberto';
       doc.substatus=novoDocumento?'No prazo':calcularSubstatusOrcamento({status:'Aberto',substatus:S._substatusOrc,prazoPendencia:S._prazoPendencia,quantidadeProrrogacoes:S._quantidadeProrrogacoes,faturamentoVinculado:S._faturamentoVinculado});
       S._statusOrc='Aberto';S._substatusOrc=doc.substatus;
-      const response=await apiV5('/budgets/save',{method:'POST',body:{sessionId:S._sessionId,document:doc}});
-      const saved=await response.json();S._numPedido=saved.numPedido;
+      const response=await apiV5('/budgets/save',{method:'POST',body:{sessionId:S._sessionId,document:doc,expectedRevision:S._revision}});
+      const saved=await response.json();S._numPedido=saved.numPedido;S._revision=saved.revision;
       const numeroNoResumo=document.getElementById('res-num-pedido');if(numeroNoResumo)numeroNoResumo.textContent=S._numPedido;
       console.log('✅ Orçamento salvo:',S._numPedido,'sessionId:',S._sessionId);
       return S._numPedido;
@@ -1950,6 +1983,7 @@ function statusVisualEstadoAtual(){return statusVisualOrcamento({status:S._statu
 function carregarOrcamentoNoEstado(docId,data){
   Object.assign(S,{
     clienteDoc:digits(data.clienteDoc||''),clienteNome:data.clienteNome||'',clienteNomeFantasia:data.clienteNomeFantasia||'',clienteTipo:data.clienteTipo||'',clienteMunicipio:data.clienteMunicipio||'',clienteUF:data.clienteUF||'',
+    cadastroClienteId:data.cadastroClienteId||'',clienteCadastroStatus:data.clienteCadastroStatus||'',_revision:Number(data.revisaoOrcamento||0),
     tipo:data.tipo||null,kit:data.kitId||null,
     prot:data.nProt||0,preco:data.preco||'campanha',obs:data.obs||'',
     _sessionId:docId,_numPedido:data.numPedido||null,_erpSaleNumber:data.pedidoVendaSenior||'',_erpBonusNumber:data.pedidoBonificacaoSenior||'',
@@ -2032,6 +2066,7 @@ async function novoOrcamento(){
   // Resetar estado completo e gerar novo sessionId
   Object.assign(S,{
     clienteDoc:'',clienteTipo:'',clienteNome:'',clienteNomeFantasia:'',clienteFonte:'',clienteMunicipio:'',clienteUF:'',
+    cadastroClienteId:'',clienteCadastroStatus:'',clienteSincronizadoEm:null,_revision:null,
     tipo:null,kit:null,mod:null,varEcg:null,varInd:null,varMax:null,
     prot:0,bonifAplic:{},vac:'sim',vacF:null,vacD:0,
     av:{},preco:'campanha',pag:null,obs:'',
@@ -2427,7 +2462,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.3.0';
+const VOICE_APP_VERSION = '6.4.1';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -2651,7 +2686,7 @@ function mostrarRevisaoVoz(result) {
   voiceElement('voice-review').hidden = false;
   if (voiceClientProposal.document || voiceClientProposal.name) {
     mostrarEditorCliente('voice-client-editor', voiceClientProposal);
-    if (voiceClientProposal.document.length === 14 && validarDocumento(voiceClientProposal.document))
+    if (validarDocumento(voiceClientProposal.document))
       agendarConsultaCliente('voice-client-editor', voiceClientProposal);
   } else {
     voiceElement('voice-client-editor').hidden = true;
@@ -2714,13 +2749,14 @@ function mostrarEditorCliente(id, proposta) {
   const root = voiceElement(id);
   root.hidden = false;
   root.innerHTML = `<h3>Conferência do cliente</h3>
-    <p class="voice-help">Confira cada dígito reconhecido. Você pode alterar o documento; o CNPJ será consultado automaticamente.</p>
+    <p class="voice-help">Confira cada dígito reconhecido. CPF e CNPJ serão consultados no cadastro sincronizado.</p>
     <label class="doc-label" for="${id}-doc">CPF ou CNPJ</label>
     <input class="doc-input" id="${id}-doc" inputmode="numeric" maxlength="18" value="${esc(formatDoc(proposta.document))}" oninput="clienteEdicaoDocumento(this)">
     <label class="doc-label" for="${id}-name">Nome / Razão Social</label>
     <input class="doc-input" id="${id}-name" maxlength="150" value="${esc(proposta.name)}" oninput="clienteEdicaoNome(this)">
     <div id="${id}-fantasia-field" ${proposta.document.length===14?'':'hidden'}><label class="doc-label" for="${id}-fantasia">Nome Fantasia (opcional)</label>
     <input class="doc-input" id="${id}-fantasia" maxlength="150" placeholder="Não informado" value="${esc(proposta.fantasia||'')}" oninput="clienteEdicaoFantasia(this)"></div>
+    <div id="${id}-cadastros"></div>
     <div class="voice-help" id="${id}-status" role="status">${proposta.municipio ? esc(proposta.municipio + ' / ' + proposta.uf) : proposta.document && !validarDocumento(proposta.document) ? 'Número inválido. Confira cada dígito e corrija antes de confirmar.' : 'Confira ou complete os dados.'}</div>
     ${id === 'voice-client-editor' ? '<div class="voice-actions"><button class="voice-primary" onclick="confirmarClienteVoz()">Confirmar cliente</button><button onclick="ignorarClienteVoz()">Continuar sem cliente</button></div>' : ''}`;
 }
@@ -2731,17 +2767,19 @@ function clienteEdicaoDocumento(input) {
   input.value = formatDoc(doc);
   proposta.document = doc;
   proposta.name = ''; proposta.fantasia = ''; proposta.municipio = ''; proposta.uf = ''; proposta.fonte = '';
+  proposta.cadastroId='';proposta.statusCadastro='';
   proposta.consultando = false;
   clienteConsultaSequencia++;
   const name = voiceElement(clienteEditorAtivo + '-name');
   if (name) name.value = '';
   const fantasy = voiceElement(clienteEditorAtivo + '-fantasia');if(fantasy)fantasy.value='';
+  const choices=voiceElement(clienteEditorAtivo+'-cadastros');if(choices)choices.replaceChildren();
   const fantasyField=voiceElement(clienteEditorAtivo + '-fantasia-field');if(fantasyField)fantasyField.hidden=doc.length!==14;
   if (clienteEditorAtivo === 'voice-client-editor') { voiceClientConfirmed = false; voiceButtons(); }
   const status = voiceElement(clienteEditorAtivo + '-status');
   status.textContent = !doc ? 'Cliente não informado.' : !validarDocumento(doc) ? 'Confira os dígitos do CPF/CNPJ.' :
-    doc.length === 11 ? 'CPF válido. Você pode complementar o nome.' : 'Consultando CNPJ…';
-  if (doc.length === 14 && validarDocumento(doc)) agendarConsultaCliente(clienteEditorAtivo, proposta);
+    'Consultando cadastro sincronizado…';
+  if (validarDocumento(doc)) agendarConsultaCliente(clienteEditorAtivo, proposta);
 }
 function clienteEdicaoNome(input) {
   if (!clienteEdicaoAtiva) return;
@@ -2750,14 +2788,39 @@ function clienteEdicaoNome(input) {
   if (clienteEditorAtivo === 'voice-client-editor') { voiceClientConfirmed = false; voiceButtons(); }
 }
 function clienteEdicaoFantasia(input){if(clienteEdicaoAtiva)clienteEdicaoAtiva.fantasia=input.value.trimStart();}
+function selecionarCadastroEditor(codigo){
+  const proposta=clienteEdicaoAtiva;
+  const c=proposta?.opcoesCadastro?.find(x=>String(x.cadastroId)===codigo);
+  if(!c)return;
+  proposta.cadastroId=c.cadastroId;proposta.statusCadastro=c.disponivel?'aprovado':'bloqueado';
+  proposta.name=c.nome;proposta.fantasia=c.nomeFantasia;proposta.municipio=c.cidade;proposta.uf=c.uf;
+  proposta.fonte='firebase';proposta.escolha=c;
+  const id=clienteEditorAtivo;
+  voiceElement(id+'-name').value=c.nome;
+  voiceElement(id+'-fantasia').value=c.nomeFantasia||'';
+  voiceElement(id+'-status').textContent=c.disponivel?'Cadastro '+c.codigoCliente+' selecionado.':CLIENTE_BLOQUEADO;
+}
 function agendarConsultaCliente(id, proposta) {
   const sequencia = ++clienteConsultaSequencia;
   proposta.consultando = true;
   setTimeout(async () => {
-    if (sequencia !== clienteConsultaSequencia || !validarDocumento(proposta.document) || proposta.document.length !== 14) return;
+    if (sequencia !== clienteConsultaSequencia || !validarDocumento(proposta.document)) return;
     const doc = proposta.document;
     try {
-      const dados = await consultarCnpjPublico(doc);
+      const encontrados=await buscarClienteNoCadastro(doc);
+      if (sequencia !== clienteConsultaSequencia || proposta.document !== doc || clienteEdicaoAtiva !== proposta) return;
+      proposta.opcoesCadastro=encontrados;
+      if(encontrados.length>1){
+        proposta.statusCadastro='selecionar';
+        voiceElement(id+'-cadastros').innerHTML='<label class="doc-label">Selecione o código do cliente</label><select class="doc-input" onchange="selecionarCadastroEditor(this.value)"><option value="">Selecione</option>'+
+          encontrados.map(c=>`<option value="${esc(c.cadastroId)}">Código ${esc(c.codigoCliente)} · ${esc(c.nome)} · ${esc(c.cidade)}/${esc(c.uf)}</option>`).join('')+'</select>';
+        voiceElement(id+'-status').textContent='Mais de um cadastro para este documento.';
+        return;
+      }
+      if(encontrados.length===1){selecionarCadastroEditor(String(encontrados[0].cadastroId));return;}
+      proposta.statusCadastro='nao_verificado';
+      if(doc.length===11){voiceElement(id+'-status').textContent='CPF não encontrado no Firebase. Complete o nome manualmente.';return;}
+      const dados=await consultarCnpjPublico(doc);
       if (sequencia !== clienteConsultaSequencia || proposta.document !== doc || clienteEdicaoAtiva !== proposta) return;
       proposta.name = dados.nome; proposta.fantasia = dados.fantasia; proposta.municipio = dados.municipio; proposta.uf = dados.uf; proposta.fonte = 'cnpj-publico';
       const input = voiceElement(id + '-name'); if (input) input.value = dados.nome;
@@ -2765,7 +2828,10 @@ function agendarConsultaCliente(id, proposta) {
       voiceElement(id + '-status').textContent = `CNPJ localizado: ${dados.municipio || 'município não informado'} / ${dados.uf || 'UF não informada'}. Confira os dados.`;
     } catch (_) {
       if (sequencia !== clienteConsultaSequencia || proposta.document !== doc || clienteEdicaoAtiva !== proposta) return;
-      voiceElement(id + '-status').textContent = 'Não foi possível consultar este CNPJ. Confira o número e, se desejar, informe a Razão Social.';
+      if(proposta.statusCadastro!=='nao_verificado'){
+        proposta.statusCadastro='indisponivel';
+        voiceElement(id + '-status').textContent='Cadastro temporariamente indisponível. Tente novamente.';
+      }else voiceElement(id + '-status').textContent = 'Não foi possível consultar este CNPJ. Confira o número e informe a Razão Social.';
     } finally {
       if (sequencia === clienteConsultaSequencia) proposta.consultando = false;
     }
@@ -2776,7 +2842,10 @@ function confirmarClienteVoz() {
   if (!proposta?.document || !validarDocumento(proposta.document)) {
     voiceStatus('Informe um CPF ou CNPJ válido, ou escolha Continuar sem cliente.', true); return;
   }
-  if (proposta.consultando) { voiceStatus('Aguarde a consulta do CNPJ terminar.', true); return; }
+  if (proposta.consultando) { voiceStatus('Aguarde a consulta do cadastro terminar.', true); return; }
+  if(['selecionar','bloqueado','indisponivel'].includes(proposta.statusCadastro)){
+    voiceStatus(proposta.statusCadastro==='bloqueado'?CLIENTE_BLOQUEADO:'Selecione um cadastro válido ou tente novamente.',true);return;
+  }
   voiceClientConfirmed = true;
   voiceStatus(`Documento ${formatDoc(proposta.document)} confirmado. Confira também os demais dados do orçamento.`);
   voiceButtons();
@@ -2796,13 +2865,16 @@ function aplicarClienteProposto(proposta) {
   S.clienteFonte = proposta.fonte || 'informado';
   S.clienteMunicipio = proposta.municipio || '';
   S.clienteUF = proposta.uf || '';
-  S._seniorLookup = {status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
+  S.cadastroClienteId=proposta.cadastroId||'';
+  S.clienteCadastroStatus=proposta.statusCadastro||'nao_verificado';
+  if(proposta.escolha)aplicarEscolhaCliente(proposta.escolha);
+  else S._seniorLookup = {status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''};
 }
 function abrirClienteResumo() {
   const proposta = {document:digits(S.clienteDoc), name:S.clienteNome || '', fantasia:S.clienteNomeFantasia||'', municipio:S.clienteMunicipio || '', uf:S.clienteUF || '', fonte:S.clienteFonte || '', consultando:false};
   voiceElement('summary-client-modal').hidden = false;
   mostrarEditorCliente('summary-client-editor', proposta);
-  if (proposta.document.length === 14 && validarDocumento(proposta.document) && !proposta.name)
+  if (validarDocumento(proposta.document))
     agendarConsultaCliente('summary-client-editor', proposta);
 }
 function fecharClienteResumo() {
@@ -2816,7 +2888,10 @@ function confirmarClienteResumo() {
     voiceElement('summary-client-editor-status').textContent = 'Informe um CPF ou CNPJ válido.'; return;
   }
   if (proposta.consultando) {
-    voiceElement('summary-client-editor-status').textContent = 'Aguarde a consulta do CNPJ.'; return;
+    voiceElement('summary-client-editor-status').textContent = 'Aguarde a consulta do cadastro.'; return;
+  }
+  if(['selecionar','bloqueado','indisponivel'].includes(proposta.statusCadastro)){
+    voiceElement('summary-client-editor-status').textContent=proposta.statusCadastro==='bloqueado'?CLIENTE_BLOQUEADO:'Selecione um cadastro válido ou tente novamente.';return;
   }
   aplicarClienteProposto(proposta);
   fecharClienteResumo();
@@ -3249,6 +3324,21 @@ novoOrcamento=async function(){
   }
 };
 async function sendToSenior(){
+  if(S._numPedido){
+    try{
+      const response=await apiV5('/budgets/by-number/'+encodeURIComponent(S._numPedido));
+      const current=(await response.json()).data;
+      if(Number(current.revisaoOrcamento||0)!==Number(S._revision||0) ||
+         String(current.codRep||'')!==String(S._seniorLookup?.codRep||'') ||
+         String(current.codCli||'')!==String(S._seniorLookup?.codCli||'')){
+        alert('O cadastro ou o orçamento foi atualizado. Recarregue o orçamento pelo número, confira os dados e tente novamente.');
+        return;
+      }
+    }catch(e){
+      alert('Não foi possível confirmar o vínculo atual. Atualize o orçamento antes de enviar: '+e.message);
+      return;
+    }
+  }
   if(!podeEnviarSenior()){alert('Seu perfil não possui vínculo comercial autorizado para enviar este orçamento ao ERP.');return;}
   if(S._erpSaleNumber==='0'||S._erpBonusNumber==='0'){alert('Número de pedido legado igual a zero. Confira o ERP antes de novo envio.');return;}
   const senha=prompt('🔒 Informe a senha para envio dos pedidos:');

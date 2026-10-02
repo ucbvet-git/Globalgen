@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.2.0</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.2.2</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -176,7 +176,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.2.0</div>
+    <div class="login-version">Gestão GBG · versão 5.2.2</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +191,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.2.0</div>
+    <div class="login-version">Gestão GBG · versão 5.2.2</div>
   </div>
 </div>
 <!-- App -->
@@ -206,9 +206,10 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
 
   <div class="filters">
     <button class="f-btn" style="background:var(--deep);color:#fff" onclick="forcarSincronizacaoCadastrosG()">☁ Atualizar Firebase</button>
+    <button class="f-btn" id="g-full-load-button" style="background:#77513d;color:#fff;display:none" onclick="abrirCargaCompletaG()">📦 Carga completa</button>
     <button class="f-btn" style="background:var(--pr);color:#fff" onclick="abrirTabelasPrecosG()">💲 Tabelas de preços</button>
     <span class="f-label">Status:</span>
-    <select class="f-inp" id="f-status" onchange="alterarStatusGestao()">
+    <select class="f-inp" id="f-status" onchange="alterarFiltroStatusGestao()">
       <option value="">Todos</option>
       <option value="Aberto" selected>⏳ Abertos</option>
       <option value="Enviado ao ERP">📤 Enviado ao ERP</option>
@@ -423,6 +424,8 @@ function entrarNoApp(u){
   const nm=document.getElementById('g-user-name');if(nm)nm.textContent=u.nomRep||'';
   const syncButton=document.querySelector('[onclick="forcarSincronizacaoCadastrosG()"]');
   if(syncButton)syncButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
+  const fullButton=document.getElementById('g-full-load-button');
+  if(fullButton)fullButton.style.display=u.isAdmin?'':'none';
   const pricesButton=document.querySelector('[onclick="abrirTabelasPrecosG()"]');
   if(pricesButton)pricesButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
   // Status padrão conforme perfil
@@ -676,6 +679,61 @@ async function atualizarStatusSincronizacaoG(){
   }catch(e){el.textContent='Não foi possível consultar o horário das sincronizações.';}
 }
 
+// A carga histórica é solicitada pelo administrador e executada pela tarefa
+// separada GBG-Firebase-CargaCompleta. Atualizar Firebase continua incremental.
+function abrirCargaCompletaG(){
+  if(!_gAuthUser?.isAdmin)return;
+  if(document.getElementById('g-full-load-overlay'))return;
+  const choices=[
+    ['clientesSenior','Clientes'],['representantes','Representantes'],
+    ['notasFiscaisV2','Notas fiscais']
+  ];
+  const overlay=document.createElement('div');
+  overlay.id='g-full-load-overlay';
+  overlay.style.cssText='position:fixed;inset:0;background:#0009;z-index:10051;display:flex;align-items:center;justify-content:center;padding:20px';
+  const panel=document.createElement('div');
+  panel.style.cssText='background:#fff;max-width:480px;width:100%;padding:22px;border-radius:14px;box-shadow:0 12px 30px #0003';
+  panel.innerHTML='<h2 style="margin:0 0 10px">Carga completa · administradores</h2>'+
+    '<p style="font-size:13px">Reconstrói os cadastros escolhidos. A tarefa das 03h e o botão Atualizar Firebase continuam processando apenas pendências.</p>'+
+    choices.map(([value,label])=>`<label style="display:block;padding:8px 0"><input type="checkbox" value="${value}"> ${label}</label>`).join('')+
+    '<p style="font-size:12px">A execução será feita por uma tarefa separada. Confira a cota do Firebase antes de repetir uma carga de clientes.</p>'+
+    '<div id="g-full-load-status" role="status" style="font-size:12px;margin:8px 0;min-height:20px"></div>'+
+    '<div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" data-fechar>Fechar</button><button type="button" data-iniciar disabled>Solicitar carga</button></div>';
+  overlay.append(panel);document.body.append(overlay);
+  const status=panel.querySelector('#g-full-load-status');
+  const start=panel.querySelector('[data-iniciar]');
+  panel.querySelectorAll('input[type=checkbox]').forEach(box=>box.addEventListener('change',()=>{
+    start.disabled=!panel.querySelector('input[type=checkbox]:checked');
+  }));
+  let refreshing=false;
+  const update=async()=>{
+    if(refreshing||!overlay.isConnected)return;
+    refreshing=true;
+    try{
+      const response=await apiV5G('/management/sync/full/status');
+      const x=await response.json();
+      const names=Object.fromEntries(choices.map(([id,label])=>[id,label]));
+      const selected=(x.selecionadas||[]).map(id=>names[id]||id).join(', ');
+      const completed=(x.concluidas||[]).map(id=>names[id]||id).join(', ');
+      status.textContent=x.status==='nenhuma'?'Nenhuma carga completa solicitada.':
+        `${x.status||'—'} · ${selected||'—'}${x.etapaAtual?' · Etapa: '+(names[x.etapaAtual]||x.etapaAtual):''}${completed?' · Concluídas: '+completed:''}${x.mensagem?' · '+x.mensagem:''}`;
+    }catch(e){status.textContent='Não foi possível consultar o andamento: '+e.message;}
+    finally{refreshing=false;}
+  };
+  const timer=setInterval(update,15000);
+  panel.querySelector('[data-fechar]').onclick=()=>{clearInterval(timer);overlay.remove();};
+  start.onclick=async()=>{
+    const selected=[...panel.querySelectorAll('input[type=checkbox]:checked')].map(x=>x.value);
+    if(!selected.length||!confirm('Solicitar carga completa de '+selected.map(x=>choices.find(c=>c[0]===x)?.[1]||x).join(', ')+'?'))return;
+    start.disabled=true;status.textContent='Registrando solicitação...';
+    try{
+      await apiV5G('/management/sync/full',{method:'POST',body:{collections:selected}});
+      await update();
+    }catch(e){status.textContent='A solicitação não foi registrada: '+e.message;start.disabled=false;}
+  };
+  update();
+}
+
 // ── AUTH ──
 // entrar() substituída por doLoginGestao()
 // sair() substituída por sairGestao()
@@ -717,7 +775,7 @@ async function iniciarApp(){
   try{
     const app=firebase.apps.find(a=>a.name==='gestao')||firebase.initializeApp(FB_CONFIG,'gestao');
     db=firebase.firestore(app);
-    popularFiltroProtocolosG();alterarStatusGestao();
+    popularFiltroProtocolosG();alterarFiltroStatusGestao();
     await carregarOrcamentos();
     await atualizarStatusSincronizacaoG();
     await atualizarAlertasSegurancaG();
@@ -744,7 +802,7 @@ const SUBSTATUS_G={
   Finalizado:['Preço alto','Falta de produto','Prazo de entrega'],
   'Excluído':['Dados incompletos','Erro de digitação','Teste de Orçamento']
 };
-function alterarStatusGestao(){
+function alterarFiltroStatusGestao(){
   const status=document.getElementById('f-status').value;
   const el=document.getElementById('f-substatus');
   el.innerHTML='<option value="">Todos</option>'+(SUBSTATUS_G[status]||[]).map(v=>`<option value="${v}">${v}</option>`).join('');
@@ -814,7 +872,7 @@ function aplicarFiltros(){
 function limparFiltros(){
   ['f-de','f-ate','f-rep','f-cli','f-num','f-protocolo'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('f-status').value='Aberto';
-  alterarStatusGestao();
+  alterarFiltroStatusGestao();
   // SUP: não resetar o filtro de supervisor (está travado)
   if(!(_gAuthUser&&_gAuthUser.catRep==='SUP'&&!_gAuthUser.isAdmin)){
     document.getElementById('f-sup').value='';
