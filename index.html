@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.4.2</title>
+<title>GLOBALGEN — Orçamento v6.5.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -338,6 +338,19 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
 .v61-edit-fields input{display:block;width:100%;padding:8px 6px;margin-top:3px;border:1px solid var(--bd);border-radius:7px;font-size:14px}
 .v61-edit-fields input:disabled{background:var(--sf);color:var(--mt)}
 </style>
+<style>
+#gbg-home[hidden],#gbg-budget[hidden]{display:none!important}
+#gbg-home{min-height:100vh;background:var(--sf);padding:26px 16px;color:var(--tx)}
+.gbg-home-card{max-width:520px;margin:4vh auto;background:white;border:1px solid var(--bd);border-radius:18px;padding:24px;box-shadow:0 10px 30px #00444612}
+.gbg-home-card h1{color:var(--deep);font-size:22px;margin:0 0 8px}
+.gbg-home-card p{color:var(--mt);font-size:13px;line-height:1.4}
+.gbg-home-option{display:block;width:100%;text-align:left;padding:17px;border:1.5px solid var(--bd);border-radius:12px;background:white;color:var(--deep);font-family:inherit;font-size:16px;font-weight:700;margin:10px 0;cursor:pointer}
+.gbg-home-option:first-of-type{border-color:var(--pr);background:var(--lt)}
+.gbg-home-option:disabled{color:var(--mt);background:var(--sf);cursor:not-allowed}
+.gbg-home-option small{display:block;margin-top:3px;font-size:11px;font-weight:500}
+.gbg-home-bar{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.gbg-home-bar button{border:1px solid var(--bd);border-radius:8px;background:white;color:var(--pr);padding:7px 12px;cursor:pointer}
+</style>
 </head>
 <body>
 <div id="orc-modal" onclick="if(event.target===this)fecharMeusOrcamentos()">
@@ -423,7 +436,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.4.2</div>
+    <div class="app-version">Orçamento GBG · versão 6.5.1</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -437,10 +450,19 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.4.2</div>
+    <div class="app-version">Orçamento GBG · versão 6.5.1</div>
   </div>
 </div>
-<div class="no-print">
+<div id="gbg-home" class="no-print" hidden>
+  <div class="gbg-home-card">
+    <div class="gbg-home-bar"><h1>GLOBALGEN</h1><button onclick="sairDaConta()">Sair</button></div>
+    <p>Escolha uma área para continuar.</p>
+    <button class="gbg-home-option" onclick="abrirAreaOrcamentos()">📋 Orçamentos<small>Criar, recuperar e acompanhar orçamentos</small></button>
+    <button class="gbg-home-option" disabled>🧾 NFs e Boletos<small>Em breve</small></button>
+    <button class="gbg-home-option" disabled>📊 Metas e Faturamento<small>Em breve</small></button>
+  </div>
+</div>
+<div class="no-print" id="gbg-budget" hidden>
   <div class="hdr">
     <img class="brand-logo" id="app-logo" alt="GlobalGen reproductive engineering">
     <svg class="logo" viewBox="0 0 360 104" xmlns="http://www.w3.org/2000/svg"><defs><style>.c1{fill:#199198}.c2{fill:#004446}.c3{fill:#878787}.c4{fill:#070508}
@@ -459,7 +481,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
 .orc-item-meta{font-size:11.5px;color:var(--mt);margin-top:2px}
 .orc-empty{padding:32px;text-align:center;color:var(--mt);font-size:13px}
 </style></defs><path class="c2" d="M0,28.6v47h10.3V58.1h7.4c5.9,0,10.5-1.5,13.8-4.6,3.4-3.1,5.1-7.3,5.1-12.5,0-5-1.6-9-4.8-12-3.2-2.9-7.7-4.4-13.4-4.4H0zm10.3,8.6h5.8c2.7,0,4.8.6,6.1,1.9,1.4,1.2,2.1,3.1,2.1,5.5,0,2.6-.7,4.6-2.2,5.9-1.5,1.4-3.7,2.1-6.5,2.1h-5.3V37.1z"/><path class="c1" d="M54.7,28.6H44.4v47h10.3V28.6z"/><path class="c2" d="M96.2,28.6H86L63.5,75.5h10.7l4.1-9.3h25l4.1,9.3h11.4L96.2,28.6zm-14.4,29.8l8.3-19,8.3,19H81.8z"/><path class="c4" d="M145,53.9h4.1v18.7c-.8.3-2.3.7-4.5,1.2-2.2.5-5,.8-8.3.8-2.8,0-5.3-.5-7.6-1.5-2.4-1-4.4-2.4-6.1-4.2-1.7-1.8-3.1-4.1-4-6.8-1-2.7-1.5-5.7-1.5-9.1s.5-6.5,1.6-9.2c1-2.7,2.5-4.9,4.4-6.8,1.9-1.8,4.2-3.2,6.8-4.2,2.7-1,5.6-1.4,8.8-1.4,1.6,0,3.1.1,4.5.4,1.4.2,2.7.5,3.9.9,1.1.4,2.1.8,3,1.3.8.5,1.5,1,1.9,1.4l-1.3,2.1c-.2.3-.5.5-.9.6-.4.1-.9,0-1.4-.3-.5-.3-1.2-.7-1.9-1-.7-.4-1.6-.7-2.5-1-1-.3-2-.6-3.2-.8-1.2-.2-2.5-.3-4-.3-2.5,0-4.9.4-7,1.2-2.1.8-3.9,2-5.5,3.6-1.5,1.6-2.7,3.5-3.6,5.7-.8,2.2-1.3,4.8-1.3,7.6s.4,5.3,1.2,7.5c.8,2.2,1.9,4.1,3.4,5.6,1.5,1.5,3.3,2.7,5.4,3.5,2.1.8,4.5,1.2,7.1,1.2,1.6,0,3-.1,4.3-.3,1.3-.2,2.4-.4,3.5-.7V59.3h-9.4v-5.4h13.5z"/><path class="c4" d="M156.2,74.2V32.3h15.5c2.1,0,4,.3,5.7.9,1.7.6,3.1,1.5,4.2,2.7,1.2,1.1,2,2.5,2.7,4.1.6,1.6.9,3.4.9,5.4s-.3,3.8-1,5.5-1.6,3-2.8,4.2c-1.2,1.2-2.7,2.1-4.4,2.7-1.7.6-3.6,1-5.7,1h-11.1v15.5h-4Zm4-19.1h11c1.4,0,2.7-.2,3.9-.6,1.2-.4,2.2-1,3.1-1.8.9-.8,1.5-1.8,2-3,.5-1.2.7-2.5.7-4s-.2-2.8-.7-4c-.5-1.1-1.1-2.1-2-2.9-.8-.8-1.9-1.4-3.1-1.7-1.2-.4-2.5-.6-3.9-.6h-11v18.5z"/><path class="c4" d="M191.5,53.4c0-3,.5-5.8,1.5-8.4s2.4-4.8,4.3-6.7c1.9-1.9,4.1-3.3,6.8-4.4,2.7-1.1,5.6-1.6,8.9-1.6s6.3.5,9,1.6c2.7,1.1,4.9,2.5,6.8,4.4,1.9,1.9,3.3,4.1,4.3,6.7s1.5,5.4,1.5,8.4-.5,5.8-1.5,8.4c-1,2.6-2.4,4.8-4.3,6.6-1.9,1.9-4.1,3.3-6.8,4.4-2.7,1.1-5.6,1.6-9,1.6s-6.3-.5-8.9-1.6c-2.7-1.1-4.9-2.5-6.8-4.4-1.9-1.9-3.3-4.1-4.3-6.6s-1.5-5.4-1.5-8.4zm4.2,0c0,2.5.4,4.7,1.1,6.8.8,2,1.8,3.8,3.2,5.3,1.4,1.5,3.1,2.6,5.1,3.4,2,.8,4.3,1.2,6.8,1.2s4.8-.4,6.8-1.2c2-.8,3.7-2,5.1-3.4,1.4-1.5,2.5-3.2,3.2-5.3.8-2,1.1-4.3,1.1-6.8s-.4-4.7-1.1-6.8c-.8-2-1.8-3.8-3.2-5.3-1.4-1.5-3.1-2.6-5.1-3.4-2-.8-4.3-1.2-6.8-1.2s-4.8.4-6.8,1.2c-2,.8-3.7,2-5.1,3.4-1.4,1.5-2.5,3.2-3.2,5.3-.8,2-1.1,4.3-1.1,6.8z"/><path class="c4" d="M243.4,32.3h3.8c.5,0,.9.1,1.2.4.3.2.6.5.7.9l14.6,33.3c.3.7.5,1.4.8,2.2.2.8.5,1.5.7,2.3.2-.8.4-1.6.6-2.3.2-.8.5-1.5.7-2.2L280.9,33.6c.2-.4.4-.7.7-.9.3-.2.7-.4,1.2-.4h4L267.7,74.2h-4.1L243.4,32.3z"/><path class="c4" d="M293.1,74.2V32.3h26.3v3.6h-22.3v15.1h18.1v3.5h-18.1v16.2h22.3v3.6h-26.3z"/><path class="c4" d="M325.6,74.2V32.3h3.9c.9,0,1.5.4,1.7,1.3l.2,1,14.6,33.7c.3.7.6,1.5.8,2.2.3.8.5,1.5.7,2.3.3-.8.5-1.6.8-2.4.3-.8.5-1.5.8-2.2l14.8-33.7c.2-.4.4-.7.7-.9.3-.2.7-.4,1.2-.4h3.8l.03,42h-3.6l-.07-33.7c0-.6.02-1.2.07-1.8.04-.6.09-1.3.14-2l-14.9,34.1c-.4.9-1,1.4-1.9,1.4h-.6c-.8,0-1.5-.5-1.9-1.4L331,39.2c.07.7.12,1.4.14,2,.02.6.04,1.2.04,1.8v33.8h-3.6z"/><path class="c3" d="M0,85.4v18.5h2.3v-7.4h9.6v-1.8H2.3v-7.5H13.3v-1.8H0z"/><path class="c3" d="M16.8,103.9V85.4h2.3v18.5h-2.3z"/><path class="c3" d="M23.4,103.9V85.4h7.2c1.3,0,2.4.3,3.5.8,1.1.5,2,1.3,2.7,2.2.8.9,1.3,2,1.8,3.3.4,1.2.6,2.6.6,4v2.1c0,1.4-.2,2.7-.6,4-.4,1.2-1,2.3-1.8,3.3-.7.9-1.7,1.7-2.7,2.2-1.1.5-2.2.8-3.5.8h-7.2zm2.3-16.7v14.9h4.9c.9,0,1.7-.2,2.5-.6.7-.4,1.4-.9,1.9-1.6.5-.7.9-1.5,1.2-2.5.3-1,.4-2,.4-3.2v-2.1c0-1.2-.1-2.2-.4-3.2-.3-1-.7-1.8-1.2-2.5-.5-.7-1.2-1.2-1.9-1.6-.8-.4-1.6-.6-2.5-.6h-4.9z"/><path class="c3" d="M58.2,103.9h-2.4L46.5,89.1v14.8h-2.3V85.4h2.4l9.3,14.8V85.4h2.3v18.5z"/><path class="c3" d="M74.3,103.9H63v-18.5h11.3v1.8H65.3v6.3h8v1.8h-8v6.8h9v1.8z"/><path class="c3" d="M84.1,103.9h-2.3V87.2h-6V85.4h14.2v1.8h-6v16.7z"/></svg>
-    <span class="hdr-frac" id="stepfrac"></span><div id="auth-user-bar"><span class="a-user-name" id="auth-user-name"></span><button class="a-logout" onclick="sairDaConta()">Sair</button></div>
+    <span class="hdr-frac" id="stepfrac"></span><div id="auth-user-bar"><button class="a-logout" onclick="mostrarInicioOrcamento()">Início</button><span class="a-user-name" id="auth-user-name"></span><button class="a-logout" onclick="sairDaConta()">Sair</button></div>
   </div>
   <div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" id="progfill"></div></div></div>
   <div class="step-hdr"><div class="step-title" id="stitle"></div><div class="step-sub" id="ssub"></div><div class="summary-client-action" id="summary-client-action"></div></div>
@@ -506,6 +528,10 @@ const PRECOS={
 };
 let PRICE_VERSION = null;
 let ACTIVE_PRICE_VERSION = null;
+let PRICE_LABELS = {campanha:'Campanha · Tabela original',normal:'Normal · Tabela original'};
+let BONUS_VERSION = null;
+let BONUS_KIT_RATES = {};
+function nomeTabelaSelecionada(){return PRICE_LABELS[S.preco] || (S.preco==='normal'?'Normal':'Campanha');}
 async function carregarTabelaPrecos(versao = null){
   const resp = await apiV5(versao ? '/prices/' + encodeURIComponent(versao) : '/prices/active');
   const tabela = await resp.json();
@@ -518,7 +544,15 @@ async function carregarTabelaPrecos(versao = null){
   }
   PRECOS.campanha={...tabela.campanha};PRECOS.normal={...tabela.normal};
   PRICE_VERSION=tabela.version;
+  PRICE_LABELS={campanha:tabela.campanhaNome||'Campanha · Tabela original',normal:tabela.normalNome||'Normal · Tabela original'};
   if(!versao) ACTIVE_PRICE_VERSION=tabela.version;
+}
+async function carregarBonificacoes(versao = null){
+  const response=await apiV5(versao ? '/bonuses/'+encodeURIComponent(versao) : '/bonuses/active');
+  const config=await response.json();
+  if(!config.version||!config.rates)throw new Error('Bonificações por kit indisponíveis.');
+  BONUS_VERSION=config.version;
+  BONUS_KIT_RATES={...config.rates};
 }
 // Composições extraídas das abas Protocolos_Corte e Protocolos_Leite
 // H=ml por animal | vol=ml ou unidades por frasco/pack | bc: always/dbl/max/alwmax
@@ -778,7 +812,9 @@ function calcKitProds(kitId,N,mod,varEcg,varInd,varMax,pm){
     .map(([code,qty])=>({code,qty,preco:P[code]||0,valor:qty*(P[code]||0),nome:PROD_NOME[code]||code}));
 }
 // ════ CÁLCULO DE BONIFICAÇÃO ════
-function getBonifRate(tipo,mod){
+function getBonifRate(tipo,mod,kitId=S.kit){
+  const key=String(kitId||'')+':'+(tipo==='leite'?'leite':mod==='bestchoice'?'bestchoice':mod==='maxrelin'?'maxrelin':'nenhum');
+  if(Object.prototype.hasOwnProperty.call(BONUS_KIT_RATES,key))return Number(BONUS_KIT_RATES[key]);
   if(tipo==='leite')return BONIF_RATES.leite;
   if(mod==='bestchoice')return BONIF_RATES.corte_bestchoice;
   if(mod==='maxrelin')return BONIF_RATES.corte_maxrelin;
@@ -969,7 +1005,7 @@ function renderStep(){
     <div style="margin-top:18px;padding-top:16px;border-top:1.5px solid var(--bd)">
       <div class="vsec-lbl" style="margin-bottom:8px"><div class="vsec-dot" style="background:var(--mt)"></div>Recuperar orçamento existente</div>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="inp-recuperar" class="recuperar-input" placeholder="GBG-0000-0000" maxlength="15"
+        <input type="text" id="inp-recuperar" class="recuperar-input" placeholder="GBG-AAMM-XXXX (hífens opcionais)" maxlength="15"
           style="flex:1;border:1.5px solid var(--bd);border-radius:10px;padding:11px 12px;font-size:14px;font-weight:600;font-family:inherit;outline:none;letter-spacing:1px;text-transform:uppercase"
           oninput="this.value=this.value.toUpperCase()">
         <button onclick="recuperarOrcamento()" style="padding:11px 16px;background:var(--deep);color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:13px;white-space:nowrap">Carregar</button>
@@ -1099,7 +1135,7 @@ function renderStep(){
     }).join('');
   }
   if(sid==='preco') return`<div class="pgrid2">
-    ${[{id:'campanha',badge:'padrão',nm:'Campanha',sb:'Tabela de campanha vigente',def:true},{id:'normal',badge:'alternativo',nm:'Normal',sb:'Tabela de preços lista',def:false}].map(p=>`
+    ${[{id:'campanha',badge:'padrão',nm:PRICE_LABELS.campanha,sb:'Tabela de campanha',def:true},{id:'normal',badge:'alternativo',nm:PRICE_LABELS.normal,sb:'Tabela normal',def:false}].map(p=>`
     <div class="prcard${S.preco===p.id?' on':''}" onclick="sv('preco','${p.id}')">
       <div class="pr-badge ${p.def?'def':'alt'}">${p.badge}</div>
       <div class="pr-name">${p.nm}</div><div class="pr-sub">${p.sb}</div>
@@ -1198,7 +1234,7 @@ function renderStep(){
     </div>
     <!-- Observações -->
     <div class="obs-w"><label class="obs-l">Observações</label>
-      <textarea class="obs-ta" placeholder="Condições, termos, observações gerais..." oninput="S.obs=this.value">${S.obs}</textarea>
+      <textarea class="obs-ta" placeholder="Condições, termos, observações gerais..." maxlength="2000" ${S._modoRecuperado&&!S._editandoRecuperado?'readonly':''} oninput="S.obs=this.value">${esc(S.obs)}</textarea>
     </div>
     <div class="res-clause">Aceitamos as condições deste pedido. Pedido sujeito a confirmação e aprovação da matriz.</div>
     <!-- ── Envio para Senior G5 ── -->
@@ -1208,11 +1244,11 @@ function renderStep(){
       <div class="res-row"><span class="res-rl">Supervisor</span><span class="res-rv" id="sl-sup">${renderSupField()}</span></div>
     </div>
     ${S._seniorLookup.status==='error'?`<button onclick="iniciarLookupSenior()" style="width:100%;padding:10px;background:#fff;border:1.5px solid var(--rd);color:var(--rd);border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">🔄 Tentar novamente</button>`:''}
-    <button onclick="sendToSenior()" id="btn-enviar-senior"
+    ${v61CanEdit()?`<button onclick="sendToSenior()" id="btn-enviar-senior"
       ${!podeEnviarSenior()?'disabled':''} 
       style="width:100%;padding:13px;background:${podeEnviarSenior()?'var(--deep)':'var(--bd)'};color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:${podeEnviarSenior()?'pointer':'not-allowed'};font-family:inherit;margin-bottom:8px;-webkit-tap-highlight-color:transparent">
       ${S._seniorLookup.status==='loading'?'⏳ Aguardando consulta...':podeEnviarSenior()?'🚀 Enviar para Senior G5':'⚠️ Vínculo comercial pendente ou sem permissão'}
-    </button>
+    </button>`:''}
     <div id="send-result"></div>
     ${S._modoRecuperado&&S._statusOrc==='Aberto'?`
     <div class="obs-w" style="margin-top:8px"><label class="obs-l">Encerrar orçamento</label>
@@ -1233,6 +1269,8 @@ function renderNav(){
   const bk=idx>0?`<button class="btn-bk" onclick="goBack()">← Voltar</button>`:'';
   // Resumo
   if(sid==='resumo'){
+    if(S._modoRecuperado&&S._editandoRecuperado)return`<button class="btn-bk" onclick="cancelarEdicaoOrcamento()">Cancelar edição</button>`
+      +`<button class="btn-nxt" onclick="salvarEdicaoOrcamento()">💾 Salvar alterações</button>`;
     if(S._modoRecuperado)return`<button class="btn-bk" disabled style="opacity:.35;cursor:not-allowed;flex:1">← Voltar</button>`
       +`<button class="btn-nxt" style="flex:1;background:var(--mt);font-size:12px;font-weight:600" onclick="novoOrcamento()">Novo Orçamento</button>`
       +`<button class="btn-pdf" onclick="gerarPDF()" style="flex:1">📄 PDF</button>`;
@@ -1272,7 +1310,9 @@ function render(){
   const m=META[sid]||{t:'',s:''};
   document.getElementById('stitle').textContent=m.t;
   document.getElementById('ssub').textContent=m.s;
-  document.getElementById('summary-client-action').innerHTML=sid==='resumo'&&(!validarDocumento(S.clienteDoc)||!S.clienteNome?.trim())?'<button onclick="abrirClienteResumo()">Informar Cliente</button>':'';
+  document.getElementById('summary-client-action').innerHTML=
+    (sid==='resumo'&&(!validarDocumento(S.clienteDoc)||!S.clienteNome?.trim())?'<button onclick="abrirClienteResumo()">Informar Cliente</button>':'')+
+    (S._editandoRecuperado&&sid!=='resumo'?'<button onclick="goToStep(\'resumo\')">← Revisar resumo</button>':'');
   document.getElementById('content').innerHTML=renderStep();
   const bbar=document.getElementById('bbar');
   bbar.innerHTML=renderNav();
@@ -1646,6 +1686,7 @@ async function abrirPDFGerado(){
 }
 function criarPDFBlob(escala,qualidade,nome){return html2pdf().set({margin:0,filename:nome,image:{type:'jpeg',quality:qualidade},html2canvas:{scale:escala,useCORS:true,backgroundColor:'#ffffff',logging:false},jsPDF:{unit:'pt',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','legacy'],avoid:['tr','.p-cond','.p-obs','.p-tots']}}).from(document.getElementById('printpage')).outputPdf('blob')}
 async function gerarPDF(){
+  if(S._editandoRecuperado){alert('Salve as alterações antes de gerar o PDF.');return;}
   const btn=document.querySelector('.btn-pdf');
   try{buildPrint();validarConteudoPDF();}
   catch(e){alert('Não foi possível montar o PDF corretamente:\n'+e.message);return;}
@@ -1813,11 +1854,7 @@ function renderSeniorLookupField(field){
 function podeEnviarSenior(){
   const lk=S._seniorLookup||{},u=_authUser;
   if(!u||lk.status!=='ok'||!lk.codCli||!String(lk.codRep||'').replace(/^0+/,''))return false;
-  const code=String(u.codRep||'').trim().replace(/^0+/,'');
-  if(u.isAdmin||['SUB','GER'].includes(String(u.catRep||'').toUpperCase()))return true;
-  return !!code&&(code===String(lk.codFuncionario||'').trim().replace(/^0+/,'')||
-    (u.catRep==='REP'&&code===String(lk.codRep).trim().replace(/^0+/,''))||
-    (u.catRep==='SUP'&&code===String(lk.codSup||'').trim().replace(/^0+/,'')));
+  return u.isAdmin||['SUB','GER'].includes(String(u.catRep||'').toUpperCase());
 }
 // Atualiza o bloco de lookup no Resumo sem re-renderizar a tela toda
 function updResumoSeniorInfo(){
@@ -1949,8 +1986,9 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.4.2';
+       doc.versaoOrcamento='6.5.1';
        doc.versaoTabelaPrecos=PRICE_VERSION;
+       doc.versaoBonificacao=BONUS_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
        doc.protocolosV6=v6Protocols().map(p=>({...p}));
        doc.linhasFinaisV6=calcOrder().rows.map(p=>({...p}));
@@ -1970,6 +2008,15 @@ async function saveOrcamento(){
     await Promise.race([saveP(),timeoutP]);
   }catch(e){
     console.log('❌ Erro Firebase:',e.message);
+    if(e.status===409&&!S._numPedido&&/tabela de preços mudou|bonificação mudou/i.test(e.message)){
+      if(confirm(e.message+'\n\nAtualizar as versões e recalcular este orçamento para conferência?')){
+        if(S.manualLines&&!confirm('Os ajustes manuais serão descartados no recálculo. Continuar?'))throw e;
+        await carregarTabelaPrecos();await carregarBonificacoes();
+        S.manualLines=null;S._bonusLocked=false;S._hadManualEdit=false;
+        v6RefreshPayment();render();
+        throw new Error('Valores atualizados. Confira os itens e o pagamento antes de salvar novamente.');
+      }
+    }
     throw e; // propaga para bloquear geração do PDF
   }
 }
@@ -2001,6 +2048,7 @@ function carregarOrcamentoNoEstado(docId,data){
     tipo:data.tipo||null,kit:data.kitId||null,
     prot:data.nProt||0,preco:data.preco||'campanha',obs:data.obs||'',
     _sessionId:docId,_numPedido:data.numPedido||null,_erpSaleNumber:data.pedidoVendaSenior||'',_erpBonusNumber:data.pedidoBonificacaoSenior||'',
+    _editandoRecuperado:false,_modeloNovo:Array.isArray(data.protocolosV6)&&data.protocolosV6.length>0&&Array.isArray(data.linhasFinaisV6)&&data.linhasFinaisV6.length>0,
     _modoRecuperado:true,_statusOrc:data.status||'Aberto',_substatusOrc:data.status==='Aberto'?calcularSubstatusOrcamento(data):(data.substatus||''),_prazoPendencia:data.prazoPendencia||null,_quantidadeProrrogacoes:Number(data.quantidadeProrrogacoes||0),_cancelMotivo:'',
     _faturamentoVinculado:possuiNfValidaVinculada(data),_nfVinculadaNumero:data.nfVinculadaNumero||'',_nfVinculadaVlrLiq:Number(data.nfVinculadaVlrLiq||0),_faturamentoConferido:data.faturamentoConferido===true,
     _seniorLookup:{status:data.codRep&&data.codCli?'ok':'error',codRep:data.codRep||'',codCli:data.codCli||'',nomeRep:data.nomeRep||'',codSup:data.codSup||'',nomeSup:data.nomeSup||'',codFuncionario:data.codFuncionario||'',error:'Vínculo comercial pendente.'},
@@ -2015,6 +2063,7 @@ function carregarOrcamentoNoEstado(docId,data){
   const tags=data.tags||'';
   S.mod=tags.includes('Best Choice')?'bestchoice':tags.includes('Maxrelin')&&!tags.includes('Best')? 'maxrelin':'nenhum';
   // Pagamento
+  S._dadosRecuperados={id:docId,data:JSON.parse(JSON.stringify(data))};
   S._pagamentoSalvo=data.pagamento||'';
   S._pagamentoQtdParSalvo=Math.max(1,Math.trunc(Number(data.pagamentoQtdPar||1)));
   S.pag=data.pagamentoCodCpg||PAGS.find(p=>p.lbl===data.pagamento)?.id||null;
@@ -2039,9 +2088,41 @@ async function recuperarOrcamento(){
     if(status==='Finalizado'){el.style.color='var(--rd)';el.textContent='🔒 Este orçamento já foi finalizado e não pode ser alterado.';return;}
     if(status==='Cancelado'){el.style.color='var(--rd)';el.textContent='❌ Este orçamento foi cancelado.';return;}
     await carregarTabelaPrecos(data.versaoTabelaPrecos||'legacy-v61');
+    await carregarBonificacoes(data.versaoBonificacao||'legacy-bonif-v61');
     carregarOrcamentoNoEstado(docId,data);
     sid='resumo';render();
   }catch(e){el.style.color='var(--rd)';el.textContent='❌ Erro: '+e.message;}
+}
+function iniciarEdicaoOrcamento(){
+  if(!S._modoRecuperado||S._statusOrc!=='Aberto'||!S._modeloNovo)return;
+  S._editandoRecuperado=true;
+  if(!S._faturamentoVinculado)S.savedLines=null;
+  render();
+}
+function cancelarEdicaoOrcamento(){
+  if(!confirm('Descartar as alterações não salvas?'))return;
+  const loaded=S._dadosRecuperados;
+  if(loaded)carregarOrcamentoNoEstado(loaded.id,loaded.data);
+  sid='resumo';render();
+}
+async function salvarEdicaoOrcamento(){
+  if(!S._editandoRecuperado||S._statusOrc!=='Aberto')return;
+  if(!confirm('Salvar as alterações deste orçamento? Confira os valores antes de confirmar.'))return;
+  try{
+    if(S._faturamentoVinculado){
+      await apiV5('/budgets/save',{method:'POST',body:{sessionId:S._sessionId,
+        document:{obs:S.obs||''},expectedRevision:S._revision}});
+    }else{
+      const pg=getPagamentoSelecionado(),total=calcOrder();
+      if(!total||!pg||valorParcelaPagamento(pg,total)+0.001<VALOR_MINIMO_PARCELA)
+        throw new Error('Confira a condição de pagamento e a parcela mínima.');
+      await saveOrcamento();
+    }
+    const response=await apiV5('/budgets/by-number/'+encodeURIComponent(S._numPedido));
+    const updated=await response.json();
+    carregarOrcamentoNoEstado(updated.id,updated.data);
+    sid='resumo';render();alert('Orçamento atualizado. O número foi mantido.');
+  }catch(error){alert('Não foi possível salvar: '+error.message);}
 }
 function opcoesMotivosOrcamento(){
   const action=document.getElementById('budget-action').value;
@@ -2085,7 +2166,7 @@ async function novoOrcamento(){
     prot:0,bonifAplic:{},vac:'sim',vacF:null,vacD:0,
     av:{},preco:'campanha',pag:null,obs:'',
     codRep:'',_seniorLookup:{status:null,codCli:'',codRep:'',nomeRep:'',codSup:'',nomeSup:'',codFuncionario:'',error:''},
-    _sessionId:null,_numPedido:null,_modoRecuperado:false,_statusOrc:null,_substatusOrc:null,_prazoPendencia:null,_quantidadeProrrogacoes:0,_cancelMotivo:'',_pagamentoSalvo:'',_pagamentoQtdParSalvo:1,
+    _sessionId:null,_numPedido:null,_modoRecuperado:false,_editandoRecuperado:false,_modeloNovo:false,_dadosRecuperados:null,_statusOrc:null,_substatusOrc:null,_prazoPendencia:null,_quantidadeProrrogacoes:0,_cancelMotivo:'',_pagamentoSalvo:'',_pagamentoQtdParSalvo:1,
     _faturamentoVinculado:false,_nfVinculadaNumero:'',_nfVinculadaVlrLiq:0
   });
   cadastrosEncontrados=[];
@@ -2110,7 +2191,26 @@ function saveSession(u){localStorage.setItem(A_SESSION_KEY,JSON.stringify({...u,
 function clearSession(){localStorage.removeItem(A_SESSION_KEY);_authUser=null;}
 function showLogin(){document.getElementById('a-login').style.display='block';document.getElementById('a-prim').style.display='none';}
 function showPrimAcesso(){document.getElementById('a-login').style.display='none';document.getElementById('a-prim').style.display='block';}
-function showAuthScreen(){document.getElementById('auth-screen').style.display='flex';document.getElementById('auth-user-bar').style.display='none';}
+function showAuthScreen(){
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('auth-user-bar').style.display='none';
+  document.getElementById('gbg-home').hidden=true;
+  document.getElementById('gbg-budget').hidden=true;
+}
+function mostrarInicioOrcamento(){
+  const budget=document.getElementById('gbg-budget');
+  if(!budget.hidden && (S._editandoRecuperado || (!S._numPedido &&
+      (S.tipo || S.kit || S.clienteDoc || S.clienteNome || S.obs || S.protocolos?.length || S.av && Object.values(S.av).some(Boolean)))))
+    if(!confirm('Há dados não salvos neste orçamento. Voltar ao Início?'))return;
+  budget.hidden=true;
+  document.getElementById('gbg-home').hidden=false;
+  window.scrollTo(0,0);
+}
+function abrirAreaOrcamentos(){
+  document.getElementById('gbg-home').hidden=true;
+  document.getElementById('gbg-budget').hidden=false;
+  render();
+}
 function hideAuthScreen(u){
   document.getElementById('auth-screen').style.display='none';
   const bar=document.getElementById('auth-user-bar');
@@ -2136,7 +2236,7 @@ async function doLogin(){
     _authUser=usuarioDoPerfilV5(profile);
     saveSession(_authUser);
     try{await getFbDb().collection('representantes').doc(cred.user.uid).update({ultimoLogin:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
-    await carregarTabelaPrecos();hideAuthScreen(_authUser);render();await verificarPendenciasUsuario();
+    await carregarTabelaPrecos();await carregarBonificacoes();hideAuthScreen(_authUser);mostrarInicioOrcamento();await verificarPendenciasUsuario();
   }catch(e){
     const msg=e.code==='auth/wrong-password'||e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'?'E-mail ou senha incorretos.':
               e.code==='auth/invalid-email'?'E-mail inválido.':
@@ -2168,7 +2268,7 @@ async function restaurarSessao(sess){
     const firebaseUser=await aguardarAuthFirebase(getFirebaseAuth());
     if(!firebaseUser)throw new Error('Sessão expirada');
     _authUser=usuarioDoPerfilV5(await obterPerfilApiV5());
-    saveSession(_authUser);await carregarTabelaPrecos();hideAuthScreen(_authUser);render();await verificarPendenciasUsuario();
+    saveSession(_authUser);await carregarTabelaPrecos();await carregarBonificacoes();hideAuthScreen(_authUser);mostrarInicioOrcamento();await verificarPendenciasUsuario();
   }catch(_){clearSession();showAuthScreen();showLogin();}
 }
 // Logout
@@ -2477,7 +2577,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.4.2';
+const VOICE_APP_VERSION = '6.5.1';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -2925,6 +3025,7 @@ function confirmarClienteResumo() {
   }
   aplicarClienteProposto(proposta);
   fecharClienteResumo();
+  if(S._modoRecuperado&&!S._editandoRecuperado)iniciarEdicaoOrcamento();
   iniciarLookupSenior();
   render();
 }
@@ -3041,7 +3142,7 @@ function v6UseProtocol(p) {
 }
 function v6Protocols() {
   const list=(S.protocolos||[]).map(p=>({...p}));
-  if(!S._modoRecuperado) {
+  if(!S._modoRecuperado||S._editandoRecuperado) {
     const d=v6DraftProtocol();
     if(d.kit&&d.prot>0) {
       if(S._activeProtocolIndex>=0)list[S._activeProtocolIndex]=d;
@@ -3059,6 +3160,9 @@ function v6SaveDraft() {
   return true;
 }
 function v6DiscardManualOnStructureChange() {
+  if(S._modoRecuperado&&S._bonusLocked){
+    alert('A bonificação deste orçamento foi fixada manualmente. A composição dos itens não pode ser alterada.');return false;
+  }
   if(!S.manualLines)return true;
   if(!confirm('Alterar protocolos descartará os ajustes manuais dos itens. Deseja recriar os itens pelas regras de bonificação?'))return false;
   S.manualLines=null;S._hadManualEdit=false;
@@ -3073,13 +3177,13 @@ function adicionarOutroProtocolo() {
   S._activeProtocolIndex=-1;S._draftIsNew=true;sid='kit';render();
 }
 function editarProtocoloV6(index) {
-  if(S._modoRecuperado)return;
+  if(S._modoRecuperado&&!S._editandoRecuperado)return;
   if(!v6DiscardManualOnStructureChange())return;
   const p=S.protocolos[index];if(!p)return;
   S._activeProtocolIndex=index;S._draftIsNew=false;v6UseProtocol(p);sid='kit';render();
 }
 function removerProtocoloV6(index) {
-  if(S._modoRecuperado||S.protocolos.length<2)return;
+  if(S._modoRecuperado&&!S._editandoRecuperado||S.protocolos.length<2)return;
   if(!v6DiscardManualOnStructureChange())return;
   S.protocolos.splice(index,1);
   S._activeProtocolIndex=Math.min(S.protocolos.length-1,Math.max(0,index-1));
@@ -3135,7 +3239,7 @@ function v6BaseOrder(){
     if(!allMap.has(item.code))allMap.set(item.code,{...item,qty:0,valor:0});
     const row=allMap.get(item.code);row.qty+=item.qty;row.valor+=item.valor;
   }
-  const budget=protocols.reduce((sum,p)=>sum+p.prot*getBonifRate(p.tipo,p.mod),0);
+  const budget=protocols.reduce((sum,p)=>sum+p.prot*getBonifRate(p.tipo,p.mod,p.kit),0);
   const bonif=S.manualLines?{dist:{},total:0,budget}:v6BonifGlobal(kitProds,budget);
   const rows=[...allMap.values()].map(item=>({code:item.code,nome:item.nome,
     saleQty:item.qty-(bonif.dist[item.code]||0),salePrice:item.preco,
@@ -3150,7 +3254,7 @@ function v6BaseOrder(){
 }
 calcOrder=function(){
   const base=v6BaseOrder();if(!base)return null;
-  const rows=S._modoRecuperado&&S.savedLines?S.savedLines.map(p=>({...p})):
+  const rows=S._modoRecuperado&&(!S._editandoRecuperado||S._faturamentoVinculado)&&S.savedLines?S.savedLines.map(p=>({...p})):
     S.manualLines?S.manualLines.map(p=>({...p})):base.rows;
   const allProds=rows.filter(p=>p.saleQty+p.bonusQty>0).map(p=>({
     code:p.code,nome:p.nome,qty:p.saleQty+p.bonusQty,preco:p.salePrice,
@@ -3170,7 +3274,7 @@ function v6BestPayment(){
   return [...V6_PAYMENTS].reverse().map(([code,count])=>PAGS.find(p=>p.id===code&&quantidadeParcelasPagamento(p)===count&&total/count+0.001>=VALOR_MINIMO_PARCELA)).find(Boolean)||null;
 }
 function v6RefreshPayment(){
-  if(S._modoRecuperado)return;
+  if(S._modoRecuperado&&!S._editandoRecuperado)return;
   if(!PAGS.length)return;
   const current=PAGS.find(p=>p.id===S.pag);
   if(S._pagManual&&current&&valorParcelaPagamento(current)+0.001>=VALOR_MINIMO_PARCELA)return;
@@ -3216,6 +3320,7 @@ goBack=function(){
   v6OldGoBack();
 };
 goToStep=function(id){
+  if(S._modoRecuperado&&(!S._editandoRecuperado||S._faturamentoVinculado)&&id!=='resumo')return;
   if(S.manualLines&&!['pag','resumo'].includes(id)&&!v6DiscardManualOnStructureChange())return;
   v6OldGoToStep(id);
 };
@@ -3223,8 +3328,8 @@ goToStep=function(id){
 function v6ProtocolCards(protocols,editable=true){
   return `<div class="res-sec"><div class="res-shdr">Protocolos (${protocols.length})</div>${protocols.map((p,i)=>`
     <div class="v6-protocol-card"><strong>${i+1}. ${esc(v6ProtocolLabel(p))}</strong>
-      ${editable&&!S._modoRecuperado?`<div class="voice-actions"><button onclick="editarProtocoloV6(${i})">Editar protocolo</button>${protocols.length>1?`<button onclick="removerProtocoloV6(${i})">Remover</button>`:''}</div>`:''}
-    </div>`).join('')}${editable&&!S._modoRecuperado?'<button class="v6-add-button" onclick="adicionarOutroProtocolo()">＋ Adicionar outro Protocolo</button>':''}</div>`;
+      ${editable&&(!S._modoRecuperado||S._editandoRecuperado)?`<div class="voice-actions"><button onclick="editarProtocoloV6(${i})">Editar protocolo</button>${protocols.length>1?`<button onclick="removerProtocoloV6(${i})">Remover</button>`:''}</div>`:''}
+    </div>`).join('')}${editable&&(!S._modoRecuperado||S._editandoRecuperado)?'<button class="v6-add-button" onclick="adicionarOutroProtocolo()">＋ Adicionar outro Protocolo</button>':''}</div>`;
 }
 function v6RowsHtml(T,forPrint=false){
   if(forPrint)return `<table class="p-items-final"><colgroup><col style="width:11%"><col style="width:29%"><col style="width:7%"><col style="width:7%"><col style="width:14%"><col style="width:16%"><col style="width:16%"></colgroup><thead><tr><th>Código</th><th>Produto</th><th class="c">Venda</th><th class="c">Bonif.</th><th class="r">R$ unit.</th><th class="r">R$ venda</th><th class="r">R$ Bonif.</th></tr></thead><tbody>
@@ -3238,8 +3343,11 @@ renderStep=function(){
     const original=v6OldRenderStep();const begin=original.indexOf('<div class="res-kit">');const end=original.indexOf('<!-- Observações -->');
     if(begin<0||end<begin)return original;
     const T=calcOrder(),pg=getPagamentoSelecionado();if(!T)return original;
-    const sum=`${S._statusOrc?`<div class="res-sec">${statusBadge(S._statusOrc)} ${esc(S._substatusOrc||'')}${S._faturamentoConferido?' · Conferido pelo usuário':''}</div>`:''}${v6ProtocolCards(T.protocols)}${v6RowsHtml(T)}
-      <div class="res-sec"><div class="res-shdr">Condições</div><div class="res-row"><span class="res-rl">Tabela de preços</span><span class="res-rv">${S.preco==='campanha'?'Campanha':'Normal'} · ${esc(PRICE_VERSION||'indisponível')}</span></div><div class="res-row"><span class="res-rl">Pagamento</span><span class="res-rv">${pg?esc(pg.lbl):'Pendente'}</span></div></div>
+    const editButton=S._modoRecuperado&&!S._editandoRecuperado&&S._statusOrc==='Aberto'&&S._modeloNovo
+      ?`<button class="v6-edit-button" onclick="iniciarEdicaoOrcamento()">✏️ ${S._faturamentoVinculado?'Editar observações':'Editar orçamento'}</button>`:'';
+    const sections=S._editandoRecuperado&&S._faturamentoVinculado?'<p>NF vinculada: somente as observações podem ser alteradas.</p>':S._editandoRecuperado?`<div class="voice-actions"><button onclick="goToStep('bonifAplic')">Aplicadores</button><button onclick="goToStep('vac')">Vacinas</button><button onclick="goToStep('avulsos')">Itens avulsos</button><button onclick="goToStep('preco')">Tabela</button><button onclick="goToStep('pag')">Pagamento</button></div>`:'';
+    const sum=`${S._statusOrc?`<div class="res-sec">${statusBadge(S._statusOrc)} ${esc(S._substatusOrc||'')}${S._faturamentoConferido?' · Conferido pelo usuário':''}</div>`:''}${editButton}${sections}${v6ProtocolCards(T.protocols,!S._faturamentoVinculado)}${v6RowsHtml(T)}
+      <div class="res-sec"><div class="res-shdr">Condições</div><div class="res-row"><span class="res-rl">Tabela de preços</span><span class="res-rv">${esc(nomeTabelaSelecionada())}</span></div><div class="res-row"><span class="res-rl">Pagamento</span><span class="res-rv">${pg?esc(pg.lbl):'Pendente'}</span></div></div>
       <div class="res-sec"><div class="res-shdr">Totais</div><div class="res-row"><span class="res-rl">Total Pedido</span><span class="res-rv">${fmt(T.totalPedido)}</span></div><div class="res-row"><span class="res-rl">🎁 (−) Bonificação</span><span class="res-rv neg">− ${fmt(T.totalBonif)}</span></div></div>
       <div class="res-total-box"><span class="res-tl">Total Final</span><span class="res-tv">${fmt(T.totalFinal)}</span></div>
       <div class="res-av-box"><span class="av-l">À Vista (−3%)</span><span class="av-v">${fmt(T.aVista)}</span></div>
@@ -3321,6 +3429,7 @@ buildPrint=function(){
     <div class="p-sec">Kits e quantidades</div><table><thead><tr><th>Kit e configuração</th><th class="c">Protocolos</th></tr></thead><tbody>
     ${T.protocols.map(p=>`<tr><td class="nm">${esc(v6ProtocolLabel(p))}</td><td class="c">${p.prot}</td></tr>`).join('')}</tbody></table>
     <div class="p-sec">Itens finais ${T.manual?'(ajustados manualmente)':''}</div>${v6RowsHtml(T,true)}
+    <div class="p-conds"><div class="p-cond"><div class="p-cond-l">Tabela de preços</div><div class="p-cond-v">${esc(nomeTabelaSelecionada())}</div></div></div>
     <div class="p-tots"><div class="p-ti"><div class="ptr"><span>Total Pedido</span><span class="p-total-pedido">${fmt(T.totalPedido)}</span></div>
     <div class="ptr neg"><span>🎁 Bonificação</span><span>− ${fmt(T.totalBonif)}</span></div>
     <div class="ptr big"><span>Total Final</span><span class="p-total-final">${fmt(T.totalFinal)}</span></div>
@@ -3354,6 +3463,7 @@ novoOrcamento=async function(){
   }
 };
 async function sendToSenior(){
+  if(!v61CanEdit()){alert('Seu perfil não permite enviar pedidos ao ERP.');return;}
   if(S._numPedido){
     try{
       const response=await apiV5('/budgets/by-number/'+encodeURIComponent(S._numPedido));
@@ -3573,7 +3683,7 @@ v6RowsHtml = function(T, forPrint = false) {
       ${p.saleQty > 0 ? `<span>Venda <strong>${p.saleQty} × ${fmt(p.salePrice)} = ${fmt(p.saleQty*p.salePrice)}</strong></span>` : ''}
       ${p.bonusQty > 0 ? `<span class="v61-bonus">Bonif. <strong>${p.bonusQty} × ${fmt(p.salePrice)} = ${fmt(p.bonusQty*p.salePrice)}</strong></span>` : ''}
       </div></div>`).join('')}
-    ${!S._modoRecuperado && v61CanEdit() ? '<button class="v6-edit-button" onclick="abrirEditorItensV6()">✏️ Editar quantidade e valor dos itens</button>' : ''}</div>`;
+    ${(!S._modoRecuperado || S._editandoRecuperado) && !S._faturamentoVinculado && v61CanEdit() ? '<button class="v6-edit-button" onclick="abrirEditorItensV6()">✏️ Editar quantidade e valor dos itens</button>' : ''}</div>`;
 };
 
 document.getElementById('v6-edit-modal').innerHTML = `<div class="voice-card v6-edit-card">
@@ -3585,7 +3695,7 @@ document.getElementById('v6-edit-modal').innerHTML = `<div class="voice-card v6-
 </div>`;
 
 abrirEditorItensV6 = async function() {
-  if (S._modoRecuperado || !v61CanEdit()) return;
+  if (S._faturamentoVinculado || S._modoRecuperado && !S._editandoRecuperado || !v61CanEdit()) return;
   try { await v61ConfirmEditorRole(); }
   catch (error) { alert(error.message || 'Não foi possível validar sua permissão.'); return; }
   const T = calcOrder(), base = v6BaseOrder();
@@ -3649,6 +3759,8 @@ novoOrcamento = async function() {
     PRICE_VERSION = null;
     try { await carregarTabelaPrecos(); render(); }
     catch(error){ alert('Não foi possível atualizar os preços: '+error.message); }
+    try { await carregarBonificacoes(); render(); }
+    catch(error){ alert('Não foi possível atualizar as bonificações: '+error.message); }
   }
 };
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.2.2</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.3.1</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -155,6 +155,15 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
   .p-ftr{margin-top:10px;display:flex;justify-content:space-between;font-size:8.5px;color:#999}
 }
 </style>
+<style>
+#admin-screen[hidden]{display:none!important}
+#app.admin-open>.filters,#app.admin-open>#sync-status,#app.admin-open>#security-alerts,
+#app.admin-open>.stats,#app.admin-open>.lista{display:none!important}
+#bonus-overlay .bonus-line{display:grid;grid-template-columns:minmax(140px,1fr) repeat(3,minmax(85px,110px));gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #ddd}
+#bonus-overlay .bonus-line input{width:100%;box-sizing:border-box;padding:7px}
+#edit-budget-overlay{z-index:10020}
+@media(max-width:600px){#bonus-overlay .bonus-line{grid-template-columns:1fr 1fr}#bonus-overlay .bonus-line strong{grid-column:1/-1}}
+</style>
 </head>
 <body>
 <!-- Login / Primeiro Acesso -->
@@ -176,7 +185,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.2.2</div>
+    <div class="login-version">Gestão GBG · versão 5.3.1</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -191,7 +200,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.2.2</div>
+    <div class="login-version">Gestão GBG · versão 5.3.1</div>
   </div>
 </div>
 <!-- App -->
@@ -205,9 +214,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
   </div>
 
   <div class="filters">
-    <button class="f-btn" style="background:var(--deep);color:#fff" onclick="forcarSincronizacaoCadastrosG()">☁ Atualizar Firebase</button>
-    <button class="f-btn" id="g-full-load-button" style="background:#77513d;color:#fff;display:none" onclick="abrirCargaCompletaG()">📦 Carga completa</button>
-    <button class="f-btn" style="background:var(--pr);color:#fff" onclick="abrirTabelasPrecosG()">💲 Tabelas de preços</button>
+    <button class="f-btn" id="g-admin-button" style="background:var(--deep);color:#fff;display:none" onclick="abrirAdministracaoG()">⚙ Administração</button>
     <span class="f-label">Status:</span>
     <select class="f-inp" id="f-status" onchange="alterarFiltroStatusGestao()">
       <option value="">Todos</option>
@@ -238,6 +245,16 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
   <div id="security-alerts" style="padding:0 18px;font-size:12px;color:#943c12" role="status"></div>
   <div class="stats" id="stats"></div>
   <div class="lista" id="lista"><div class="loading">⏳ Carregando orçamentos...</div></div>
+  <div id="admin-screen" hidden style="padding:22px;max-width:760px;margin:auto">
+    <button class="f-btn" onclick="fecharAdministracaoG()">← Voltar aos orçamentos</button>
+    <h2>Administração</h2><p>Escolha a área que deseja administrar.</p>
+    <div style="display:grid;gap:12px;margin-top:18px">
+      <button class="f-btn" style="background:var(--pr);color:#fff;text-align:left;padding:15px" onclick="abrirTabelasPrecosG()">💲 Tabelas de Preços</button>
+      <button class="f-btn" style="background:var(--pr);color:#fff;text-align:left;padding:15px" onclick="abrirBonificacoesG()">🎁 Bonificação por Kit</button>
+      <button class="f-btn" style="background:var(--deep);color:#fff;text-align:left;padding:15px" onclick="forcarSincronizacaoCadastrosG()">☁ Atualizar Firebase</button>
+      <button class="f-btn" id="g-full-load-button" style="background:#77513d;color:#fff;text-align:left;padding:15px;display:none" onclick="abrirCargaCompletaG()">📦 Carga completa</button>
+    </div>
+  </div>
 </div>
 
 <!-- Edição das tabelas de preços vigentes -->
@@ -247,8 +264,27 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <p style="font-size:12px;line-height:1.5">Alterações publicadas passam a valer imediatamente para novos orçamentos. Os emitidos conservam seus preços.</p>
     <div id="prices-version" style="font-size:11px;margin:8px 0"></div>
     <div style="overflow:auto;max-height:65vh"><table class="m-table"><thead><tr><th>Código e produto</th><th>Campanha (R$)</th><th>Normal (R$)</th></tr></thead><tbody id="prices-rows"></tbody></table></div>
+    <div id="prices-periods" style="display:grid;gap:10px;margin-top:12px"></div>
     <div id="prices-status" role="status" style="font-size:12px;margin:10px 0"></div>
     <button class="f-btn" id="prices-publish" style="background:var(--pr);color:#fff" onclick="publicarTabelasPrecosG()">Publicar novos preços</button>
+  </div>
+</div>
+<div class="overlay" id="bonus-overlay" onclick="if(event.target===this)fecharBonificacoesG()">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-hdr"><div class="modal-title">Bonificação por Kit</div><button class="modal-close" onclick="fecharBonificacoesG()">✕ Fechar</button></div>
+    <p style="font-size:12px">Valores por protocolo. A publicação passa a valer para novos orçamentos.</p>
+    <div id="bonus-version" style="font-size:12px;font-weight:700"></div>
+    <div id="bonus-rows" style="max-height:62vh;overflow:auto"></div>
+    <div id="bonus-status" role="status" style="margin:10px 0;font-size:12px"></div>
+    <button class="f-btn" style="background:var(--pr);color:#fff" onclick="publicarBonificacoesG()">Publicar bonificações</button>
+  </div>
+</div>
+<div class="overlay" id="edit-budget-overlay" onclick="if(event.target===this)fecharEdicaoGestao()">
+  <div class="modal" style="max-width:900px;max-height:90vh;overflow:auto">
+    <div class="modal-hdr"><div class="modal-title" id="edit-budget-title">Editar orçamento</div><button class="modal-close" onclick="fecharEdicaoGestao()">✕ Fechar</button></div>
+    <div id="edit-budget-fields"></div>
+    <div id="edit-budget-result" role="status" style="margin:12px 0"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="f-btn" onclick="recalcularEdicaoGestao()">Recalcular e conferir</button><button class="f-btn" style="background:var(--pr);color:#fff" onclick="salvarEdicaoGestao()">Salvar alterações</button></div>
   </div>
 </div>
 <!-- Modal detalhes -->
@@ -422,6 +458,8 @@ function entrarNoApp(u){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app').style.display='block';
   const nm=document.getElementById('g-user-name');if(nm)nm.textContent=u.nomRep||'';
+  const adminButton=document.getElementById('g-admin-button');
+  if(adminButton)adminButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
   const syncButton=document.querySelector('[onclick="forcarSincronizacaoCadastrosG()"]');
   if(syncButton)syncButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
   const fullButton=document.getElementById('g-full-load-button');
@@ -432,6 +470,15 @@ function entrarNoApp(u){
   const fStatus=document.getElementById('f-status');
   if(fStatus)fStatus.value='Aberto';
   iniciarApp().then(()=>travarFiltroSupervisor());
+}
+function abrirAdministracaoG(){
+  if(!_gAuthUser||(!_gAuthUser.isAdmin&&!['SUB','GER'].includes(_gAuthUser.catRep)))return;
+  document.getElementById('app').classList.add('admin-open');
+  document.getElementById('admin-screen').hidden=false;
+}
+function fecharAdministracaoG(){
+  document.getElementById('app').classList.remove('admin-open');
+  document.getElementById('admin-screen').hidden=true;
 }
 // Primeiro acesso gestão
 async function doGFirstAccess(){
@@ -684,6 +731,9 @@ async function atualizarStatusSincronizacaoG(){
 function abrirCargaCompletaG(){
   if(!_gAuthUser?.isAdmin)return;
   if(document.getElementById('g-full-load-overlay'))return;
+  const senha=prompt('Digite a senha para abrir a carga completa:');
+  if(senha===null)return;
+  if(senha!==SENHA_SYNC_FIREBASE){alert('Senha incorreta. A carga completa não foi aberta.');return;}
   const choices=[
     ['clientesSenior','Clientes'],['representantes','Representantes'],
     ['notasFiscaisV2','Notas fiscais']
@@ -789,6 +839,17 @@ async function carregarOrcamentos(){
       _tsMs:timestampMsG(item.data.ts),
       _data:new Date(timestampMsG(item.data.ts)||0)
     }));
+    const oldVersions=[...new Set(todosOrc.filter(o=>!o.nomeTabelaPreco&&o.versaoTabelaPrecos&&o.versaoTabelaPrecos!=='legacy-v61')
+      .map(o=>o.versaoTabelaPrecos))];
+    const labels=new Map();
+    await Promise.all(oldVersions.map(async version=>{
+      try{labels.set(version,await(await apiV5G('/prices/'+encodeURIComponent(version))).json());}catch(_){}
+    }));
+    for(const o of todosOrc){
+      const table=labels.get(o.versaoTabelaPrecos);
+      o.nomeTabelaPreco||=(o.preco==='normal'?table?.normalNome:table?.campanhaNome)||
+        (o.preco==='normal'?'Normal · Tabela original':'Campanha · Tabela original');
+    }
     aplicarFiltros();
     popularFiltroSupervisor();
   }catch(e){document.getElementById('lista').innerHTML=`<div class="empty">❌ ${e.message}<br><small>Verifique a conexão com a API.</small></div>`;}
@@ -838,13 +899,13 @@ function aplicarFiltros(){
   const ate=document.getElementById('f-ate').value;
   const rep=document.getElementById('f-rep').value.toLowerCase();
   const cli=document.getElementById('f-cli').value.toLowerCase();
-  const num=document.getElementById('f-num').value.toLowerCase();
+  const num=document.getElementById('f-num').value.toLowerCase().replace(/[\s-]/g,'');
   filtrados=todosOrc.filter(o=>{
     if(de&&o._data<new Date(de))return false;
     if(ate&&o._data>new Date(ate+'T23:59:59'))return false;
     if(rep&&!(o.nomeRep||'').toLowerCase().includes(rep)&&!String(o.codRep).includes(rep))return false;
     if(cli&&!(o.clienteNome||'').toLowerCase().includes(cli)&&!(o.clienteDoc||'').includes(cli))return false;
-    if(num&&!(o.numPedido||'').toLowerCase().includes(num))return false;
+    if(num&&!String(o.codigoOrcamento||o.numPedido||'').toLowerCase().replace(/[\s-]/g,'').includes(num))return false;
     const st=document.getElementById('f-status').value;
     if(st&&(o.status||'Aberto')!==st)return false;
     const sub=document.getElementById('f-substatus').value;
@@ -916,7 +977,7 @@ function renderLista(){
         <span class="badge">${escPdfG(resumoKitsG(o))}</span>
         ${o.tags?`<span class="badge mod">${o.tags}</span>`:''}
         <span class="badge">${o.nProt||0} protocolos</span>
-        <span class="badge">${o.preco==='campanha'?'Campanha':'Normal'}</span>
+        <span class="badge">${escPdfG(o.nomeTabelaPreco||((o.preco==='normal'?'Normal':'Campanha')+' · Tabela original'))}</span>
       </div>
       <div style="display:inline-block;margin-bottom:6px">${statusBadgeG(statusOrcamentoG(o))} <small>${o.substatus&&o.status!=='Aberto'?o.substatus:''}</small></div>
       ${o.faturamentoVinculado?`<div style="font-size:11.5px;font-weight:750;color:#075985;background:#EAF7FF;border:1px solid #BAE6FD;border-radius:7px;padding:6px 9px;margin-bottom:7px">🧾 NF ${o.nfVinculadaSerie?o.nfVinculadaSerie+'/':''}${o.nfVinculadaNumero||'—'} · ${fmt(o.nfVinculadaVlrLiq)} · ${o.faturamentoConferido?'Conferido':'Aguardando conferência'}</div>`:''}
@@ -988,6 +1049,7 @@ function abrirModal(idx){
       <div class="m-row" style="font-size:15px"><span class="m-rl" style="font-weight:700">Total Final</span><span class="m-rv" style="color:var(--pr);font-size:16px;font-weight:800">${fmt(o.totalFinal)}</span></div>
       <div class="m-row"><span class="m-rl">À Vista (−3%)</span><span class="m-rv pos">${fmt(o.aVista)}</span></div>
       <div class="m-row"><span class="m-rl">Prazo de Pagamento</span><span class="m-rv">${o.pagamento||'—'}</span></div>
+      <div class="m-row"><span class="m-rl">Tabela de preços</span><span class="m-rv">${escPdfG(o.nomeTabelaPreco||((o.preco==='normal'?'Normal':'Campanha')+' · Tabela original'))}</span></div>
       <div class="m-row"><span class="m-rl">${rotuloParcelaG(o)}</span><span class="m-rv">${fmt(o.valorParcela)}</span></div>
       <div class="m-row"><span class="m-rl">Valor por Protocolo</span><span class="m-rv">${fmt(o.valorPorProt)}</span></div>
     </div>
@@ -996,6 +1058,7 @@ function abrirModal(idx){
     <div class="m-sec"><div class="m-sec-title">Pedidos no ERP</div><div>Venda: ${o.pedidoVendaSenior||'—'} · Bonificação: ${o.pedidoBonificacaoSenior||'—'}</div>${[o.envioVendaErpEstado,o.envioBonificacaoErpEstado].includes('verificar_no_erp')?'<p>⚠️ Envio pendente de conferência no ERP antes de nova tentativa.</p>':''}</div>
     <div class="m-actions">
       <button class="m-btn-pdf" onclick="gerarPDFModal(${idx})">📄 Gerar PDF</button>
+      ${(o.status||'Aberto')==='Aberto'&&Array.isArray(o.protocolosV6)&&o.protocolosV6.length&&Array.isArray(o.linhasFinaisV6)&&o.linhasFinaisV6.length?`<button class="m-btn-pdf" onclick="abrirEdicaoGestao(${idx})">${o.faturamentoVinculado?'✏️ Editar observações':'✏️ Editar orçamento'}</button>`:''}
     </div>
     ${(o.status||'Aberto')==='Aberto'?`
     <div class="m-cancel-area">
@@ -1010,6 +1073,224 @@ function abrirModal(idx){
   document.getElementById('overlay').classList.add('on');
 }
 function fecharModal(){document.getElementById('overlay').classList.remove('on');}
+
+let bonusEmEdicaoG=null;
+async function abrirBonificacoesG(){
+  if(!_gAuthUser||!(_gAuthUser.isAdmin||['SUB','GER'].includes(_gAuthUser.catRep)))return;
+  document.getElementById('bonus-overlay').classList.add('on');
+  const status=document.getElementById('bonus-status');status.textContent='Carregando...';
+  try{
+    bonusEmEdicaoG=await(await apiV5G('/bonuses/active')).json();
+    document.getElementById('bonus-version').textContent='Valores vigentes para novos orçamentos';
+    document.getElementById('bonus-rows').innerHTML=Object.entries(PDF_G_KITS).map(([kit,info])=>{
+      const milk=kit.startsWith('L');
+      const variants=milk?[['leite','Bonificação']]:[['nenhum','Padrão'],['maxrelin','Maxrelin'],['bestchoice','Best Choice']];
+      return `<div class="bonus-line"><strong>${kit} · ${escPdfG(info[0])}</strong>${variants.map(([variant,label])=>
+        `<label>${label}<input data-bonus-key="${kit}:${variant}" type="number" min="0" max="1000000" step="0.01" value="${Number(bonusEmEdicaoG.rates[kit+':'+variant]||0).toFixed(2)}"></label>`).join('')}</div>`;
+    }).join('');
+    status.textContent='Altere somente as taxas desejadas. Valores de orçamentos salvos permanecem na versão original.';
+  }catch(e){status.textContent=e.message;}
+}
+function fecharBonificacoesG(){document.getElementById('bonus-overlay').classList.remove('on');}
+async function publicarBonificacoesG(){
+  if(!bonusEmEdicaoG)return;
+  const status=document.getElementById('bonus-status'),rates={...bonusEmEdicaoG.rates};
+  for(const input of document.querySelectorAll('[data-bonus-key]')){
+    const value=Number(input.value);
+    if(!input.value.trim()||!Number.isFinite(value)||value<0||value>1000000||Math.abs(value*100-Math.round(value*100))>.00001){
+      status.textContent='Use valores não negativos com até duas casas decimais.';input.focus();return;
+    }
+    rates[input.dataset.bonusKey]=Math.round(value*100)/100;
+  }
+  const changes=Object.keys(rates).filter(k=>rates[k]!==bonusEmEdicaoG.rates[k]);
+  if(!changes.length){status.textContent='Não há alterações.';return;}
+  if(!confirm('Publicar imediatamente as bonificações de '+changes.length+' combinação(ões) de kit e variação?'))return;
+  status.textContent='Publicando...';
+  try{bonusEmEdicaoG=await(await apiV5G('/management/bonuses/publish',
+    {method:'POST',body:{expectedVersion:bonusEmEdicaoG.version,rates}})).json();
+    document.getElementById('bonus-version').textContent='Valores vigentes para novos orçamentos';
+    status.textContent='Bonificações publicadas para novos orçamentos.';
+  }catch(e){status.textContent=e.message;}
+}
+
+let edicaoGestao=null;
+const podeEditarValoresG=()=>!!(_gAuthUser&&(_gAuthUser.isAdmin||['SUB','GER'].includes(_gAuthUser.catRep)));
+function fecharEdicaoGestao(){
+  if(edicaoGestao?.dirty&&!confirm('Descartar as alterações não salvas?'))return;
+  document.getElementById('edit-budget-overlay').classList.remove('on');edicaoGestao=null;
+}
+function campoEdG(label,content){return `<label style="display:block;font-size:12px;font-weight:700;margin:8px 0">${label}<br>${content}</label>`}
+function opcoesKitEdG(selected,tipo){return Object.entries(PDF_G_KITS).filter(([k])=>k.startsWith(tipo==='leite'?'L':'C'))
+  .map(([k,v])=>`<option value="${k}" ${selected===k?'selected':''}>${k} · ${escPdfG(v[0])} · ${escPdfG(v[1])}</option>`).join('')}
+function capturarCamposEdG(){
+  if(!edicaoGestao)return;
+  const d=edicaoGestao.draft,obs=document.getElementById('edit-obs'),price=document.getElementById('edit-preco'),pay=document.getElementById('edit-pagamento');
+  if(obs)d.obs=obs.value;
+  if(price)d.preco=price.value;
+  const payment=pay&&edicaoGestao.payments.find(x=>x.codCpg===pay.value);
+  if(payment){d.pagamento=payment.lbl;d.pagamentoCodCpg=payment.codCpg;d.pagamentoQtdPar=payment.qtdParcelas;}
+}
+function marcarEdicaoGestao(){if(edicaoGestao){capturarCamposEdG();edicaoGestao.change=(edicaoGestao.change||0)+1;edicaoGestao.dirty=true;edicaoGestao.preview=null;document.getElementById('edit-budget-result').textContent=edicaoGestao.original.faturamentoVinculado?'Revise as observações antes de salvar.':'Recalcule e confira os valores antes de salvar.';}}
+function linhaProtEdG(p,i,tipo){
+  const selector=(name,options,value)=>`<select class="f-inp" data-field="${name}" onchange="alterarProtocoloEdG(${i})">${options.map(([v,label])=>
+    `<option value="${v}" ${String(value||'')===v?'selected':''}>${label}</option>`).join('')}</select>`;
+  return `<div class="m-sec" data-protocol="${i}" style="border:1px solid #ddd">
+    <strong>Protocolo ${i+1}</strong> <button type="button" onclick="removerProtocoloEdG(${i})" ${edicaoGestao.draft.protocolosV6.length===1?'disabled':''}>Remover</button>
+    <div class="filter-modal-grid">${campoEdG('Kit',`<select class="f-inp" data-field="kit" onchange="alterarProtocoloEdG(${i})">${opcoesKitEdG(p.kit,tipo)}</select>`)}
+    ${campoEdG('Quantidade de protocolos',`<input class="f-inp" data-field="prot" type="number" min="1" max="1000000" value="${Number(p.prot)||1}" onchange="alterarProtocoloEdG(${i})">`)}
+    ${tipo==='corte'?campoEdG('Variação',selector('mod',[['nenhum','Padrão'],['maxrelin','Padrão +Maxrelin'],['bestchoice','Best Choice']],p.mod||'nenhum')):''}
+    ${PDF_G_KITS[p.kit]?.[2]?campoEdG('eCG',selector('varEcg',[['ecgen','eCGen'],['ecegon','Ecegon']],p.varEcg||'ecgen')):''}
+    ${campoEdG('Induscio',selector('varInd',[['50ml','50ml'],['20ml','20ml']],p.varInd||'50ml'))}
+    ${['L1','L4'].includes(p.kit)||p.mod==='maxrelin'||p.mod==='bestchoice'?campoEdG('Maxrelin',selector('varMax',[['50ml','50ml'],['20ml','20ml']],p.varMax||'50ml')):''}
+    </div></div>`;
+}
+function renderizarEdicaoGestao(){
+  const {draft,original,payments}=edicaoGestao,tipo=draft.protocolosV6[0].tipo;
+  document.getElementById('edit-budget-title').textContent='Editar '+original.numPedido+' · '+(original.clienteNome||'Anônimo');
+  document.querySelector('#edit-budget-overlay [onclick="recalcularEdicaoGestao()"]').hidden=!!original.faturamentoVinculado;
+  if(original.faturamentoVinculado){
+    document.getElementById('edit-budget-fields').innerHTML='<p>NF vinculada: composição, valores, bonificações e pagamento permanecem bloqueados.</p>'+campoEdG('Observações',`<textarea class="f-inp" id="edit-obs" maxlength="2000" oninput="marcarEdicaoGestao()">${escPdfG(draft.obs||'')}</textarea>`);
+    document.getElementById('edit-budget-result').textContent='Revise as observações antes de salvar.';
+    return;
+  }
+  const auxCode=(code)=>`<option value="${escPdfG(code)}">${escPdfG(code)} · ${escPdfG(edicaoGestao.products?.[code]||'')}</option>`;
+  document.getElementById('edit-budget-fields').innerHTML=`<p>Cliente e número permanecem vinculados ao orçamento. Tabela e bonificações seguem suas versões originais.</p>
+    <div class="m-sec"><strong>Protocolos · ${tipo==='leite'?'Gado de Leite':'Gado de Corte'}</strong>
+      ${draft.protocolosV6.map((p,i)=>linhaProtEdG(p,i,tipo)).join('')}
+      <button class="f-btn" onclick="adicionarProtocoloEdG()">Adicionar outro protocolo</button></div>
+    <div class="m-sec"><strong>Itens adicionais</strong><div class="filter-modal-grid">
+      ${campoEdG('Vacina',`<select class="f-inp" id="edit-vacina" onchange="mudarExtrasEdG()"><option value="">Sem vacina</option><option value="100ml" ${draft.vacinas?.frasco==='100ml'?'selected':''}>Vac-Cherry 100ml</option><option value="250ml" ${draft.vacinas?.frasco==='250ml'?'selected':''}>Vac-Cherry 250ml</option></select>`)}
+      ${campoEdG('Doses de vacina',`<input class="f-inp" id="edit-doses" type="number" min="0" max="1000000" value="${Number(draft.vacinas?.doses)||0}" onchange="mudarExtrasEdG()">`)}
+      ${campoEdG('Código de item avulso',`<select class="f-inp" id="edit-avulso-code"><option value="">Selecione um produto</option>${Object.keys(edicaoGestao.products||{}).sort().map(auxCode).join('')}</select>`)}
+      ${campoEdG('Quantidade avulsa',`<input class="f-inp" id="edit-avulso-qty" type="number" min="0" max="1000000" value="0">`)}
+    </div><button class="f-btn" onclick="adicionarAvulsoEdG()">Adicionar item avulso</button>
+    <div id="edit-avulsos">${(draft.prodsAvulso||[]).map((x,i)=>`<div>${escPdfG(x.nome||x.code)} · ${Number(x.qty)} <button onclick="removerAvulsoEdG(${i})">Remover</button></div>`).join('')}</div>
+    <p>Aplicadores bonificados:</p>${['CM10A001','CM10A023'].map(code=>campoEdG(code,`<input class="f-inp" data-aplic="${code}" type="number" min="0" value="${Number((draft.bonifAplic||[]).find(x=>x.code===code)?.qty||0)}" onchange="mudarExtrasEdG()">`)).join('')}</div>
+    <div class="m-sec"><strong>Condições comerciais</strong><div class="filter-modal-grid">
+      ${campoEdG('Tabela de preço',`<select class="f-inp" id="edit-preco" onchange="marcarEdicaoGestao()"><option value="campanha" ${draft.preco==='campanha'?'selected':''}>${escPdfG(edicaoGestao.labels?.campanha||'Campanha · Tabela original')}</option><option value="normal" ${draft.preco==='normal'?'selected':''}>${escPdfG(edicaoGestao.labels?.normal||'Normal · Tabela original')}</option></select>`)}
+      ${campoEdG('Pagamento',`<select class="f-inp" id="edit-pagamento" onchange="marcarEdicaoGestao()">${payments.map(p=>`<option value="${escPdfG(p.codCpg)}" ${String(draft.pagamentoCodCpg)===String(p.codCpg)?'selected':''}>${escPdfG(p.lbl)} · ${p.qtdParcelas}x</option>`).join('')}</select>`)}
+    </div>${campoEdG('Observações',`<textarea class="f-inp" id="edit-obs" maxlength="2000" oninput="marcarEdicaoGestao()">${escPdfG(draft.obs||'')}</textarea>`)}</div>
+    <div class="m-sec"><strong>Itens finais</strong><div id="edit-linhas">${linhasEdicaoGestao()}</div></div>`;
+  document.getElementById('edit-budget-result').textContent='Revise as alterações e recalcule antes de salvar.';
+}
+function linhasEdicaoGestao(){
+  const lines=edicaoGestao.draft.linhasFinaisV6||[],allowed=podeEditarValoresG();
+  return `<div style="overflow:auto"><table class="m-table"><thead><tr><th>Produto</th><th>Venda</th><th>Bonif.</th><th>R$ unit.</th></tr></thead><tbody>${lines.map((x,i)=>{
+    const eligible=!['CM10A001','CM10A023','CM10A004','CM10A005','CM10A003'].includes(x.code)&&
+      (edicaoGestao.draft.prods||[]).some(p=>p.code===x.code)||
+      (edicaoGestao.draft.bonifAplic||[]).some(p=>p.code===x.code);
+    const inp=(field,value,editable)=>editable?`<input style="width:75px" type="number" min="0" step="${field==='salePrice'?'0.01':'1'}" data-line="${i}" data-field="${field}" value="${value}" onchange="alterarLinhaEdG(${i})">`:value;
+    return `<tr><td>${escPdfG(x.nome||x.code)}<small> ${escPdfG(x.code)}</small></td><td>${inp('saleQty',x.saleQty,allowed)}</td><td>${inp('bonusQty',x.bonusQty,allowed&&eligible)}</td><td>${inp('salePrice',x.salePrice,allowed)}</td></tr>`;
+  }).join('')}</tbody></table></div>`;
+}
+async function abrirEdicaoGestao(idx){
+  const o=filtrados[idx];if(!o||(o.status||'Aberto')!=='Aberto'||!Array.isArray(o.protocolosV6)||!o.protocolosV6.length||!o.linhasFinaisV6?.length)return;
+  const draft=JSON.parse(JSON.stringify(o));delete draft.id;delete draft._tsMs;delete draft._data;
+  edicaoGestao={original:o,draft,dirty:false,preview:null,change:0,payments:[],products:{}};
+  const activeEditor=edicaoGestao;
+  fecharModal();
+  document.getElementById('edit-budget-overlay').classList.add('on');
+  document.getElementById('edit-budget-result').textContent='Carregando condições de pagamento...';
+  try{
+    if(o.faturamentoVinculado){renderizarEdicaoGestao();return;}
+    const [snap,priceResponse]=await Promise.all([getGDb().collection('condicoesPagamento').get(),
+      apiV5G('/prices/'+encodeURIComponent(o.versaoTabelaPrecos||'legacy-v61'))]);
+    const table=await priceResponse.json();
+    if(edicaoGestao!==activeEditor)return;
+    edicaoGestao.products=table.produtos||{};
+    edicaoGestao.labels={campanha:table.campanhaNome,normal:table.normalNome};
+    edicaoGestao.payments=snap.docs.map(d=>{const p=d.data(),codCpg=String(p.codCpg||d.id),qtdParcelas=Number(p.qtdPar||p.qtdParcelas);
+      return {codCpg,qtdParcelas,lbl:String(p.desCpg||p.descricao||'Condição '+codCpg)};
+    }).filter(p=>p.qtdParcelas>0&&Number.isInteger(p.qtdParcelas));
+    if(!edicaoGestao.payments.some(p=>p.codCpg===String(o.pagamentoCodCpg)))
+      edicaoGestao.payments.push({codCpg:String(o.pagamentoCodCpg),qtdParcelas:Number(o.pagamentoQtdPar)||1,lbl:o.pagamento||'Atual'});
+    renderizarEdicaoGestao();
+  }catch(e){if(edicaoGestao===activeEditor)document.getElementById('edit-budget-result').textContent='Não foi possível carregar as condições: '+e.message;}
+}
+function alterarProtocoloEdG(i){capturarCamposEdG();
+  const p=edicaoGestao.draft.protocolosV6[i],box=document.querySelector(`[data-protocol="${i}"]`);
+  const old=p.kit;p.kit=box.querySelector('[data-field="kit"]').value;
+  p.prot=Number(box.querySelector('[data-field="prot"]').value);
+  if(p.prot<1||!Number.isInteger(p.prot)){alert('Quantidade de protocolos inválida.');return;}
+  p.mod=box.querySelector('[data-field="mod"]')?.value||'nenhum';
+  p.varEcg=box.querySelector('[data-field="varEcg"]')?.value||'ecgen';
+  p.varInd=box.querySelector('[data-field="varInd"]')?.value||'50ml';
+  p.varMax=box.querySelector('[data-field="varMax"]')?.value||'50ml';
+  if(old!==p.kit){p.varEcg='ecgen';renderizarEdicaoGestao();}
+  marcarEdicaoGestao();
+}
+function adicionarProtocoloEdG(){capturarCamposEdG();const p=edicaoGestao.draft.protocolosV6[0],kit=p.tipo==='leite'?'L1':'C1';
+  edicaoGestao.draft.protocolosV6.push({tipo:p.tipo,kit,mod:'nenhum',varEcg:'ecgen',varInd:'50ml',varMax:'50ml',prot:1});renderizarEdicaoGestao();marcarEdicaoGestao();}
+function removerProtocoloEdG(i){capturarCamposEdG();if(edicaoGestao.draft.protocolosV6.length<2)return;edicaoGestao.draft.protocolosV6.splice(i,1);renderizarEdicaoGestao();marcarEdicaoGestao();}
+function mudarExtrasEdG(){const d=edicaoGestao.draft;
+  const frasco=document.getElementById('edit-vacina').value,doses=Number(document.getElementById('edit-doses').value);
+  d.vacinas=frasco&&doses>0?{frasco,doses}:null;
+  d.bonifAplic=['CM10A001','CM10A023'].map(code=>({code,qty:Number(document.querySelector(`[data-aplic="${code}"]`).value)})).filter(x=>x.qty>0);
+  marcarEdicaoGestao();
+}
+function adicionarAvulsoEdG(){capturarCamposEdG();const code=document.getElementById('edit-avulso-code').value,qty=Number(document.getElementById('edit-avulso-qty').value);
+  if(!code||!Number.isInteger(qty)||qty<1)return alert('Selecione o item e informe a quantidade.');
+  edicaoGestao.draft.prodsAvulso??=[];edicaoGestao.draft.prodsAvulso.push({code,qty,nome:edicaoGestao.products[code]});renderizarEdicaoGestao();marcarEdicaoGestao();}
+function removerAvulsoEdG(i){capturarCamposEdG();edicaoGestao.draft.prodsAvulso.splice(i,1);renderizarEdicaoGestao();marcarEdicaoGestao();}
+function alterarLinhaEdG(i){const row=edicaoGestao.draft.linhasFinaisV6[i],beforeBonus=Number(row.bonusQty);
+  for(const field of ['saleQty','bonusQty','salePrice']){
+    const el=document.querySelector(`[data-line="${i}"][data-field="${field}"]`);if(el)row[field]=Number(el.value);
+  }
+  row.bonusPrice=row.salePrice;
+  if(Number(row.bonusQty)!==beforeBonus&&
+     !edicaoGestao.draft.bonificacaoManualV61){
+    edicaoGestao.draft.bonificacaoManualV61=true;
+    alert('A quantidade bonificada será fixada manualmente. Depois de salvar, a bonificação deste orçamento não será mais recalculada automaticamente.');
+  }
+  edicaoGestao.draft.ajusteManualV6=true;marcarEdicaoGestao();
+}
+function composicaoEdG(d){
+  const pick=(list,keys)=>(list||[]).map(x=>Object.fromEntries(keys.map(k=>[k,x[k]??null])));
+  return {protocolos:pick(d.protocolosV6,['tipo','kit','mod','prot','varEcg','varInd','varMax']),
+    avulsos:pick(d.prodsAvulso,['code','qty']),aplicadores:pick(d.bonifAplic,['code','qty']),
+    vacina:d.vacinas?{frasco:d.vacinas.frasco,doses:d.vacinas.doses}:null,preco:d.preco};
+}
+async function recalcularEdicaoGestao(){
+  if(!edicaoGestao)return;
+  const {original,draft}=edicaoGestao;
+  draft.preco=document.getElementById('edit-preco').value;
+  const payment=edicaoGestao.payments.find(x=>x.codCpg===document.getElementById('edit-pagamento').value);
+  draft.pagamento=payment.lbl;draft.pagamentoCodCpg=payment.codCpg;draft.pagamentoQtdPar=payment.qtdParcelas;
+  draft.obs=document.getElementById('edit-obs').value;
+  const activeEditor=edicaoGestao,generation=edicaoGestao.change||0;
+  const result=document.getElementById('edit-budget-result');result.textContent='Recalculando...';
+  try{
+    const structureChanged=JSON.stringify(composicaoEdG(draft))!==JSON.stringify(composicaoEdG(original));
+    if(structureChanged&&original.bonificacaoManualV61)
+      throw new Error('A bonificação deste orçamento foi fixada manualmente. A composição não pode mudar.');
+    if(structureChanged&&draft.ajusteManualV6){
+      if(!confirm('A mudança na composição substituirá os ajustes manuais dos itens. Continuar?'))return;
+    }
+    if(structureChanged){draft.ajusteManualV6=false;draft.bonificacaoManualV61=false;}
+    const preview=await(await apiV5G('/budgets/preview',{method:'POST',body:{sessionId:original.id,document:draft,expectedRevision:Number(original.revisaoOrcamento||0)}})).json();
+    if(edicaoGestao!==activeEditor)return;
+    if((edicaoGestao.change||0)!==generation)throw new Error('Os dados mudaram durante o recálculo. Recalcule novamente.');
+    Object.assign(draft,preview.document);
+    result.textContent=`Total: ${fmt(preview.totalFinal)} · Bonificação: ${fmt(preview.totalBonif)}. Confira os itens.`;
+    document.getElementById('edit-linhas').innerHTML=linhasEdicaoGestao();
+    const total=draft.linhasFinaisV6.reduce((sum,x)=>sum+Number(x.saleQty)*Number(x.salePrice),0);
+    if(total/payment.qtdParcelas+0.001<500)throw new Error('A parcela mínima é R$ 500,00.');
+    edicaoGestao.preview=true;edicaoGestao.dirty=true;
+  }catch(e){if(edicaoGestao!==activeEditor)return;edicaoGestao.preview=null;result.textContent=e.message;}
+}
+async function salvarEdicaoGestao(){
+  if(!edicaoGestao)return;
+  if(!edicaoGestao.original.faturamentoVinculado&&!edicaoGestao.preview)return alert('Clique em Recalcular e conferir antes de salvar.');
+  capturarCamposEdG();
+  const {original,draft}=edicaoGestao;
+  if(!confirm('Salvar as alterações de '+original.numPedido+'?'))return;
+  const result=document.getElementById('edit-budget-result');result.textContent='Salvando...';
+  try{
+    await apiV5G('/budgets/save',{method:'POST',body:{sessionId:original.id,document:original.faturamentoVinculado?{obs:draft.obs||''}:JSON.parse(JSON.stringify(draft)),expectedRevision:Number(original.revisaoOrcamento||0)}});
+    edicaoGestao.dirty=false;fecharEdicaoGestao();fecharModal();await carregarOrcamentos();aplicarFiltros();
+    alert('Orçamento atualizado.');
+  }catch(e){result.textContent=e.message;}
+}
 
 // ── PDF DO MODAL ──
 function escPdfG(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -1106,7 +1387,7 @@ function montarPDFGestao(o){
     ${kitBlock}
     ${o.clienteNome||o.clienteDoc?`<div class="p-conds" style="margin-top:0"><div class="p-cond"><div class="p-cond-l">Cliente</div><div class="p-cond-v">${escPdfG(nomeCliente(o))}</div></div>
       <div class="p-cond"><div class="p-cond-l">${escPdfG(o.clienteTipo||'CNPJ/CPF')}</div><div class="p-cond-v">${escPdfG(o.clienteDoc||'—')}</div></div></div>`:''}
-    <div class="p-sec">Itens finais ${M.isV6&&o.ajusteManualV6?'(ajustados manualmente)':''}</div>${tabelaItensPdfG(M.allProds)}
+    <div class="p-sec">${escPdfG(o.nomeTabelaPreco||((o.preco==='normal'?'Normal':'Campanha')+' · Tabela original'))} · Itens finais ${M.isV6&&o.ajusteManualV6?'(ajustados manualmente)':''}</div>${tabelaItensPdfG(M.allProds)}
     <div class="p-tots"><div class="p-ti">
       <div class="ptr"><span>Total Pedido</span><span class="p-total-pedido">${fmt(o.totalPedido)}</span></div>
       <div class="ptr neg"><span>🎁 Bonificação</span><span>− ${fmt(o.totalBonif)}</span></div>
@@ -1219,13 +1500,13 @@ async function conferirFaturamentoGestao(idx){
 // ── CSV EXPORT ──
 function exportarCSV(){
   if(!filtrados.length){alert('Nenhum orçamento para exportar.');return;}
-  const cols=['Nº Pedido','Status','Substatus','Pedido venda ERP','Pedido bonificação ERP','Conferido pelo usuário','NF Vinculada','Série NF','Valor NF','Supervisor','Data/Hora','Cliente Nome','Cliente Doc','Tipo','Cód Representante','Nome Representante','Cód Cliente Senior','Kit','Variação','Nº Protocolos','Tabela Preço','Versão preços','Condição Pagamento','Total Pedido','Bonificação','Total Final','À Vista','Valor por Protocolo','Valor Parcela','Vacinas','Observações'];
+  const cols=['Nº Pedido','Status','Substatus','Pedido venda ERP','Pedido bonificação ERP','Conferido pelo usuário','NF Vinculada','Série NF','Valor NF','Supervisor','Data/Hora','Cliente Nome','Cliente Doc','Tipo','Cód Representante','Nome Representante','Cód Cliente Senior','Kit','Variação','Nº Protocolos','Tabela Preço','Condição Pagamento','Total Pedido','Bonificação','Total Final','À Vista','Valor por Protocolo','Valor Parcela','Vacinas','Observações'];
   const rows=filtrados.map(o=>[
     o.numPedido||'',statusOrcamentoG(o),o.substatus||'',o.pedidoVendaSenior||'',o.pedidoBonificacaoSenior||'',o.faturamentoConferido?'Sim':'Não',o.nfVinculadaNumero||'',o.nfVinculadaSerie||'',o.faturamentoVinculado?(Number(o.nfVinculadaVlrLiq)||0).toFixed(2):'',
     o.nomeSup||'Sem supervisor',o.dataHora||'',o.clienteNome||'',o.clienteDoc||'',o.clienteTipo||'',
     o.codRep||'',o.nomeRep||'',o.codCli||'',
     resumoKitsG(o),o.tags||'',o.nProt||0,
-    o.preco||'',o.versaoTabelaPrecos||'Legado',o.pagamento||'',
+    o.nomeTabelaPreco||'',o.pagamento||'',
     (o.totalPedido||0).toFixed(2),(o.totalBonif||0).toFixed(2),
     (o.totalFinal||0).toFixed(2),(o.aVista||0).toFixed(2),
     (o.valorPorProt||0).toFixed(2),(o.valorParcela||0).toFixed(2),
@@ -1241,6 +1522,29 @@ function exportarCSV(){
 
 // Tabelas versionadas: somente a API autenticada publica alterações.
 let tabelaEmEdicaoG = null;
+const MESES_PRECO_G=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function editorPeriodosPrecosG(){
+  const box=document.getElementById('prices-periods');
+  box.innerHTML=['campanha','normal'].map(tipo=>{
+    const period=tabelaEmEdicaoG[tipo+'Periodo']||'';
+    const names=period.split('/')[0].split('-');
+    const year=period.split('/')[1]||String(new Date().getFullYear()).slice(-2);
+    return `<fieldset data-periodo-tipo="${tipo}" style="border:1px solid #ddd;border-radius:9px;padding:10px"><legend>${tipo==='campanha'?'Campanha':'Normal'}: ${escPdfG(tabelaEmEdicaoG[tipo+'Nome'])}</legend>
+      <label><input type="checkbox" data-change> Alterar os meses no nome desta tabela</label>
+      <div style="margin:8px 0"><label>Ano <input data-year type="number" min="2000" max="2099" value="20${year}" style="width:90px"></label></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${MESES_PRECO_G.map(m=>`<label><input type="checkbox" data-month="${m}" ${names.includes(m)?'checked':''}> ${m}</label>`).join('')}</div>
+    </fieldset>`;
+  }).join('');
+}
+function periodoEditadoG(tipo){
+  const box=document.querySelector(`[data-periodo-tipo="${tipo}"]`);
+  if(!box.querySelector('[data-change]').checked)return null;
+  const year=Number(box.querySelector('[data-year]').value);
+  const months=[...box.querySelectorAll('[data-month]:checked')].map(x=>x.dataset.month);
+  if(!Number.isInteger(year)||year<2000||year>2099||!months.length)
+    throw new Error(`Selecione o ano e ao menos um mês para ${tipo}.`);
+  return months.join('-')+'/'+String(year).slice(-2);
+}
 async function abrirTabelasPrecosG(){
   if(!_gAuthUser || (!_gAuthUser.isAdmin && !['SUB','GER'].includes(_gAuthUser.catRep))){
     alert('Seu perfil não permite alterar preços.');return;
@@ -1252,7 +1556,8 @@ async function abrirTabelasPrecosG(){
   try{
     const resp=await apiV5G('/prices/active');
     tabelaEmEdicaoG=await resp.json();
-    document.getElementById('prices-version').textContent='Versão vigente: '+tabelaEmEdicaoG.version;
+    document.getElementById('prices-version').textContent=`Vigentes: ${tabelaEmEdicaoG.campanhaNome} · ${tabelaEmEdicaoG.normalNome}`;
+    editorPeriodosPrecosG();
     const rows=document.getElementById('prices-rows');rows.replaceChildren();
     Object.keys(tabelaEmEdicaoG.produtos).sort().forEach(code=>{
       const tr=document.createElement('tr');
@@ -1288,15 +1593,28 @@ async function publicarTabelasPrecosG(){
   const changes=Object.keys(tabelaEmEdicaoG.produtos).filter(code=>
     next.campanha[code]!==tabelaEmEdicaoG.campanha[code]||
     next.normal[code]!==tabelaEmEdicaoG.normal[code]);
-  if(!changes.length){status.textContent='Nenhuma alteração para publicar.';return;}
-  if(!confirm(`Publicar imediatamente ${changes.length} produto(s) alterado(s)?\n\n`+
+  let periods;
+  try{
+    periods={campanhaPeriodo:periodoEditadoG('campanha'),normalPeriodo:periodoEditadoG('normal')};
+    const changed=tipo=>changes.some(code=>next[tipo][code]!==tabelaEmEdicaoG[tipo][code]) ||
+      periods[tipo+'Periodo']!==null&&periods[tipo+'Periodo']!==tabelaEmEdicaoG[tipo+'Periodo'];
+    if(!changed('campanha')&&!changed('normal')){status.textContent='Nenhuma alteração para publicar.';return;}
+    for(const tipo of ['campanha','normal']){
+      if(!changed(tipo))periods[tipo+'Periodo']=null;
+      if(changed(tipo)&&!periods[tipo+'Periodo']&&!tabelaEmEdicaoG[tipo+'Periodo'])
+        throw new Error(`Selecione os meses e o ano para o primeiro nome da tabela ${tipo==='campanha'?'Campanha':'Normal'}.`);
+    }
+  }catch(error){status.textContent=error.message;return;}
+  if(!confirm(`Publicar as alterações de preços e nomes para novos orçamentos?\n\n`+
+    ['campanha','normal'].filter(tipo=>periods[tipo+'Periodo']).map(tipo=>`${tipo==='campanha'?'Campanha':'Normal'}: ${periods[tipo+'Periodo']}`).join('\n')+'\n'+
     changes.map(code=>`${code}: Campanha ${fmt(tabelaEmEdicaoG.campanha[code])} → ${fmt(next.campanha[code])}; Normal ${fmt(tabelaEmEdicaoG.normal[code])} → ${fmt(next.normal[code])}`).join('\n')))
     return;
   button.disabled=true;status.textContent='Publicando...';
   try{
-    const resp=await apiV5G('/management/prices/publish',{method:'POST',body:{expectedVersion:tabelaEmEdicaoG.version,...next}});
+    const resp=await apiV5G('/management/prices/publish',{method:'POST',body:{expectedVersion:tabelaEmEdicaoG.version,...next,...periods}});
     tabelaEmEdicaoG=await resp.json();
-    document.getElementById('prices-version').textContent='Versão vigente: '+tabelaEmEdicaoG.version;
+    document.getElementById('prices-version').textContent=`Vigentes: ${tabelaEmEdicaoG.campanhaNome} · ${tabelaEmEdicaoG.normalNome}`;
+    editorPeriodosPrecosG();
     status.textContent='Preços publicados. A nova versão já vale para novos orçamentos.';
   }catch(e){status.textContent='A publicação não foi concluída: '+e.message;}
   finally{button.disabled=false;}
