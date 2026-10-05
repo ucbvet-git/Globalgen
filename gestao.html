@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.3.1</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.4.0</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -164,6 +164,22 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
 #edit-budget-overlay{z-index:10020}
 @media(max-width:600px){#bonus-overlay .bonus-line{grid-template-columns:1fr 1fr}#bonus-overlay .bonus-line strong{grid-column:1/-1}}
 </style>
+<style>
+.gbg-nf-overlay[hidden]{display:none!important}
+.gbg-nf-overlay{position:fixed;inset:0;background:#0008;z-index:8000;display:flex;align-items:center;justify-content:center;padding:14px}
+.gbg-nf-card{background:#fff;color:#263238;border-radius:14px;width:100%;max-width:850px;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 16px 50px #0004;font-family:Arial,sans-serif}
+.gbg-nf-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.gbg-nf-top h2{margin:0;font-size:22px;color:#004446}
+.gbg-nf-card button{cursor:pointer;border:1px solid #b8d1d1;border-radius:7px;padding:9px 13px;background:#eef7f7;color:#004446;font-weight:700;font-size:13px}
+.gbg-nf-card button:disabled{opacity:.55;cursor:default}.gbg-nf-options{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.gbg-nf-options button{text-align:left;flex:1;min-width:210px}.gbg-nf-options small{display:block;margin-top:4px}
+.gbg-nf-search{display:flex;flex-wrap:wrap;align-items:end;gap:10px;margin:14px 0}.gbg-nf-search label{display:grid;gap:6px;font-size:13px;font-weight:700}
+.gbg-nf-search input{padding:10px;border:1px solid #b8d1d1;border-radius:7px;font-size:16px;max-width:100%;width:190px}
+.gbg-nf-note{border:1px solid #dce7e7;border-radius:9px;padding:14px;margin:10px 0}.gbg-nf-note h3{font-size:16px;margin:0 0 8px;color:#004446}
+.gbg-nf-note p{font-size:13px;line-height:1.6;margin:6px 0}.gbg-nf-status{font-size:13px;line-height:1.5;margin:10px 0;color:#425466}
+.gbg-nf-detail{font-size:13px;line-height:1.7;background:#f4f8f8;padding:10px;border-radius:7px;margin-top:10px}
+.gbg-nf-error{color:#a61b1b!important}.gbg-nf-warning{background:#fff6d8;border-radius:7px;padding:10px;font-size:13px;margin:12px 0}
+@media(max-width:520px){.gbg-nf-card{padding:16px}.gbg-nf-overlay{padding:8px}.gbg-nf-top h2{font-size:18px}}
+</style>
 </head>
 <body>
 <!-- Login / Primeiro Acesso -->
@@ -185,7 +201,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.3.1</div>
+    <div class="login-version">Gestão GBG · versão 5.4.0</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -200,7 +216,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.3.1</div>
+    <div class="login-version">Gestão GBG · versão 5.4.0</div>
   </div>
 </div>
 <!-- App -->
@@ -215,6 +231,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
 
   <div class="filters">
     <button class="f-btn" id="g-admin-button" style="background:var(--deep);color:#fff;display:none" onclick="abrirAdministracaoG()">⚙ Administração</button>
+    <button class="f-btn" onclick="GbgInvoiceView.open()">🧾 Notas fiscais</button>
     <span class="f-label">Status:</span>
     <select class="f-inp" id="f-status" onchange="alterarFiltroStatusGestao()">
       <option value="">Todos</option>
@@ -499,6 +516,7 @@ async function doGFirstAccess(){
 }
 // Logout gestão
 async function sairGestao(){
+  window.GbgInvoiceView?.close();
   try{await getGAuth().signOut();}catch(_){}
   clearGSession();
   document.getElementById('app').style.display='none';
@@ -736,7 +754,7 @@ function abrirCargaCompletaG(){
   if(senha!==SENHA_SYNC_FIREBASE){alert('Senha incorreta. A carga completa não foi aberta.');return;}
   const choices=[
     ['clientesSenior','Clientes'],['representantes','Representantes'],
-    ['notasFiscaisV2','Notas fiscais']
+    ['notasFiscaisV2','Notas fiscais — histórico desde 01/09/2026 e vínculos comerciais']
   ];
   const overlay=document.createElement('div');
   overlay.id='g-full-load-overlay';
@@ -1619,6 +1637,90 @@ async function publicarTabelasPrecosG(){
   }catch(e){status.textContent='A publicação não foi concluída: '+e.message;}
   finally{button.disabled=false;}
 }
+</script>
+<script>
+// ── CONSULTA DE NFs: autorização validada no servidor ──
+function createGbgInvoiceView(config){
+  let overlay=null,requestId=0,controller=null,customer='',next='',previousOverflow='';
+  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')?String(value).split('-').reverse().join('/'):'—';
+  const money=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
+  const roles=[['codRep','nomeRep','Representante'],['codSup','nomeSup','Supervisor'],['codGerente','nomeGerente','Gerente'],['codFuncionario','nomeFuncionario','Funcionário'],['codCoordenador','nomeCoordenador','Coordenador']];
+  function begin(){controller?.abort();controller=new AbortController();return ++requestId;}
+  const live=id=>id===requestId&&overlay?.isConnected&&!overlay.hidden&&!!config.user();
+  function close(){++requestId;controller?.abort();controller=null;customer='';next='';
+    if(overlay){overlay.remove();overlay=null;document.body.style.overflow=previousOverflow;}}
+  function links(note){return roles.map(([code,name,label])=>'<div><strong>'+label+':</strong> '+
+    escape(note[name]|| (note[code]?'Código '+note[code]:'Não informado'))+(note[name]&&note[code]?' · '+escape(note[code]):'')+'</div>').join('');}
+  async function load(more=false){
+    const input=overlay.querySelector('[data-cliente]');
+    const value=input.value.trim();
+    const status=overlay.querySelector('[data-status]');
+    if(!/^\d{1,9}$/.test(value)||Number(value)===0){status.textContent='Informe o código do cliente no Senior.';return;}
+    const selected=String(Number(value));
+    const append=more&&selected===customer&&!!next;
+    if(!append){customer=selected;next='';overlay.querySelector('[data-lista]').replaceChildren();overlay.querySelector('[data-proxima]').hidden=true;}
+    const id=begin();status.classList.remove('gbg-nf-error');status.textContent='Consultando notas fiscais...';
+    overlay.querySelector('[data-consultar]').disabled=true;overlay.querySelector('[data-proxima]').disabled=true;
+    try{
+      const response=await config.api('/invoices?customerCode='+encodeURIComponent(customer)+(append?'&cursor='+encodeURIComponent(next):''),{signal:controller.signal});
+      const data=await response.json();if(!live(id))return;
+      next=data.proximaPagina||'';
+      const list=overlay.querySelector('[data-lista]');
+      for(const note of data.notas||[]){
+        const item=document.createElement('article');item.className='gbg-nf-note';
+        item.innerHTML='<h3>NF '+escape(note.codSnf)+' / '+escape(note.numNfv)+'</h3>'+
+          '<p>Cliente '+escape(note.codCli)+' · Empresa '+escape(note.codEmp)+' · Filial '+escape(note.codFil)+'<br>'+
+          'Emissão: '+date(note.dataEmissao)+' · Valor: '+money(note.vlrLiq)+' · '+(note.cancelada?'Cancelada':'Fechada')+'</p>'+
+          '<button type="button" data-vinculos>Ver vínculos comerciais</button><div class="gbg-nf-detail" data-detalhe hidden></div>';
+        item.querySelector('[data-vinculos]').onclick=async()=>{
+          const button=item.querySelector('[data-vinculos]'),detail=item.querySelector('[data-detalhe]');
+          const detailId=requestId,detailCustomer=customer;button.disabled=true;detail.hidden=false;detail.classList.remove('gbg-nf-error');detail.textContent='Consultando...';
+          try{
+            const result=await config.api('/invoices/'+encodeURIComponent(detailCustomer)+'/'+encodeURIComponent(note.idNota),{signal:controller.signal});
+            const fresh=await result.json();if(!live(detailId)||!item.isConnected)return;
+            detail.innerHTML=links(fresh);
+            if((config.user()?.isAdmin||config.user()?.catRep==='GER')&&fresh.vinculosComerciaisCompletos!==true)
+              detail.insertAdjacentHTML('beforeend','<p class="gbg-nf-warning">Há vínculos não recebidos do Senior nesta NF. Confira o cadastro e a sincronização.</p>');
+          }catch(error){if(live(detailId)&&item.isConnected){detail.textContent=error.message;detail.classList.add('gbg-nf-error');}}
+          finally{if(item.isConnected)button.disabled=false;}
+        };
+        list.append(item);
+      }
+      status.textContent=list.children.length?list.children.length+' nota(s) disponível(is) para este login.':'Nenhuma nota fiscal disponível para este cliente e login.';
+      overlay.querySelector('[data-proxima]').hidden=!next;
+    }catch(error){if(live(id)){status.textContent=error.message;status.classList.add('gbg-nf-error');}}
+    finally{if(live(id)){overlay.querySelector('[data-consultar]').disabled=false;overlay.querySelector('[data-proxima]').disabled=false;}}
+  }
+  async function open(){
+    if(!config.user())return;close();previousOverflow=document.body.style.overflow;
+    overlay=document.createElement('div');overlay.className='gbg-nf-overlay no-print';
+    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Notas fiscais');
+    overlay.innerHTML='<div class="gbg-nf-card"><div class="gbg-nf-top"><h2>'+escape(config.title||'Notas fiscais')+'</h2>'+
+      '<button type="button" data-fechar>'+escape(config.closeLabel||'Fechar')+'</button></div>'+
+      (config.secondCopies?'<div class="gbg-nf-options"><button type="button" disabled>Boletos — segunda via<small>Em breve</small></button><button type="button" disabled>Notas Fiscais — segunda via<small>Em breve</small></button></div>':'')+
+      '<p class="gbg-nf-status">Consulte as notas fiscais e seus vínculos comerciais.</p><div data-historico class="gbg-nf-status"></div>'+
+      '<form class="gbg-nf-search"><label>Código do cliente<input data-cliente inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Código no Senior" required></label>'+
+      '<button type="submit" data-consultar>Consultar / Atualizar</button></form><div data-status class="gbg-nf-status" role="status"></div>'+
+      '<div data-lista></div><button type="button" data-proxima hidden>Carregar mais</button></div>';
+    document.body.append(overlay);document.body.style.overflow='hidden';
+    overlay.querySelector('[data-fechar]').onclick=close;
+    overlay.querySelector('form').onsubmit=event=>{event.preventDefault();load(false);};
+    overlay.querySelector('[data-proxima]').onclick=()=>load(true);
+    const initial=String(config.customerCode?.()||'');overlay.querySelector('[data-cliente]').value=/^\d{1,9}$/.test(initial)?initial:'';
+    overlay.querySelector('[data-cliente]').focus();
+    const id=begin();
+    try{
+      const response=await config.api('/invoices/status',{signal:controller.signal});const data=await response.json();if(!live(id))return;
+      const history=overlay.querySelector('[data-historico]');
+      history.textContent=data.atualizacaoHistoricaPendente?'A atualização do histórico desde 01/09/2026 ainda está pendente. As notas já disponíveis podem ser consultadas.':'Histórico de NFs geradas a partir de 01/09/2026.';
+    }catch(error){if(live(id))overlay.querySelector('[data-historico]').textContent=error.message;}
+  }
+  return {open,close};
+}
+// ── FIM CONSULTA DE NFs ──
+
+window.GbgInvoiceView=createGbgInvoiceView({api:apiV5G,user:()=>_gAuthUser,title:'Notas fiscais'});
 </script>
 </body>
 </html>
