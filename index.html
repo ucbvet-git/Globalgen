@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.8.0</title>
+<title>GLOBALGEN — Orçamento v6.9.0</title>
 <meta name="application-name" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-title" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#199198">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.8.0">
-<link rel="manifest" href="./orcamento.webmanifest?v=6.8.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.9.0">
+<link rel="manifest" href="./orcamento.webmanifest?v=6.9.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -375,6 +375,34 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
 .gbg-nf-error{color:#a61b1b!important}.gbg-nf-warning{background:#fff6d8;border-radius:7px;padding:10px;font-size:13px;margin:12px 0}
 @media(max-width:520px){.gbg-nf-card{padding:16px}.gbg-nf-overlay{padding:8px}.gbg-nf-top h2{font-size:18px}}
 </style>
+<style>
+.gbg-doc-screen[hidden],.gbg-doc-screen [hidden]{display:none!important}
+.gbg-doc-screen{min-height:100vh;min-height:100dvh;padding:calc(20px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px));background:var(--sf);color:var(--tx)}
+.gbg-doc-screen .gbg-home-card{margin:0 auto;padding:22px;max-width:520px}
+.gbg-doc-screen .gbg-doc-title{font-size:19px;line-height:1.35;color:var(--deep);margin:18px 0 8px;overflow-wrap:anywhere}
+.gbg-doc-screen .gbg-home-bar{align-items:center;gap:10px}.gbg-doc-screen .gbg-home-bar h1{margin:0;font-size:22px}
+.gbg-doc-screen button{min-height:44px;max-width:100%;font-family:inherit;cursor:pointer;touch-action:manipulation}
+.gbg-doc-screen .gbg-home-bar button{min-width:64px;font-size:13px;padding:10px 12px;flex-shrink:0}
+.gbg-doc-screen .gbg-doc-option{display:flex;align-items:center;gap:14px;min-height:106px;padding:16px;text-align:left}
+.gbg-doc-option img{flex-shrink:0}.gbg-doc-option span{min-width:0;overflow-wrap:anywhere}.gbg-doc-option:disabled img{opacity:.6}
+.gbg-doc-screen .gbg-home-option small{font-size:12px;line-height:1.5;margin-top:5px}
+.gbg-boleto-heading{display:flex;align-items:center;gap:10px;margin-top:18px}.gbg-boleto-heading img{flex-shrink:0}
+.gbg-doc-screen .gbg-boleto-heading .gbg-doc-title{margin:0;font-size:18px}
+.gbg-doc-screen .gbg-nf-search{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;margin:20px 0}
+.gbg-doc-screen .gbg-nf-search label{font-size:14px;color:var(--deep);gap:7px;min-width:0}
+.gbg-doc-screen .gbg-nf-search input{width:100%;min-width:0;min-height:46px;border:1px solid var(--bd);border-radius:9px;padding:12px;font:inherit;font-size:16px;background:#fff;color:var(--tx)}
+.gbg-doc-screen button:focus-visible,.gbg-doc-screen input:focus-visible{outline:3px solid #19919866;outline-offset:2px}
+.gbg-doc-screen .gbg-nf-note{padding:15px;border-color:var(--bd);border-radius:12px;overflow-wrap:anywhere;margin:14px 0}
+.gbg-doc-screen .gbg-nf-note h3{font-size:16px}.gbg-doc-screen .gbg-nf-note p,.gbg-doc-screen .gbg-nf-status{font-size:13px;line-height:1.65}
+.gbg-doc-screen .gbg-nf-options{display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin:14px 0}
+.gbg-doc-screen .gbg-nf-options button{min-width:0;width:100%;text-align:center;overflow-wrap:anywhere}
+.gbg-doc-screen .gbg-nf-note button,.gbg-doc-screen .gbg-nf-search button,.gbg-doc-screen [data-proxima],.gbg-doc-screen .gbg-doc-back{display:block;width:100%;padding:12px;border:1px solid var(--bd);border-radius:9px;background:var(--lt);color:var(--deep);font-size:14px;font-weight:700}
+.gbg-doc-screen [data-consultar],.gbg-doc-screen [data-gerar],.gbg-doc-screen [data-gerar-nf]{background:var(--pr);border-color:var(--pr);color:white}
+.gbg-doc-screen button:disabled{opacity:.55;cursor:default}.gbg-doc-screen .gbg-boleto-batch{background:var(--lt);border-color:var(--pr)}
+.gbg-boleto-values{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;padding:10px 0;font-size:12px;color:var(--mt)}
+.gbg-boleto-values strong{display:block;font-size:17px;color:var(--deep);line-height:1.5}.gbg-doc-screen .gbg-doc-back{margin-top:22px;background:white}
+@media(max-width:360px){.gbg-doc-screen{padding:calc(12px + env(safe-area-inset-top,0px)) 10px calc(20px + env(safe-area-inset-bottom,0px))}.gbg-doc-screen .gbg-home-card{padding:16px}.gbg-doc-screen .gbg-doc-option{padding:12px;gap:10px}.gbg-doc-option img{width:54px;height:54px}}
+</style>
 </head>
 <body>
 <div id="orc-modal" onclick="if(event.target===this)fecharMeusOrcamentos()">
@@ -460,7 +488,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.8.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.9.0</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -474,7 +502,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.8.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.9.0</div>
   </div>
 </div>
 <div id="gbg-home" class="no-print" hidden>
@@ -482,7 +510,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="gbg-home-bar"><h1>GLOBALGEN</h1><button onclick="sairDaConta()">Sair</button></div>
     <p>Escolha uma área para continuar.</p>
     <button class="gbg-home-option" onclick="abrirAreaOrcamentos()">📋 Orçamentos<small>Criar, recuperar e acompanhar orçamentos</small></button>
-    <button class="gbg-home-option" onclick="GbgInvoiceView.open()">🧾 NFs e Boletos<small>Consultar notas fiscais e segunda via de boletos</small></button>
+    <button class="gbg-home-option" onclick="GbgDocumentsView.open()">🧾 NFs e Boletos<small>Segunda via de boletos · NFs em breve</small></button>
     <button class="gbg-home-option" disabled>📊 Metas e Faturamento<small>Em breve</small></button>
   </div>
 </div>
@@ -2011,7 +2039,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.8.0';
+       doc.versaoOrcamento='6.9.0';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.versaoBonificacao=BONUS_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
@@ -2217,7 +2245,7 @@ function clearSession(){localStorage.removeItem(A_SESSION_KEY);_authUser=null;}
 function showLogin(){document.getElementById('a-login').style.display='block';document.getElementById('a-prim').style.display='none';}
 function showPrimAcesso(){document.getElementById('a-login').style.display='none';document.getElementById('a-prim').style.display='block';}
 function showAuthScreen(){
-  window.GbgInvoiceView?.close();
+  window.GbgDocumentsView?.close();
   window.GbgBoletoView?.close();
   document.getElementById('auth-screen').style.display='flex';
   document.getElementById('auth-user-bar').style.display='none';
@@ -2229,6 +2257,8 @@ function mostrarInicioOrcamento(){
   if(!budget.hidden && (S._editandoRecuperado || (!S._numPedido &&
       (S.tipo || S.kit || S.clienteDoc || S.clienteNome || S.obs || S.protocolos?.length || S.av && Object.values(S.av).some(Boolean)))))
     if(!confirm('Há dados não salvos neste orçamento. Voltar ao Início?'))return;
+  window.GbgDocumentsView?.close();
+  window.GbgBoletoView?.close();
   budget.hidden=true;
   document.getElementById('gbg-home').hidden=false;
   window.scrollTo(0,0);
@@ -2604,7 +2634,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.8.0';
+const VOICE_APP_VERSION = '6.9.0';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
@@ -3856,160 +3886,124 @@ async function adiarFaturadosPendentes(){
 
 </script>
 <script>
-// ── CONSULTA DE NFs: autorização validada no servidor ──
-function createGbgInvoiceView(config){
-  let overlay=null,requestId=0,controller=null,customer='',next='',previousOverflow='';
-  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')?String(value).split('-').reverse().join('/'):'—';
-  const money=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
-  const roles=[['codRep','nomeRep','Representante'],['codSup','nomeSup','Supervisor'],['codGerente','nomeGerente','Gerente'],['codFuncionario','nomeFuncionario','Funcionário'],['codCoordenador','nomeCoordenador','Coordenador']];
-  function begin(){controller?.abort();controller=new AbortController();return ++requestId;}
-  const live=id=>id===requestId&&overlay?.isConnected&&!overlay.hidden&&!!config.user();
-  function close(){++requestId;controller?.abort();controller=null;customer='';next='';
-    if(overlay){overlay.remove();overlay=null;document.body.style.overflow=previousOverflow;}}
-  function links(note){return roles.map(([code,name,label])=>'<div><strong>'+label+':</strong> '+
-    escape(note[name]|| (note[code]?'Código '+note[code]:'Não informado'))+(note[name]&&note[code]?' · '+escape(note[code]):'')+'</div>').join('');}
-  async function load(more=false){
-    const input=overlay.querySelector('[data-cliente]');
-    const value=input.value.trim();
-    const status=overlay.querySelector('[data-status]');
-    if(!/^\d{1,9}$/.test(value)||Number(value)===0){status.textContent='Informe o código do cliente no Senior.';return;}
-    const selected=String(Number(value));
-    const append=more&&selected===customer&&!!next;
-    if(!append){customer=selected;next='';overlay.querySelector('[data-lista]').replaceChildren();overlay.querySelector('[data-proxima]').hidden=true;}
-    const id=begin();status.classList.remove('gbg-nf-error');status.textContent='Consultando notas fiscais...';
-    overlay.querySelector('[data-consultar]').disabled=true;overlay.querySelector('[data-proxima]').disabled=true;
-    try{
-      const response=await config.api('/invoices?customerCode='+encodeURIComponent(customer)+(append?'&cursor='+encodeURIComponent(next):''),{signal:controller.signal});
-      const data=await response.json();if(!live(id))return;
-      next=data.proximaPagina||'';
-      const list=overlay.querySelector('[data-lista]');
-      for(const note of data.notas||[]){
-        const item=document.createElement('article');item.className='gbg-nf-note';
-        item.innerHTML='<h3>NF '+escape(note.codSnf)+' / '+escape(note.numNfv)+'</h3>'+
-          '<p>Cliente '+escape(note.codCli)+' · Empresa '+escape(note.codEmp)+' · Filial '+escape(note.codFil)+'<br>'+
-          'Emissão: '+date(note.dataEmissao)+' · Valor: '+money(note.vlrLiq)+' · '+(note.cancelada?'Cancelada':'Fechada')+'</p>'+
-          '<button type="button" data-vinculos>Ver vínculos comerciais</button><div class="gbg-nf-detail" data-detalhe hidden></div>';
-        item.querySelector('[data-vinculos]').onclick=async()=>{
-          const button=item.querySelector('[data-vinculos]'),detail=item.querySelector('[data-detalhe]');
-          const detailId=requestId,detailCustomer=customer;button.disabled=true;detail.hidden=false;detail.classList.remove('gbg-nf-error');detail.textContent='Consultando...';
-          try{
-            const result=await config.api('/invoices/'+encodeURIComponent(detailCustomer)+'/'+encodeURIComponent(note.idNota),{signal:controller.signal});
-            const fresh=await result.json();if(!live(detailId)||!item.isConnected)return;
-            detail.innerHTML=links(fresh);
-            if((config.user()?.isAdmin||config.user()?.catRep==='GER')&&fresh.vinculosComerciaisCompletos!==true)
-              detail.insertAdjacentHTML('beforeend','<p class="gbg-nf-warning">Há vínculos não recebidos do Senior nesta NF. Confira o cadastro e a sincronização.</p>');
-          }catch(error){if(live(detailId)&&item.isConnected){detail.textContent=error.message;detail.classList.add('gbg-nf-error');}}
-          finally{if(item.isConnected)button.disabled=false;}
-        };
-        list.append(item);
-      }
-      status.textContent=list.children.length?list.children.length+' nota(s) disponível(is) para este login.':'Nenhuma nota fiscal disponível para este cliente e login.';
-      overlay.querySelector('[data-proxima]').hidden=!next;
-    }catch(error){if(live(id)){status.textContent=error.message;status.classList.add('gbg-nf-error');}}
-    finally{if(live(id)){overlay.querySelector('[data-consultar]').disabled=false;overlay.querySelector('[data-proxima]').disabled=false;}}
-  }
-  async function open(initialCode=''){
-    if(!config.user())return;close();previousOverflow=document.body.style.overflow;
-    overlay=document.createElement('div');overlay.className='gbg-nf-overlay no-print';
-    overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Notas fiscais');
-    overlay.innerHTML='<div class="gbg-nf-card"><div class="gbg-nf-top"><h2>'+escape(config.title||'Notas fiscais')+'</h2>'+
-      '<button type="button" data-fechar>'+escape(config.closeLabel||'Fechar')+'</button></div>'+
-      (config.secondCopies?'<div class="gbg-nf-options"><button type="button" data-boletos'+(config.openBoletos?'':' disabled')+'>Boletos — segunda via<small>'+(config.openBoletos?'Consultar títulos e gerar PDF':'Em breve')+'</small></button><button type="button" disabled>Notas Fiscais — segunda via<small>Em breve</small></button></div>':'')+
-      '<p class="gbg-nf-status">Consulte as notas fiscais e seus vínculos comerciais.</p><div data-historico class="gbg-nf-status"></div>'+
-      '<form class="gbg-nf-search"><label>Código do cliente<input data-cliente inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Código no Senior" required></label>'+
-      '<button type="submit" data-consultar>Consultar / Atualizar</button></form><div data-status class="gbg-nf-status" role="status"></div>'+
-      '<div data-lista></div><button type="button" data-proxima hidden>Carregar mais</button></div>';
-    document.body.append(overlay);document.body.style.overflow='hidden';
-    overlay.querySelector('[data-fechar]').onclick=close;
-    const boletoButton=overlay.querySelector('[data-boletos]');
-    if(config.secondCopies&&config.openBoletos&&boletoButton)boletoButton.onclick=()=>{const code=overlay.querySelector('[data-cliente]').value;close();config.openBoletos(code);};
-    overlay.querySelector('form').onsubmit=event=>{event.preventDefault();load(false);};
-    overlay.querySelector('[data-proxima]').onclick=()=>load(true);
-    const initial=String(initialCode||config.customerCode?.()||'');overlay.querySelector('[data-cliente]').value=/^\d{1,9}$/.test(initial)?initial:'';
-    overlay.querySelector('[data-cliente]').focus();
-    const id=begin();
-    try{
-      const response=await config.api('/invoices/status',{signal:controller.signal});const data=await response.json();if(!live(id))return;
-      const history=overlay.querySelector('[data-historico]');
-      history.textContent=data.atualizacaoHistoricaPendente?'A atualização do histórico desde 01/09/2026 ainda está pendente. As notas já disponíveis podem ser consultadas.':'Histórico de NFs geradas a partir de 01/09/2026.';
-    }catch(error){if(live(id))overlay.querySelector('[data-historico]').textContent=error.message;}
+// Embedded in the standalone Orçamento HTML during release preparation.
+function createGbgDocumentsView(config){
+  let screen=null;
+  function close(){if(screen){screen.remove();screen=null;}}
+  function open(){
+    if(!config.user())return;close();config.enter?.();
+    screen=document.createElement('section');screen.className='gbg-doc-screen no-print';screen.setAttribute('aria-label','NFs e Boletos');
+    screen.innerHTML='<div class="gbg-home-card"><div class="gbg-home-bar"><h1>GLOBALGEN</h1><button type="button" data-inicio>Início</button></div>'+
+      '<h2 class="gbg-doc-title">NFs e Boletos</h2><p>Escolha o documento para continuar.</p>'+
+      '<button type="button" class="gbg-home-option gbg-doc-option" data-boletos><img src="icons/gbg-boletos.svg" width="64" height="64" alt=""><span>Boletos<small>Consultar e gerar segunda via</small></span></button>'+
+      '<button type="button" class="gbg-home-option gbg-doc-option" disabled><img src="icons/gbg-notas-fiscais.svg" width="64" height="64" alt=""><span>Notas Fiscais<small>Segunda via · Em breve</small></span></button></div>';
+    document.body.append(screen);
+    screen.querySelector('[data-inicio]').onclick=()=>{close();config.home?.();};
+    screen.querySelector('[data-boletos]').onclick=()=>{close();config.boletos?.();};
+    config.scroll?.();
   }
   return {open,close};
 }
-// ── FIM CONSULTA DE NFs ──
+// ── FIM TELA NFs E BOLETOS ──
 
 // Embedded in the standalone Orçamento HTML during release preparation.
 function createGbgBoletoView(config){
-  let overlay=null,controller=null,requestId=0,owner='',customer='',filter='',next='',selected='',pdf=null,previousOverflow='',nativePending=false,generationButton=null;
+  let overlay=null,controller=null,requestId=0,owner='',customer='',filter='',invoiceFilter='',next='',selected='',selectedDocument='',pdf=null,nativePending=false,loading=false;
+  let titleButtons=[],batchButtons=[];
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
   const date=value=>/^\d{4}-\d{2}-\d{2}$/.test(value||'')?value.split('-').reverse().join('/'):'—';
   const live=id=>id===requestId&&overlay?.isConnected&&!!config.user()&&config.user().uid===owner;
-  function begin(){controller?.abort();if(generationButton?.isConnected)generationButton.disabled=false;generationButton=null;controller=new AbortController();owner=config.user()?.uid;return ++requestId;}
+  function begin(){controller?.abort();controller=new AbortController();owner=config.user()?.uid;return ++requestId;}
   function canShare(file){try{return !!window.AndroidShare||!!(file&&navigator.share&&navigator.canShare?.({files:[file]}));}catch(_){return false;}}
   function clearPdf(){pdf=null;nativePending=false;if(overlay){overlay.querySelector('[data-pdf]').hidden=true;overlay.querySelector('[data-pdf-status]').textContent='';}}
-  function busy(value){if(overlay){overlay.querySelector('[data-consultar]').disabled=value;overlay.querySelector('[data-proxima]').disabled=value;}}
-  function reset(){++requestId;controller?.abort();customer='';filter='';next='';selected='';clearPdf();
-    if(overlay){overlay.querySelector('[data-lista]').replaceChildren();overlay.querySelector('[data-clientes]').replaceChildren();overlay.querySelector('[data-proxima]').hidden=true;overlay.querySelector('[data-status]').textContent='Consulte novamente para atualizar os títulos.';busy(false);}}
-  function close(){++requestId;controller?.abort();controller=null;clearPdf();customer='';next='';selected='';
-    if(overlay){overlay.remove();overlay=null;document.body.style.overflow=previousOverflow;}}
+  function busy(value){loading=value;if(overlay){overlay.querySelector('[data-consultar]').disabled=value;overlay.querySelector('[data-proxima]').disabled=value;
+    for(const entry of [...titleButtons,...batchButtons])entry.button.disabled=value||!entry.allowed;}}
+  function clearResults(){titleButtons=[];batchButtons=[];next='';overlay.querySelector('[data-lista]').replaceChildren();overlay.querySelector('[data-lotes]').replaceChildren();overlay.querySelector('[data-proxima]').hidden=true;}
+  function reset(clientChanged=false){++requestId;controller?.abort();customer='';filter='';invoiceFilter='';if(clientChanged){selected='';selectedDocument='';}clearPdf();
+    if(overlay){clearResults();overlay.querySelector('[data-clientes]').replaceChildren();status('Consulte novamente para atualizar os títulos.');busy(false);}}
+  function close(){++requestId;controller?.abort();controller=null;clearPdf();customer='';next='';selected='';selectedDocument='';titleButtons=[];batchButtons=[];loading=false;
+    if(overlay){overlay.remove();overlay=null;}}
   function status(text,error=false){if(!overlay)return;const e=overlay.querySelector('[data-status]');e.textContent=text;e.classList[error?'add':'remove']('gbg-nf-error');}
-  function fileName(title){return 'GBG-Boleto-'+title.customerCode+'-'+String(title.number).replace(/[^A-Za-z0-9_-]/g,'_')+'.pdf';}
-  async function generate(title,button){
-    const id=begin();generationButton=button;clearPdf();busy(true);button.disabled=true;status('Conferindo o título no Senior e preparando o PDF...');
+  const safe=value=>String(value).replace(/[^A-Za-z0-9_-]/g,'_');
+  async function receivePdf(route,body,name,label,message){
+    if(loading)return;
+    const id=begin();clearPdf();busy(true);status('Consultando o Senior e preparando o PDF...');
     try{
-      const response=await config.api('/boletos/pdf',{method:'POST',signal:controller.signal,body:{customerCode:title.customerCode,titleNumber:title.number}});
+      const response=await config.api(route,{method:'POST',signal:controller.signal,body});
       const blob=await response.blob();if(!live(id))return;
       if(!/^application\/pdf(?:;|$)/i.test(response.headers.get('Content-Type')||'')||!blob.size)throw new Error('A API não retornou um PDF de boleto.');
-      const name=fileName(title),base64=await config.base64(blob);if(!live(id))return;
+      const base64=await config.base64(blob);if(!live(id))return;
       const file=typeof File==='function'?new File([blob],name,{type:'application/pdf'}):null;
-      pdf={blob,base64,file,name,title,message:'Olá! Segue a segunda via do boleto GLOBALGEN, título '+title.number+'.'};
+      pdf={blob,base64,file,name,message};
       const panel=overlay.querySelector('[data-pdf]');panel.hidden=false;
-      panel.querySelector('[data-pdf-title]').textContent='PDF pronto · Título '+title.number;
+      panel.querySelector('[data-pdf-title]').textContent='PDF pronto · '+label;
       panel.querySelector('[data-compartilhar]').hidden=!canShare(file);
       panel.querySelector('[data-pdf-status]').textContent='Escolha Abrir, Baixar ou Compartilhar.';
-      status('Segunda via recebida do Senior.');panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
+      status('PDF recebido do Senior.');panel.scrollIntoView?.({behavior:'smooth',block:'nearest'});
     }catch(error){if(live(id))status(error.message,true);}
-    finally{if(live(id)){busy(false);generationButton=null;if(button.isConnected)button.disabled=false;}}
+    finally{if(live(id))busy(false);}
+  }
+  function generate(title){return receivePdf('/boletos/pdf',{customerCode:title.customerCode,titleNumber:title.number},
+    'GBG-Boleto-'+title.customerCode+'-'+safe(title.number)+'.pdf','Título '+title.number,
+    'Olá! Segue a segunda via do boleto GLOBALGEN, título '+title.number+'.');}
+  function generateInvoice(invoice,code){return receivePdf('/boletos/invoice-pdf',{
+    customerCode:code,invoiceNumber:invoice.number,invoiceSeries:invoice.series,invoiceBranch:invoice.branch},
+    'GBG-Boletos-'+code+'-NF-'+safe(invoice.series)+'-'+safe(invoice.number)+'.pdf','NF '+invoice.series+' / '+invoice.number,
+    'Olá! Seguem os boletos em aberto GLOBALGEN da NF '+invoice.series+' / '+invoice.number+'.');}
+  function renderBatches(invoices){
+    const code=customer;
+    const list=overlay.querySelector('[data-lotes]');list.replaceChildren();batchButtons=[];
+    for(const invoice of invoices){const card=document.createElement('section');card.className='gbg-nf-note gbg-boleto-batch';
+      card.innerHTML='<h3>NF '+escape(invoice.series)+' / '+escape(invoice.number)+'</h3><p>Um PDF com todos os boletos em aberto desta nota fiscal.</p>'+
+        (filter?'<p class="gbg-nf-status">Gerar todos considera a NF inteira, inclusive outros títulos da nota.</p>':'')+
+        '<button type="button" data-gerar-nf'+(invoice.canGenerate===true?'':' disabled')+'>Gerar todos em aberto da NF</button>'+
+        (invoice.blockReason?'<p class="gbg-nf-warning">'+escape(invoice.blockReason)+'</p>':'');
+      const button=card.querySelector('[data-gerar-nf]');button.disabled=invoice.canGenerate!==true;
+      button.onclick=()=>{if(button.isConnected&&!button.disabled&&!loading)return generateInvoice(invoice,code);};
+      batchButtons.push({button,allowed:invoice.canGenerate===true});list.append(card);
+    }
   }
   async function load(more=false){
-    const raw=overlay.querySelector('[data-cliente]').value.trim(),digits=raw.replace(/\D/g,''),title=overlay.querySelector('[data-titulo]').value.trim();
-    if(!(/^\d{1,9}$/.test(raw)&&Number(raw)>0)&&![11,14].includes(digits.length)){status('Informe o código do cliente ou CPF/CNPJ.',true);return;}
+    const raw=overlay.querySelector('[data-cliente]').value.trim(),digits=raw.replace(/\D/g,''),title=overlay.querySelector('[data-titulo]').value.trim(),nf=overlay.querySelector('[data-nota]').value.trim();
+    if(!(/^\d{1,9}$/.test(raw)&&Number(raw)>0)&&!(/^[\d./\s-]+$/.test(raw)&&[11,14].includes(digits.length))){status('Informe CPF/CNPJ ou Código ERP.',true);return;}
     if(title&&!/^[A-Za-z0-9/._-]{1,15}$/.test(title)){status('Informe o título com até 15 letras, números ou separadores / - . _.',true);return;}
+    if(nf&&(!/^\d{1,9}$/.test(nf)||Number(nf)===0)){status('Informe o número exato da nota fiscal, com até 9 dígitos.',true);return;}
+    const invoice=nf?String(Number(nf)):'';
     const id=begin();clearPdf();busy(true);status('Consultando títulos no Senior...');
     try{
-      let code=selected||(/^\d{1,9}$/.test(raw)?String(Number(raw)):'');
-      const append=more&&!!next&&code===customer&&title===filter;
-      if(!append){overlay.querySelector('[data-lista]').replaceChildren();next='';overlay.querySelector('[data-proxima]').hidden=true;}
+      let code=(selectedDocument===digits?selected:'')||(/^\d{1,9}$/.test(raw)?String(Number(raw)):'');
+      const append=more&&!!next&&code===customer&&title===filter&&invoice===invoiceFilter;
+      if(!append)clearResults();
       if(!code){
         const found=await(await config.api('/boletos/customers?document='+encodeURIComponent(digits),{signal:controller.signal})).json();if(!live(id))return;
         const choices=overlay.querySelector('[data-clientes]');choices.replaceChildren();
         if(!found.length){status('Nenhum cliente disponível para este documento e login.');return;}
         if(found.length>1){
           for(const choice of found){const button=document.createElement('button');button.type='button';button.textContent=choice.codigoCliente+' · '+choice.nome+' · '+choice.cidade+'/'+choice.uf;
-            button.onclick=()=>{selected=choice.codigoCliente;choices.replaceChildren();load(false);};choices.append(button);}
+            button.onclick=()=>{if(loading)return;selected=choice.codigoCliente;selectedDocument=digits;choices.replaceChildren();load(false);};choices.append(button);}
           status('Escolha o cadastro do cliente para consultar os títulos.');return;
         }
-        code=found[0].codigoCliente;selected=code;
+        code=found[0].codigoCliente;selected=code;selectedDocument=digits;
       }
-      customer=code;filter=title;
-      const response=await config.api('/boletos?customerCode='+encodeURIComponent(code)+(title?'&titleNumber='+encodeURIComponent(title):'')+(append?'&cursor='+encodeURIComponent(next):''),{signal:controller.signal});
+      customer=code;filter=title;invoiceFilter=invoice;
+      const response=await config.api('/boletos?customerCode='+encodeURIComponent(code)+(title?'&titleNumber='+encodeURIComponent(title):'')+(invoice?'&invoiceNumber='+encodeURIComponent(invoice):'')+(append?'&cursor='+encodeURIComponent(next):''),{signal:controller.signal});
       const data=await response.json();if(!live(id))return;
       next=data.nextCursor||'';
+      renderBatches(invoice?data.invoices||[]:[]);
       const list=overlay.querySelector('[data-lista]');
       for(const item of data.titles||[]){
-        const article=document.createElement('article');article.className='gbg-nf-note';
+        const article=document.createElement('article');article.className='gbg-nf-note gbg-boleto-title';
         article.innerHTML='<h3>Título '+escape(item.number)+'</h3><p>Cliente '+escape(item.customerCode)+' · Situação '+escape(item.status)+
           '<br>NF: '+(item.invoiceNumber?escape(item.invoiceSeries)+' / '+escape(item.invoiceNumber):'Não vinculada')+
-          '<br>Vencimento: '+date(item.dueDate)+'<br>Valor original: '+money(item.originalAmount)+' · Saldo: '+money(item.openAmount)+
-          '<br>Portador: '+escape(item.portador||'—')+' · Carteira: '+escape(item.carteira||'—')+'</p>'+
-          '<button type="button" data-gerar'+(item.canGenerate?'':' disabled')+'>Gerar segunda via</button>'+
+          '<br>Vencimento: '+date(item.dueDate)+'</p><div class="gbg-boleto-values"><div>Valor original<strong>'+money(item.originalAmount)+'</strong></div><div>Saldo em aberto<strong>'+money(item.openAmount)+'</strong></div></div>'+
+          '<p>Portador: '+escape(item.portador||'—')+' · Carteira: '+escape(item.carteira||'—')+'</p>'+
+          '<button type="button" data-gerar'+(item.canGenerate===true?'':' disabled')+'>Gerar segunda via deste título</button>'+
           (item.blockReason?'<p class="gbg-nf-warning">'+escape(item.blockReason)+'</p>':'');
         const button=article.querySelector('[data-gerar]');button.disabled=item.canGenerate!==true;
-        button.onclick=()=>{if(!button.disabled)return generate(item,button);};list.append(article);
+        button.onclick=()=>{if(button.isConnected&&!button.disabled&&!loading)return generate(item);};titleButtons.push({button,allowed:item.canGenerate===true});list.append(article);
       }
-      status(list.children.length?list.children.length+' título(s) disponível(is) para este login. A geração confere novamente o título.':'Nenhum título disponível para este cliente e login.');
+      status(list.children.length?list.children.length+' título(s) disponível(is) para este login.':'Nenhum título disponível para este cliente, filtros e login.');
       overlay.querySelector('[data-proxima]').hidden=!next;
     }catch(error){if(live(id))status(error.message,true);}
     finally{if(live(id))busy(false);}
@@ -4024,33 +4018,44 @@ function createGbgBoletoView(config){
   async function share(){if(!pdf||!live(requestId))return;const current=pdf;
     try{if(window.AndroidShare?.sharePdf){nativePending=true;window.AndroidShare.sharePdf(current.base64,current.name,current.message);pdfStatus('Escolha o aplicativo para compartilhar o PDF.');return;}
       if(!current.file||!navigator.share||!navigator.canShare?.({files:[current.file]})){pdfStatus('Compartilhamento indisponível. Abra ou baixe o PDF.');return;}
-      await navigator.share({title:'Boleto GLOBALGEN',text:current.message,files:[current.file]});
+      await navigator.share({title:'Boletos GLOBALGEN',text:current.message,files:[current.file]});
       if(pdf===current)pdfStatus('Compartilhamento concluído.');
     }catch(error){if(pdf===current&&error.name!=='AbortError')pdfStatus(error.message);}}
-  function nativeResult(success,message){if(!nativePending||!pdf||!overlay)return false;nativePending=false;pdfStatus(message||(success?'Compartilhamento aberto.':'Não foi possível compartilhar. Abra o PDF e tente novamente.'));return true;}
+  function nativeResult(success,message){if(!nativePending||!pdf||!live(requestId))return false;nativePending=false;pdfStatus(message||(success?'Compartilhamento aberto.':'Não foi possível compartilhar. Abra o PDF e tente novamente.'));return true;}
   function open(initial=''){
-    if(!config.user())return;close();previousOverflow=document.body.style.overflow;
-    overlay=document.createElement('div');overlay.className='gbg-nf-overlay no-print';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Boletos — segunda via');
-    overlay.innerHTML='<div class="gbg-nf-card"><div class="gbg-nf-top"><h2>Boletos — segunda via</h2><button type="button" data-fechar>Voltar</button></div>'+
-      '<p class="gbg-nf-status">Consulte pelo cliente e, se desejar, pelo título. São permitidos títulos DUP com remessa, situação AB e saldo positivo igual ao valor original, inclusive vencidos.</p>'+
-      '<form class="gbg-nf-search"><label>Cliente · código ou CPF/CNPJ<input data-cliente inputmode="numeric" maxlength="18" autocomplete="off" required></label>'+
-      '<label>Título (opcional)<input data-titulo maxlength="15" autocomplete="off" placeholder="Número no Senior"></label><button type="submit" data-consultar>Consultar / Atualizar</button></form>'+
-      '<div data-clientes class="gbg-nf-options"></div><div data-status class="gbg-nf-status" role="status"></div><div data-lista></div><button type="button" data-proxima hidden>Carregar mais</button>'+
-      '<section data-pdf hidden class="gbg-nf-note"><h3 data-pdf-title></h3><div class="gbg-nf-options"><button type="button" data-abrir>Abrir PDF</button><button type="button" data-baixar>Baixar PDF</button><button type="button" data-compartilhar>Compartilhar PDF</button></div><div data-pdf-status class="gbg-nf-status" role="status"></div></section></div>';
-    document.body.append(overlay);document.body.style.overflow='hidden';
-    overlay.querySelector('[data-fechar]').onclick=()=>{const code=customer||selected;close();config.back?.(code);};
-    overlay.querySelector('form').onsubmit=event=>{event.preventDefault();load(false);};overlay.querySelector('[data-proxima]').onclick=()=>load(true);
-    for(const key of ['[data-cliente]','[data-titulo]'])overlay.querySelector(key).oninput=reset;
+    if(!config.user())return;close();config.enter?.();
+    overlay=document.createElement('section');overlay.className='gbg-doc-screen no-print';overlay.setAttribute('aria-label','Boletos — segunda via');
+    overlay.innerHTML='<div class="gbg-home-card"><div class="gbg-home-bar"><h1>GLOBALGEN</h1><button type="button" data-inicio>Início</button></div>'+
+      '<div class="gbg-boleto-heading"><img src="icons/gbg-boletos.svg" width="48" height="48" alt=""><h2 class="gbg-doc-title">Boletos — segunda via</h2></div>'+
+      '<p>Consulte o cliente e, se desejar, informe o título ou a nota fiscal.</p>'+
+      '<form class="gbg-nf-search"><label>CPF/CNPJ ou Código ERP<input data-cliente inputmode="numeric" maxlength="18" autocomplete="off" required></label>'+
+      '<label>Título (opcional)<input data-titulo maxlength="15" autocomplete="off" placeholder="Número exato do título"></label>'+
+      '<label>Nota Fiscal (opcional)<input data-nota inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Número exato da NF"></label><button type="submit" data-consultar>Consultar</button></form>'+
+      '<div data-clientes class="gbg-nf-options"></div><div data-status class="gbg-nf-status" role="status" aria-live="polite"></div><div data-lotes></div><div data-lista></div><button type="button" data-proxima hidden>Carregar mais</button>'+
+      '<section data-pdf hidden class="gbg-nf-note"><h3 data-pdf-title></h3><div class="gbg-nf-options"><button type="button" data-abrir>Abrir PDF</button><button type="button" data-baixar>Baixar PDF</button><button type="button" data-compartilhar>Compartilhar PDF</button></div><div data-pdf-status class="gbg-nf-status" role="status"></div></section>'+
+      '<button type="button" data-fechar class="gbg-doc-back">Voltar para NFs e Boletos</button></div>';
+    document.body.append(overlay);
+    overlay.querySelector('[data-fechar]').onclick=()=>{close();config.back?.();};
+    overlay.querySelector('[data-inicio]').onclick=()=>{close();config.home?.();};
+    overlay.querySelector('form').onsubmit=event=>{event.preventDefault();document.activeElement?.blur?.();load(false);};overlay.querySelector('[data-proxima]').onclick=()=>load(true);
+    overlay.querySelector('[data-cliente]').oninput=()=>reset(true);
+    for(const key of ['[data-titulo]','[data-nota]'])overlay.querySelector(key).oninput=()=>reset(false);
     overlay.querySelector('[data-cliente]').value=/^\d{1,9}$/.test(String(initial))?String(initial):'';
-    overlay.querySelector('[data-cliente]').focus();overlay.querySelector('[data-abrir]').onclick=openPdf;overlay.querySelector('[data-baixar]').onclick=download;overlay.querySelector('[data-compartilhar]').onclick=share;
+    overlay.querySelector('[data-abrir]').onclick=openPdf;overlay.querySelector('[data-baixar]').onclick=download;overlay.querySelector('[data-compartilhar]').onclick=share;
+    config.scroll?.();
   }
   return {open,close,nativeResult};
 }
 // ── FIM SEGUNDA VIA DE BOLETOS ──
 
-window.GbgBoletoView=createGbgBoletoView({api:apiV5,user:()=>_authUser,base64:blobParaBase64,download:baixarBlob,back:code=>GbgInvoiceView.open(code)});
+function entrarAreaDocumentos(){
+  document.getElementById('gbg-home').hidden=true;
+  document.getElementById('gbg-budget').hidden=true;
+}
+window.GbgBoletoView=createGbgBoletoView({api:apiV5,user:()=>_authUser,base64:blobParaBase64,download:baixarBlob,
+  enter:entrarAreaDocumentos,scroll:()=>window.scrollTo(0,0),back:()=>GbgDocumentsView.open(),home:mostrarInicioOrcamento});
 
-window.GbgInvoiceView=createGbgInvoiceView({api:apiV5,user:()=>_authUser,title:'NFs e Boletos',closeLabel:'Início',secondCopies:true,openBoletos:code=>GbgBoletoView.open(code),customerCode:()=>S._seniorLookup?.codCli||''});
+window.GbgDocumentsView=createGbgDocumentsView({user:()=>_authUser,enter:entrarAreaDocumentos,scroll:()=>window.scrollTo(0,0),home:mostrarInicioOrcamento,boletos:()=>GbgBoletoView.open()});
 </script>
 </body>
 </html>
