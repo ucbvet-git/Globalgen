@@ -3,7 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.6.0</title>
+<title>GLOBALGEN — Orçamento v6.7.0</title>
+<meta name="application-name" content="GBG Orçamentos">
+<meta name="apple-mobile-web-app-title" content="GBG Orçamentos">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#199198">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.7.0">
+<link rel="manifest" href="./orcamento.webmanifest?v=6.7.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -452,7 +460,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-err" id="a-login-err"></div>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.6.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.7.0</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -466,7 +474,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.6.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.7.0</div>
   </div>
 </div>
 <div id="gbg-home" class="no-print" hidden>
@@ -2002,7 +2010,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.6.0';
+       doc.versaoOrcamento='6.7.0';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.versaoBonificacao=BONUS_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
@@ -2594,7 +2602,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.6.0';
+const VOICE_APP_VERSION = '6.7.0';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
