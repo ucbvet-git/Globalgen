@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GLOBALGEN — Gestão de Orçamentos v5.4.0</title>
+<title>GLOBALGEN — Gestão de Orçamentos v5.5.0</title>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -201,7 +201,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-login-btn" onclick="doLoginGestao()">Entrar</button>
     <button onclick="showGPrimAcesso()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">Primeiro acesso</button>
-    <div class="login-version">Gestão GBG · versão 5.4.0</div>
+    <div class="login-version">Gestão GBG · versão 5.5.0</div>
   </div>
   <!-- Painel primeiro acesso -->
   <div id="g-prim" class="login-box" style="display:none">
@@ -216,7 +216,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
     <button class="login-btn" id="g-prim-btn" onclick="doGFirstAccess()">Buscar e enviar link</button>
     <button onclick="showGLogin()"
       style="background:none;border:none;font-size:12px;color:var(--pr);cursor:pointer;text-decoration:underline;font-family:inherit;margin-top:10px">← Voltar para login</button>
-    <div class="login-version">Gestão GBG · versão 5.4.0</div>
+    <div class="login-version">Gestão GBG · versão 5.5.0</div>
   </div>
 </div>
 <!-- App -->
@@ -269,6 +269,7 @@ body{font-family:'Inter',sans-serif;background:var(--sf);color:var(--tx);min-hei
       <button class="f-btn" style="background:var(--pr);color:#fff;text-align:left;padding:15px" onclick="abrirTabelasPrecosG()">💲 Tabelas de Preços</button>
       <button class="f-btn" style="background:var(--pr);color:#fff;text-align:left;padding:15px" onclick="abrirBonificacoesG()">🎁 Bonificação por Kit</button>
       <button class="f-btn" style="background:var(--deep);color:#fff;text-align:left;padding:15px" onclick="forcarSincronizacaoCadastrosG()">☁ Atualizar Firebase</button>
+      <button class="f-btn" id="g-boleto-model-button" style="background:var(--pr);color:#fff;text-align:left;padding:15px;display:none" onclick="GbgBoletoModelView.open()">🧾 Modelos de Bloquetos</button>
       <button class="f-btn" id="g-full-load-button" style="background:#77513d;color:#fff;text-align:left;padding:15px;display:none" onclick="abrirCargaCompletaG()">📦 Carga completa</button>
     </div>
   </div>
@@ -479,6 +480,8 @@ function entrarNoApp(u){
   if(adminButton)adminButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
   const syncButton=document.querySelector('[onclick="forcarSincronizacaoCadastrosG()"]');
   if(syncButton)syncButton.style.display=u.isAdmin||['SUB','GER'].includes(u.catRep)?'':'none';
+  const modelButton=document.getElementById('g-boleto-model-button');
+  if(modelButton)modelButton.style.display=u.isAdmin?'':'none';
   const fullButton=document.getElementById('g-full-load-button');
   if(fullButton)fullButton.style.display=u.isAdmin?'':'none';
   const pricesButton=document.querySelector('[onclick="abrirTabelasPrecosG()"]');
@@ -517,6 +520,7 @@ async function doGFirstAccess(){
 // Logout gestão
 async function sairGestao(){
   window.GbgInvoiceView?.close();
+  window.GbgBoletoModelView?.close();
   try{await getGAuth().signOut();}catch(_){}
   clearGSession();
   document.getElementById('app').style.display='none';
@@ -1692,22 +1696,24 @@ function createGbgInvoiceView(config){
     }catch(error){if(live(id)){status.textContent=error.message;status.classList.add('gbg-nf-error');}}
     finally{if(live(id)){overlay.querySelector('[data-consultar]').disabled=false;overlay.querySelector('[data-proxima]').disabled=false;}}
   }
-  async function open(){
+  async function open(initialCode=''){
     if(!config.user())return;close();previousOverflow=document.body.style.overflow;
     overlay=document.createElement('div');overlay.className='gbg-nf-overlay no-print';
     overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Notas fiscais');
     overlay.innerHTML='<div class="gbg-nf-card"><div class="gbg-nf-top"><h2>'+escape(config.title||'Notas fiscais')+'</h2>'+
       '<button type="button" data-fechar>'+escape(config.closeLabel||'Fechar')+'</button></div>'+
-      (config.secondCopies?'<div class="gbg-nf-options"><button type="button" disabled>Boletos — segunda via<small>Em breve</small></button><button type="button" disabled>Notas Fiscais — segunda via<small>Em breve</small></button></div>':'')+
+      (config.secondCopies?'<div class="gbg-nf-options"><button type="button" data-boletos'+(config.openBoletos?'':' disabled')+'>Boletos — segunda via<small>'+(config.openBoletos?'Consultar títulos e gerar PDF':'Em breve')+'</small></button><button type="button" disabled>Notas Fiscais — segunda via<small>Em breve</small></button></div>':'')+
       '<p class="gbg-nf-status">Consulte as notas fiscais e seus vínculos comerciais.</p><div data-historico class="gbg-nf-status"></div>'+
       '<form class="gbg-nf-search"><label>Código do cliente<input data-cliente inputmode="numeric" maxlength="9" autocomplete="off" placeholder="Código no Senior" required></label>'+
       '<button type="submit" data-consultar>Consultar / Atualizar</button></form><div data-status class="gbg-nf-status" role="status"></div>'+
       '<div data-lista></div><button type="button" data-proxima hidden>Carregar mais</button></div>';
     document.body.append(overlay);document.body.style.overflow='hidden';
     overlay.querySelector('[data-fechar]').onclick=close;
+    const boletoButton=overlay.querySelector('[data-boletos]');
+    if(config.secondCopies&&config.openBoletos&&boletoButton)boletoButton.onclick=()=>{const code=overlay.querySelector('[data-cliente]').value;close();config.openBoletos(code);};
     overlay.querySelector('form').onsubmit=event=>{event.preventDefault();load(false);};
     overlay.querySelector('[data-proxima]').onclick=()=>load(true);
-    const initial=String(config.customerCode?.()||'');overlay.querySelector('[data-cliente]').value=/^\d{1,9}$/.test(initial)?initial:'';
+    const initial=String(initialCode||config.customerCode?.()||'');overlay.querySelector('[data-cliente]').value=/^\d{1,9}$/.test(initial)?initial:'';
     overlay.querySelector('[data-cliente]').focus();
     const id=begin();
     try{
@@ -1719,6 +1725,54 @@ function createGbgInvoiceView(config){
   return {open,close};
 }
 // ── FIM CONSULTA DE NFs ──
+
+// Embedded in the standalone Gestão HTML during release preparation.
+function createGbgBoletoModelView(config){
+  let overlay=null,controller=null,requestId=0,owner='',revision=0,previousOverflow='';
+  const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const permitted=()=>config.user()?.isAdmin===true;
+  const live=id=>id===requestId&&overlay?.isConnected&&permitted()&&config.user().uid===owner;
+  function begin(){controller?.abort();controller=new AbortController();owner=config.user()?.uid;return ++requestId;}
+  function close(){++requestId;controller?.abort();controller=null;revision=0;if(overlay){overlay.remove();overlay=null;document.body.style.overflow=previousOverflow;}}
+  function status(text){if(overlay)overlay.querySelector('[data-status]').textContent=text;}
+  function edit(row=null){revision=row?.revision||0;
+    for(const [key,value] of [['portador',row?.portador||''],['carteira',row?.carteira||''],['modelo',row?.modelo||'']]){const input=overlay.querySelector('[data-'+key+']');input.value=value;input.readOnly=key!=='modelo'&&!!row;}
+    overlay.querySelector('[data-salvar]').textContent=row?'Salvar alteração':'Cadastrar modelo';status(row?'Altere o modelo e salve. Para outra combinação, escolha Novo cadastro.':'Informe os três campos para cadastrar uma combinação.');}
+  async function load(message=''){
+    const id=begin();status('Carregando modelos...');overlay.querySelector('[data-salvar]').disabled=true;overlay.querySelector('[data-recarregar]').disabled=true;overlay.querySelector('[data-novo]').disabled=true;
+    try{const rows=await(await config.api('/management/boleto-models',{signal:controller.signal})).json();if(!live(id))return;
+      const list=overlay.querySelector('[data-lista]');list.replaceChildren();
+      for(const row of rows){const article=document.createElement('article');article.className='gbg-nf-note';
+        article.innerHTML='<h3>'+escape(row.portador)+' · '+escape(row.carteira)+' · '+escape(row.modelo)+'</h3><p>Última alteração: '+escape(row.alteradoEmUtc?new Date(row.alteradoEmUtc).toLocaleString('pt-BR'):'—')+' · '+escape(row.alteradoPor||'—')+'</p><button type="button" data-editar>Editar modelo</button>';
+        article.querySelector('[data-editar]').onclick=()=>{edit(row);overlay.querySelector('[data-modelo]').focus();};list.append(article);}
+      edit();status(message||(rows.length?rows.length+' modelo(s) cadastrado(s).':'Nenhum modelo cadastrado.'));
+    }catch(error){if(live(id)){status(error.message);overlay.querySelector('[data-lista]').replaceChildren();}}
+    finally{if(live(id)){overlay.querySelector('[data-salvar]').disabled=false;overlay.querySelector('[data-recarregar]').disabled=false;overlay.querySelector('[data-novo]').disabled=false;}}
+  }
+  async function save(){
+    if(!permitted())return;
+    const portador=overlay.querySelector('[data-portador]').value,carteira=overlay.querySelector('[data-carteira]').value,modelo=overlay.querySelector('[data-modelo]').value.trim().toUpperCase();
+    if(!/^[0-9]{4}$/.test(portador)||!/^[0-9]{2}$/.test(carteira)||!/^[A-Z]{4}[0-9]{3}\.BLO$/.test(modelo)){status('Use Portador com 4 dígitos, Carteira com 2 dígitos e modelo com 4 letras + 3 números + .BLO.');return;}
+    const id=begin();overlay.querySelector('[data-salvar]').disabled=true;overlay.querySelector('[data-recarregar]').disabled=true;overlay.querySelector('[data-novo]').disabled=true;status('Salvando modelo...');
+    try{await config.api('/management/boleto-models',{method:'POST',signal:controller.signal,body:{portador,carteira,modelo,expectedRevision:revision}});if(!live(id))return;
+      await load('Modelo salvo.');
+    }catch(error){if(live(id))status(error.message);}
+    finally{if(live(id)){overlay.querySelector('[data-salvar]').disabled=false;overlay.querySelector('[data-recarregar]').disabled=false;overlay.querySelector('[data-novo]').disabled=false;}}
+  }
+  async function open(){if(!permitted())return;close();previousOverflow=document.body.style.overflow;
+    overlay=document.createElement('div');overlay.className='gbg-nf-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','Modelos de Bloquetos');
+    overlay.innerHTML='<div class="gbg-nf-card"><div class="gbg-nf-top"><h2>Modelos de Bloquetos</h2><button type="button" data-fechar>Fechar</button></div><p>Um modelo por Portador e Carteira. Os códigos mantêm os zeros à esquerda. Os arquivos .BLO devem existir no Senior.</p>'+
+      '<form class="gbg-nf-search"><label>Portador (4 dígitos)<input data-portador inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required placeholder="0244"></label><label>Carteira (2 dígitos)<input data-carteira inputmode="numeric" maxlength="2" pattern="[0-9]{2}" required placeholder="01"></label><label>Modelo de Bloqueto<input data-modelo maxlength="11" pattern="[A-Za-z]{4}[0-9]{3}\\.[Bb][Ll][Oo]" required placeholder="FRCR023.BLO" style="text-transform:uppercase"></label><button type="submit" data-salvar>Cadastrar modelo</button></form>'+
+      '<div class="gbg-nf-options"><button type="button" data-novo>Novo cadastro</button><button type="button" data-recarregar>Recarregar lista</button></div><div data-status role="status" class="gbg-nf-status"></div><div data-lista></div></div>';
+    document.body.append(overlay);document.body.style.overflow='hidden';overlay.querySelector('[data-fechar]').onclick=close;
+    overlay.querySelector('form').onsubmit=event=>{event.preventDefault();save();};overlay.querySelector('[data-novo]').onclick=()=>edit();overlay.querySelector('[data-recarregar]').onclick=()=>load();
+    await load();
+  }
+  return {open,close};
+}
+// ── FIM MODELOS DE BLOQUETOS ──
+
+window.GbgBoletoModelView=createGbgBoletoModelView({api:apiV5G,user:()=>_gAuthUser});
 
 window.GbgInvoiceView=createGbgInvoiceView({api:apiV5G,user:()=>_gAuthUser,title:'Notas fiscais'});
 </script>
