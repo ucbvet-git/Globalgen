@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.9.0</title>
+<title>GLOBALGEN — Orçamento v6.10.0</title>
 <meta name="application-name" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-title" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#199198">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.9.0">
-<link rel="manifest" href="./orcamento.webmanifest?v=6.9.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.10.0">
+<link rel="manifest" href="./orcamento.webmanifest?v=6.10.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -486,9 +486,10 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
       <button class="a-eye" onclick="togglePw('a-pw')" tabindex="-1">👁</button>
     </div>
     <div class="a-err" id="a-login-err"></div>
+<button class="a-btn" style="background:#edf4ef;color:var(--deep);border:1px solid #bed2c5;margin:6px 0" type="button" id="a-verify-email" hidden onclick="enviarConfirmacaoEmail()">Enviar e-mail de confirmação</button>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.9.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.10.0</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -502,7 +503,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.9.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.10.0</div>
   </div>
 </div>
 <div id="gbg-home" class="no-print" hidden>
@@ -708,9 +709,13 @@ async function apiV5(path,{method='GET',body=null,signal=null,auth=true,retry=tr
     if(user){await user.getIdToken(true);return apiV5(path,{method,body,signal,auth,retry:false});}
   }
   if(!response.ok){
-    let message=`API respondeu HTTP ${response.status}.`;
-    try{const error=await response.clone().json();message=error.message||message;}catch(_){ }
-    const failure=new Error(message);failure.status=response.status;throw failure;
+    let message=`API respondeu HTTP ${response.status}.`,code='';
+    try{const error=await response.clone().json();message=error.message||message;code=error.code||'';}catch(_){ }
+    if(code==='EMAIL_NOT_VERIFIED'&&auth&&retry){
+      const user=getFirebaseAuth().currentUser;
+      if(user){await user.reload();if(user.emailVerified){await user.getIdToken(true);return apiV5(path,{method,body,signal,auth,retry:false});}}
+    }
+    const failure=new Error(message);failure.status=response.status;failure.code=code;throw failure;
   }
   return response;
 }
@@ -2039,7 +2044,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.9.0';
+       doc.versaoOrcamento='6.10.0';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.versaoBonificacao=BONUS_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
@@ -2283,7 +2288,7 @@ async function doLogin(){
   const pw=document.getElementById('a-pw').value||'';
   const errEl=document.getElementById('a-login-err');
   const btn=document.getElementById('a-login-btn');
-  errEl.textContent='';
+  errEl.textContent='';document.getElementById('a-verify-email').hidden=true;document.getElementById('a-verify-email').disabled=false;
   if(!email||!pw){errEl.textContent='Preencha e-mail e senha.';return;}
   btn.disabled=true;btn.textContent='Verificando...';
   try{
@@ -2291,15 +2296,30 @@ async function doLogin(){
     const cred=await auth.signInWithEmailAndPassword(email,pw);
     const profile=await obterPerfilApiV5();
     _authUser=usuarioDoPerfilV5(profile);
+    await apiV5('/session/login',{method:'POST'});
     saveSession(_authUser);
-    try{await getFbDb().collection('representantes').doc(cred.user.uid).update({ultimoLogin:firebase.firestore.FieldValue.serverTimestamp()});}catch(_){}
     await carregarTabelaPrecos();await carregarBonificacoes();hideAuthScreen(_authUser);mostrarInicioOrcamento();await verificarPendenciasUsuario();
   }catch(e){
+    clearSession();_authUser=null;
+    document.getElementById('a-verify-email').hidden=e.code!=='EMAIL_NOT_VERIFIED';
     const msg=e.code==='auth/wrong-password'||e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'?'E-mail ou senha incorretos.':
               e.code==='auth/invalid-email'?'E-mail inválido.':
               e.code==='auth/too-many-requests'?'Muitas tentativas. Aguarde alguns minutos.':e.message;
     errEl.textContent=msg;
   }finally{btn.disabled=false;btn.textContent='Entrar';}
+}
+async function enviarConfirmacaoEmail(){
+  const button=document.getElementById('a-verify-email'),message=document.getElementById('a-login-err');
+  button.disabled=true;
+  try{
+    const user=getFirebaseAuth().currentUser;
+    if(!user)throw new Error('Entre com seu e-mail e senha antes de solicitar a confirmação.');
+    await user.sendEmailVerification();
+    message.textContent='Enviamos o e-mail de confirmação. Abra o link recebido e entre novamente.';
+  }catch(_){
+    message.textContent='Não foi possível enviar a confirmação agora. Entre com seu e-mail e senha e tente novamente em alguns minutos.';
+    button.disabled=false;
+  }
 }
 // Primeiro acesso
 async function doFirstAccess(){
@@ -2634,7 +2654,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.9.0';
+const VOICE_APP_VERSION = '6.10.0';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
