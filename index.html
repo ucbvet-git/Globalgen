@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
-<title>GLOBALGEN — Orçamento v6.10.0</title>
+<title>GLOBALGEN — Orçamento v6.11.0</title>
 <meta name="application-name" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-title" content="GBG Orçamentos">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#199198">
-<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.10.0">
-<link rel="manifest" href="./orcamento.webmanifest?v=6.10.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icons/gbg-orcamentos-180.png?v=6.11.0">
+<link rel="manifest" href="./orcamento.webmanifest?v=6.11.0">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>window.__firebaseCdnFalhou=false;</script>
 <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" onerror="window.__firebaseCdnFalhou=true"></script>
@@ -489,7 +489,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
 <button class="a-btn" style="background:#edf4ef;color:var(--deep);border:1px solid #bed2c5;margin:6px 0" type="button" id="a-verify-email" hidden onclick="enviarConfirmacaoEmail()">Enviar e-mail de confirmação</button>
     <button class="a-btn" id="a-login-btn" onclick="doLogin()">Entrar</button>
     <button class="a-link" onclick="showPrimAcesso()">Primeiro acesso</button>
-    <div class="app-version">Orçamento GBG · versão 6.10.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.11.0</div>
   </div>
   <!-- PRIMEIRO ACESSO -->
   <div id="a-prim" class="a-box" style="display:none">
@@ -503,7 +503,7 @@ body[data-step="kit"] .sc-desc span{font-size:11px!important;margin-left:8px!imp
     <div class="a-ok" id="a-prim-ok"></div>
     <button class="a-btn" id="a-prim-btn" onclick="doFirstAccess()">Buscar e enviar link</button>
     <button class="a-link" onclick="showLogin()">← Voltar para login</button>
-    <div class="app-version">Orçamento GBG · versão 6.10.0</div>
+    <div class="app-version">Orçamento GBG · versão 6.11.0</div>
   </div>
 </div>
 <div id="gbg-home" class="no-print" hidden>
@@ -819,7 +819,7 @@ function getKit(){return KITS[S.kit]||null}
 function nomeKit(k){return k?.nome?`${k.nome}${k.sub&&!k.nome.includes(k.sub)?' · '+k.sub:''}`:''}
 function rotuloParcela(pg){return `Valor da Parcela (${quantidadeParcelasPagamento(pg)}x)`}
 function getPagamentoSelecionado(){
-  return PAGS.find(p=>p.id===S.pag)||(S.pag?{id:S.pag,codCpg:S.pag,lbl:S._pagamentoSalvo||`Condição ${S.pag}`,par:'',qtdParcelas:S._pagamentoQtdParSalvo}:null);
+  return PAGS.find(p=>p.id===S.pag)||(S.pag?{id:S.pag,codCpg:S.pag,lbl:S._pagamentoSalvo||`Condição ${S.pag}`,par:'',qtdParcelas:S._pagamentoQtdParSalvo,versaoCondicao:S._pagamentoVersaoSalvo}:null);
 }
 const VALOR_MINIMO_PARCELA=500;
 function quantidadeParcelasPagamento(pg){
@@ -1201,17 +1201,17 @@ function renderStep(){
   if(sid==='pag'){
     prepararCondicoesPagamentoParaUsuario();
     if(PAGS_STATUS==='idle')setTimeout(()=>carregarCondicoesPagamento(),0);
-    if(PAGS_STATUS==='idle'||PAGS_STATUS==='loading')return`<div class="tip">⏳ Sincronizando as condições de pagamento com o Firebase...</div>`;
+    if(PAGS_STATUS==='idle'||PAGS_STATUS==='loading')return`<div class="tip">⏳ Consultando as condições de pagamento na API...</div>`;
     if(PAGS_STATUS==='error')return`<div class="tip" style="color:var(--rd)">⚠️ ${esc(PAGS_ERRO||'Não foi possível consultar as condições de pagamento.')}</div>
       <button class="lookup-btn" style="margin-top:12px" onclick="carregarCondicoesPagamento(true)">Tentar novamente</button>`;
     if(!PAGS.length)return`<div class="tip">Nenhuma condição de pagamento ativa para vendas foi encontrada.</div>
-      <button class="lookup-btn" style="margin-top:12px" onclick="carregarCondicoesPagamento(true)">Atualizar do Firebase</button>`;
+      <button class="lookup-btn" style="margin-top:12px" onclick="carregarCondicoesPagamento(true)">Atualizar condições</button>`;
     const pgAtual=getPagamentoSelecionado();
     const parcelaAtual=pgAtual?valorParcelaPagamento(pgAtual):0;
     const aviso=S.pag&&parcelaAtual+0.001<VALOR_MINIMO_PARCELA
       ?`<div class="tip" style="color:var(--rd);margin-bottom:12px">⚠️ A condição selecionada gera parcela de <strong>${fmt(parcelaAtual)}</strong>. Selecione outra condição; o mínimo é <strong>${fmt(VALOR_MINIMO_PARCELA)}</strong>.</div>`:'';
     return aviso+`<div class="pay-list">${PAGS.map(p=>`
-      <div class="pay-card${S.pag===p.id?' on':''}" onclick="selecionarCondicaoPagamento('${p.id}')">
+      <div class="pay-card${S.pag===p.id?' on':''}" onclick="selecionarCondicaoPagamento(decodeURIComponent('${encodeURIComponent(p.id).replace(/'/g,'%27')}'))">
         <div><div class="pay-lbl">${esc(p.lbl)}</div><div class="pay-par">${esc(descricaoParcelasPagamento(p))}</div></div>
         <div class="pay-radio"><div class="pay-dot"></div></div>
       </div>`).join('')}</div>`;
@@ -1782,10 +1782,10 @@ function gerarPDFPorImpressao(nome){
 function horSoap(){const n=new Date();return n.getHours()*60+n.getMinutes();}
 function escXml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-// ── Condições de pagamento: cache local para contingência + revalidação no Firebase ──
-const CPG_FIREBASE_COLLECTION='condicoesPagamento';
-const CPG_CACHE_PREFIX='gbg_condicoes_pagamento_v3:';
-const CPG_CACHE_TTL=24*60*60*1000;
+// ── Condições de pagamento: catálogo autorizado PostgreSQL; sem contingência de elegibilidade ──
+const CPG_CATALOG_ENDPOINT='/payment-conditions';
+const CPG_CACHE_PREFIX='gbg_condicoes_pagamento_pg_v1:';
+const CPG_CACHE_TTL=60*1000;
 function identificadorCacheCondicoesPagamento(){
   const u=_authUser||{};
   return String(u.uid||(u.isAdmin?'admin':'')||u.codRep||u.email||'sem-usuario').trim().toLowerCase();
@@ -1811,16 +1811,16 @@ function condicoesPagamentoPrecisamSincronizar(){
   return !cacheCondicoesPagamentoValido(lerCacheCondicoesPagamento());
 }
 function normalizarCondicaoPagamentoFirebase(doc){
-  const d=doc.data()||{};
+  const d=doc;
   const codCpg=String(d.codCpg??d.codigo??d.id??doc.id??'').trim();
   const sitCpg=String(d.sitCpg??d.situacao??d.status??'').trim().toUpperCase();
-  if(!codCpg||d.ativo===false||(sitCpg&&!['A','ATIVO','ACTIVE'].includes(sitCpg)))return null;
+  if(!codCpg||!/^([a-f0-9]{64})$/.test(String(d.versaoCondicao||''))||d.ativo===false||(sitCpg&&!['A','ATIVO','ACTIVE'].includes(sitCpg)))return null;
   const lbl=String(d.desCpg??d.descricao??d.lbl??d.abrCpg??`Condição ${codCpg}`).trim();
   const qtdPar=parseInt(d.qtdPar??d.QtdPar??d.quantidadeParcelas,10);
-  if(!Number.isInteger(qtdPar)||qtdPar<1){console.warn(`Condição ${codCpg} ignorada: QtdPar ausente ou inválido no Firebase.`);return null;}
+  if(!Number.isInteger(qtdPar)||qtdPar<1){console.warn(`Condição ${codCpg} ignorada: QtdPar ausente ou inválido no catálogo autorizado.`);return null;}
   const przMed=parseInt(d.przMed??d.prazoMedio,10)||0;
   const par=String(d.par||'').trim()||[qtdPar?`${qtdPar}x`:'',przMed?`prazo médio ${przMed} dias`:'',`cód. ${codCpg}`].filter(Boolean).join(' · ');
-  return{id:codCpg,codCpg,lbl,par,qtdParcelas:qtdPar};
+  return{id:codCpg,codCpg,lbl,par,qtdParcelas:qtdPar,versaoCondicao:d.versaoCondicao};
 }
 function aplicarCondicoesPagamento(lista){
   lista.sort((a,b)=>a.lbl.localeCompare(b.lbl,'pt-BR',{sensitivity:'base'})||a.codCpg.localeCompare(b.codCpg,'pt-BR',{numeric:true,sensitivity:'base'}));
@@ -1831,42 +1831,32 @@ function aplicarCondicoesPagamento(lista){
 async function carregarCondicoesPagamento(forcar=false){
   prepararCondicoesPagamentoParaUsuario();
   if(PAGS_STATUS==='loading'||PAGS_STATUS==='refreshing')return;
-  const cache=lerCacheCondicoesPagamento();
-  const temCache=!!(cache&&cache.lista.length);
-  if(temCache){
-    aplicarCondicoesPagamento(cache.lista);
-  }
-  PAGS_STATUS=temCache?'refreshing':'loading';PAGS_ERRO='';
+  const usuario=PAGS_USUARIO;
+  PAGS_STATUS='loading';PAGS_ERRO='';
   if(sid==='pag')render();
   try{
-    const db=getFbDb();
-    if(!db)throw new Error('Firebase não disponível.');
-    const snap=await db.collection(CPG_FIREBASE_COLLECTION).get();
+    const resposta=await apiV5(CPG_CATALOG_ENDPOINT);
+    const captura=await resposta.json();
+    if(usuario!==PAGS_USUARIO)return;
+    if(captura.origem!=='PostgreSql'||!Array.isArray(captura.registros))throw new Error('Catálogo de pagamento inválido.');
     const vistos=new Set();
-    const lista=snap.docs.map(normalizarCondicaoPagamentoFirebase).filter(Boolean).filter(p=>{if(vistos.has(p.codCpg))return false;vistos.add(p.codCpg);return true;});
-    if(!lista.length)throw new Error('Nenhuma condição de pagamento foi encontrada no Firebase.');
+    const lista=captura.registros.map(normalizarCondicaoPagamentoFirebase).filter(Boolean).filter(p=>{
+      if(vistos.has(p.codCpg))throw new Error('Condição duplicada no catálogo.');vistos.add(p.codCpg);return true;
+    });
     aplicarCondicoesPagamento(lista);
-    try{localStorage.setItem(chaveCacheCondicoesPagamento(),JSON.stringify({sincronizadoEm:Date.now(),lista:PAGS}));}
-    catch(eCache){console.warn('Não foi possível armazenar localmente a data da sincronização das condições de pagamento.',eCache);}
-    console.log(`✅ Condições de pagamento atualizadas pelo Firebase: ${PAGS.length} item(ns).`);
+    try{localStorage.removeItem(chaveCacheCondicoesPagamento());}catch(_){}
   }catch(e){
-    if(cache&&cache.lista.length){
-      aplicarCondicoesPagamento(cache.lista);
-      console.warn('Firebase indisponível; usando a última cópia local das condições de pagamento.',e);
-    }else{
-      PAGS=[];PAGS_STATUS='error';
-      PAGS_ERRO=`Não foi possível consultar as condições de pagamento no Firebase: ${e.message}`;
-    }
-  }finally{
-    if(sid==='pag')render();
-  }
+    if(usuario!==PAGS_USUARIO)return;
+    PAGS=[];PAGS_STATUS='error';
+    PAGS_ERRO='Não foi possível validar as condições de pagamento: '+e.message;
+  }finally{if(sid==='pag'&&usuario===PAGS_USUARIO)render();}
 }
 
 function pedidoApiV5(numInt,type,codCpg,prods,codCli,codRep){
   return{
     internalNumber:String(numInt),type,customerCode:String(codCli||''),
     customerDocument:digits(S.clienteDoc)||'',representativeCode:String(codRep||''),
-    paymentCondition:Number(codCpg),observation:String(S.obs||'').slice(0,2000),budgetSessionId:S._sessionId,
+    paymentCondition:Number(codCpg)||15,paymentConditionCode:String(codCpg),observation:String(S.obs||'').slice(0,2000),budgetSessionId:S._sessionId,
     products:prods.map(p=>({code:String(p.code),quantity:Number(p.qty),price:Number(p.preco)}))
   };
 }
@@ -2030,6 +2020,7 @@ async function saveOrcamento(){
       pagamento:pg?.lbl||'',
       pagamentoCodCpg:pg?.codCpg||'',
       pagamentoQtdPar:parcelas,
+      pagamentoVersaoCondicao:pg?.versaoCondicao||'',
       totalPedido:T.totalPedido,
       totalBonif:T.totalBonif,
       totalFinal:T.totalFinal,
@@ -2044,7 +2035,7 @@ async function saveOrcamento(){
       bonifAplic:Object.entries(S.bonifAplic).filter(([,q])=>q>0).map(([code,qty])=>({code,nome:PROD_NOME[code]||code,qty,preco:PRECOS[S.preco][code]||0,valor:qty*(PRECOS[S.preco][code]||0)})),
       obs:S.obs||''
     };
-       doc.versaoOrcamento='6.10.0';
+       doc.versaoOrcamento='6.11.0';
        doc.versaoTabelaPrecos=PRICE_VERSION;
        doc.versaoBonificacao=BONUS_VERSION;
        doc.bonificacaoManualV61=!!S._bonusLocked;
@@ -2124,6 +2115,7 @@ function carregarOrcamentoNoEstado(docId,data){
   S._dadosRecuperados={id:docId,data:JSON.parse(JSON.stringify(data))};
   S._pagamentoSalvo=data.pagamento||'';
   S._pagamentoQtdParSalvo=Math.max(1,Math.trunc(Number(data.pagamentoQtdPar||1)));
+  S._pagamentoVersaoSalvo=String(data.pagamentoVersaoCondicao||'');
   S.pag=data.pagamentoCodCpg||PAGS.find(p=>p.lbl===data.pagamento)?.id||null;
   // Vacinas
   if(data.vacinas&&data.vacinas.frasco){S.vac='sim';S.vacF=data.vacinas.frasco;S.vacD=data.vacinas.doses||0;}
@@ -2654,7 +2646,7 @@ if(document.readyState==='loading'){
 </script>
 <script>
 // Orçamento GBG v6.0.0 — interpretação por voz. O áudio não é salvo no navegador.
-const VOICE_APP_VERSION = '6.10.0';
+const VOICE_APP_VERSION = '6.11.0';
 let voiceRecorder = null;
 let voiceStream = null;
 let voiceChunks = [];
